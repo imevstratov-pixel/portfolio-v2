@@ -1,0 +1,282 @@
+---
+// One case on /cases/ (block type "cases-list"), anchored by the case anchor.
+// Content and order follow render_case() in the texts renderer: labels with
+// the status, the title, the body sections, the scheme (staff-c2), the links,
+// the case testimonials. The section «Что из этого сделаю для вас» closes the
+// case (the texts: «В конце каждого кейса строка … ведёт на услугу»): its
+// heading is bold and the service name inside the line links to the service
+// on /services/.
+//
+// Layout (12 columns from 1080px): an ink line on top, the mono labels, the
+// title in large type; then rows under full-width hairlines with the section
+// name in columns 1-3 and the text in 4-10; a vertical reel (if the case has
+// one) in columns 11-12 beside the text, on top of the hairlines; the scheme
+// across the full width under the text; testimonials as the shared
+// VideoTestimonial rows (video 3 of 12, quote beside it in the medium size);
+// the closing service line as the last row. Tablets: text in 4-12, the reel
+// under the text. Phones: one column, the reel at half width.
+import CaseLabels from '../CaseLabels.astro';
+import Prose from '../Prose.astro';
+import Button from '../Button.astro';
+import Media from '../Media.astro';
+import PipelineScheme from '../PipelineScheme.astro';
+import VideoTestimonial from '../VideoTestimonial.astro';
+import {
+  caseService,
+  findBlock,
+  getPage,
+  bodySections,
+  serviceHref,
+  getTestimonial,
+  type CaseEntry,
+} from '../../lib/content';
+import { publicFileExists } from '../../lib/media';
+
+interface Props {
+  case: CaseEntry;
+  /** Body sections to show, in order (block.sections). */
+  sections: string[];
+  /** Label fields (block.labels). */
+  labels: string[];
+  /** Name of the closing section that links to the service (block.serviceLinkLabel). */
+  serviceLinkLabel: string;
+  /** Show the status after the labels (block.statusField is set). */
+  status?: boolean;
+}
+
+const { case: c, sections, labels, serviceLinkLabel, status = true } = Astro.props;
+const d = c.data;
+const id = d.anchor;
+const titleId = `${id}-title`;
+
+const service = caseService(c);
+const serviceUrl = serviceHref(service);
+
+const all = bodySections(c, sections);
+const story = all.filter((s) => s.title !== serviceLinkLabel);
+const offer = all.find((s) => s.title === serviceLinkLabel);
+
+// The service name in the closing line («AI-конвейер производства курсов») becomes the link.
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const serviceTitle = escapeHtml(service.data.title);
+const marker = `«${serviceTitle}»`;
+const offerLinked = !!offer && offer.html.includes(marker);
+const offerHtml = offer
+  ? offer.html.replace(marker, `«<a href="${serviceUrl}">${serviceTitle}</a>»`)
+  : '';
+
+// Reel: the native player with its poster. Accessible name: the reel's hook
+// from the home page if it is listed there, otherwise the case title.
+const reel = d.reel && publicFileExists(d.reel.video) ? d.reel : null;
+const homeReels = findBlock(getPage('home'), 'reels');
+const hook: string | undefined = homeReels?.items?.find((it: { case: string }) => it.case === c.id)?.hook;
+
+const links = d.links ?? [];
+const voices = (d.testimonials ?? []).map((slug) => getTestimonial(slug));
+---
+
+<article id={id} class:list={['case', reel && 'case--reel']} aria-labelledby={titleId}>
+  <div class="wrap">
+    <div class="case__inner">
+      <header class="case__head">
+        <CaseLabels case={c} fields={labels} status={status} />
+        <h2 id={titleId} class="case__title">{d.title}</h2>
+      </header>
+
+      <div class="case__body">
+        <div class="case__rows">
+          {
+            story.map((s, i) => (
+              <div class="case__row">
+                {s.title && <h3 class="case__label label">{s.title}</h3>}
+                <div class="case__text">
+                  <Prose html={s.html} />
+                  {i === story.length - 1 && links.length > 0 && (
+                    <ul class="case__links" role="list">
+                      {links.map((l) => (
+                        <li>
+                          <Button href={l.url} size="small">
+                            {l.label}
+                          </Button>
+                          {l.note && <span class="label">{l.note}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        {
+          reel && (
+            <div class="case__reel">
+              <Media type="video" src={reel.video} poster={reel.poster} ratio="9 / 16" label={hook ?? d.title} />
+            </div>
+          )
+        }
+      </div>
+
+      {
+        d.scheme && (
+          <div class="case__block">
+            <PipelineScheme scheme={d.scheme} idPrefix={id} />
+          </div>
+        )
+      }
+
+      {
+        voices.length > 0 && (
+          <ul class="case__voices" role="list">
+            {voices.map((t) => (
+              <li class="case__voice">
+                <VideoTestimonial testimonial={t} size="medium" />
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <div class="case__row case__offer">
+        <h3 class="case__offer-title">
+          {offerLinked ? serviceLinkLabel : <a href={serviceUrl}>{serviceLinkLabel}</a>}
+        </h3>
+        {offer && <Prose class="case__text case__offer-text" html={offerHtml} size="medium" />}
+      </div>
+    </div>
+  </div>
+</article>
+
+<style>
+  .case {
+    margin-top: var(--s5);
+  }
+
+  .case__inner {
+    border-top: var(--line);
+    padding-top: var(--s2);
+  }
+
+  .case__title {
+    margin-top: var(--s2);
+    max-width: 20em;
+  }
+
+  .case__body {
+    margin-top: var(--s4);
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--gap);
+    row-gap: var(--s3);
+  }
+
+  .case__rows {
+    grid-column: 1 / -1;
+    display: grid;
+    row-gap: var(--s3);
+  }
+
+  .case__row {
+    border-top: var(--hair);
+    padding-top: var(--s2);
+    display: grid;
+    row-gap: var(--s1);
+  }
+
+  .case__label {
+    color: var(--muted);
+  }
+
+  .case__links {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--s3);
+    display: grid;
+    gap: var(--s1);
+    justify-items: start;
+  }
+
+  .case__links li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s1) var(--s2);
+  }
+
+  /* phones: the reel at half width (2 of 4 columns) */
+  .case__reel {
+    grid-column: 1 / span 2;
+  }
+
+  .case__block {
+    margin-top: var(--s4);
+    border-top: var(--hair);
+    padding-top: var(--s2);
+  }
+
+  .case__voices {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--s4);
+    display: grid;
+    row-gap: var(--s3);
+  }
+
+  .case__voice {
+    border-top: var(--hair);
+    padding-top: var(--s2);
+  }
+
+  .case__offer {
+    margin-top: var(--s4);
+  }
+
+  .case__offer-title {
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+    letter-spacing: 0;
+  }
+
+  @media (min-width: 720px) {
+    .case__row {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--gap);
+    }
+
+    .case__row > .case__label,
+    .case__offer-title {
+      grid-column: 1 / span 3;
+    }
+
+    .case__row > .case__text,
+    .case__row > :global(.case__text) {
+      grid-column: 4 / span 9;
+    }
+
+    .case__reel {
+      grid-column: 4 / span 3;
+    }
+  }
+
+  @media (min-width: 1080px) {
+    /* the rows always run the full width (one rule length on the page);
+       a reel sits on top of them in columns 11-12 */
+    .case--reel .case__rows {
+      grid-row: 1;
+    }
+
+    .case__row > .case__text,
+    .case__row > :global(.case__text) {
+      grid-column: 4 / span 7;
+    }
+
+    .case__reel {
+      grid-column: 11 / span 2;
+      grid-row: 1;
+      position: relative;
+      z-index: 1;
+      /* level with the first text row, below its hairline */
+      margin-top: calc(var(--s2) + 1px);
+    }
+  }
+</style>

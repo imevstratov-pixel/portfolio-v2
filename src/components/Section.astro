@@ -18,6 +18,8 @@ interface Props {
   pad?: 's3' | 's4' | 's5';
   /** Put the content inside .wrap (default true). Use false for full-bleed rows. */
   wrap?: boolean;
+  /** Id of a heading inside the slot that names the section (when `heading` is not passed). */
+  labelledby?: string;
   class?: string;
 }
 
@@ -30,14 +32,16 @@ const {
   rule = 'line',
   pad = 's5',
   wrap = true,
+  labelledby,
   class: className,
 } = Astro.props;
 const Tag = `h${level}` as 'h2' | 'h3';
 const headingId = id && heading ? `${id}-heading` : undefined;
+const labelId = headingId ?? labelledby;
 const hasHead = !!(label || heading || Astro.slots.has('head'));
 ---
 
-<section id={id} class:list={['section', `section--${pad}`, className]} aria-labelledby={headingId}>
+<section id={id} class:list={['section', `section--${pad}`, className]} aria-labelledby={labelId}>
   <div class:list={['section__inner', `section__inner--${rule}`, wrap && 'wrap']}>
     <div class="section__body">
       {

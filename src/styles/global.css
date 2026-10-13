@@ -320,6 +320,41 @@ hr,
   padding-block: var(--s2);
 }
 
+/* Lists with a hanging grey dash (.list-dash) or a small grey mono number
+   (.list-num) in front of each item; no dots on the site */
+.list-dash,
+.list-num {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--s1);
+  max-width: var(--measure);
+}
+
+.list-dash > li,
+.list-num > li {
+  display: grid;
+  grid-template-columns: 1.6em minmax(0, 1fr);
+  align-items: baseline;
+}
+
+.list-dash > li::before {
+  content: '—';
+  color: var(--muted);
+}
+
+.list-num {
+  counter-reset: list-num;
+}
+
+.list-num > li::before {
+  counter-increment: list-num;
+  content: counter(list-num);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
 /* Inline list separated by commas (no middle dots on the site) */
 .list-comma {
   list-style: none;
@@ -348,7 +383,7 @@ hr,
   letter-spacing: var(--track-medium);
 }
 
-.prose :is(ul, ol) {
+.prose ul {
   padding-left: 1.35em;
 }
 
@@ -356,9 +391,35 @@ hr,
   margin-top: 0.4em;
 }
 
-.prose li::marker {
+.prose ul > li::marker {
   font-family: var(--font-mono);
   font-size: 0.875em;
+}
+
+/* numbered lists: the number in small grey mono inside the text column,
+   the same treatment as .list-num */
+.prose ol {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: li;
+}
+
+.prose ol > li {
+  counter-increment: li;
+  padding-left: 1.8rem;
+}
+
+/* an inline-block in the first line, so the number sits on the text baseline */
+.prose ol > li::before {
+  content: counter(li);
+  display: inline-block;
+  width: 1.8rem;
+  margin-left: -1.8rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  font-weight: var(--regular);
+  letter-spacing: 0;
+  color: var(--muted);
 }
 
 .prose :is(h2, h3, h4) {
@@ -562,7 +623,7 @@ hr,
 
 @media (min-width: 720px) {
   .scroll-row {
-    grid-auto-columns: minmax(0, 28%);
+    grid-auto-columns: minmax(11rem, 28%);
   }
 }
 

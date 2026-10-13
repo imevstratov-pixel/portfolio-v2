@@ -1,0 +1,88 @@
+---
+// A service group on /services/ (block type "service-group"): the group name
+// large across the full width, the optional lead and note line (its link
+// labels become links inside the sentence), then each service. variant
+// "short" renders the short service template (group «Мост»).
+import Section from '../Section.astro';
+import ServiceFull from './ServiceFull.astro';
+import { caseHref, getService, isPublished, type Block } from '../../lib/content';
+import { url } from '../../lib/url';
+
+interface Props {
+  block: Block;
+  /** pages/services.md serviceTemplate.labels. */
+  labels: Record<string, string>;
+  /** Service slug -> position on the page (1–7). */
+  numbers: Map<string, number>;
+  /** serviceTemplate.button.email. */
+  email?: string;
+}
+
+const { block, labels, numbers, email } = Astro.props;
+const short = block.variant === 'short';
+
+type Segment = { text: string; href?: string };
+type NoteLink = { label: string; service?: string; case?: string; href?: string };
+
+// Split the note text at its link labels, in order. A case link only works
+// while the case is published; otherwise the words stay plain text.
+function segments(text: string, links: NoteLink[]): Segment[] {
+  const out: Segment[] = [];
+  let at = 0;
+  for (const l of links) {
+    const i = text.indexOf(l.label, at);
+    if (i < 0) throw new Error(`services: note link "${l.label}" is not in the text of group "${block.id}"`);
+    if (i > at) out.push({ text: text.slice(at, i) });
+    const href = l.service
+      ? `#${getService(l.service).data.anchor}`
+      : l.case
+        ? isPublished(l.case)
+          ? caseHref(l.case)
+          : undefined
+        : l.href
+          ? url(l.href)
+          : undefined;
+    out.push({ text: l.label, href });
+    at = i + l.label.length;
+  }
+  if (at < text.length) out.push({ text: text.slice(at) });
+  return out;
+}
+
+const note = block.note?.text ? segments(block.note.text, block.note.links ?? []) : [];
+---
+
+<Section id={block.id} heading={block.heading} class="group">
+  {
+    (block.lead || note.length > 0) && (
+      <div slot="head" class="group__head">
+        {block.lead && <p class="lead">{block.lead}</p>}
+        {note.length > 0 && (
+          <p class="group__line measure">
+            {note.map((sg) => (sg.href ? <a href={sg.href}>{sg.text}</a> : sg.text))}
+          </p>
+        )}
+      </div>
+    )
+  }
+  <div class="group__list">
+    {
+      (block.services as string[]).map((slug) => (
+        <ServiceFull service={slug} labels={labels} number={numbers.get(slug) ?? 0} short={short} email={email} />
+      ))
+    }
+  </div>
+</Section>
+
+<style>
+  .group__head {
+    display: grid;
+    gap: var(--s2);
+    margin-top: var(--s3);
+  }
+
+  .group__list {
+    display: grid;
+    gap: var(--s5);
+  }
+</style>

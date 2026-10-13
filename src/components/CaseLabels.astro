@@ -1,6 +1,7 @@
 ---
 // The mono label line of a case: «В штате, EdTech, …, 2025–2026, Мост»,
-// then the status («в работе») in bold. Commas, no middle dots.
+// then the status («в работе») in bold. Commas, no middle dots. Shown in grey
+// capitals (CSS only, the text stays as approved), the status in black.
 import { caseLabels, CASE_LABEL_FIELDS, getCase, type CaseEntry } from '../lib/content';
 
 interface Props {
@@ -33,6 +34,11 @@ const st = status ? entry.data.status : undefined;
 }
 
 <style>
+  .case-labels {
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
   .case-labels__status {
     color: var(--ink);
   }

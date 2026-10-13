@@ -4,6 +4,9 @@
 #   npm run build && npm run leakcheck            # checks dist/
 #   bash tools/leakcheck.sh path/to/dist
 #
+# In a preview build (PREVIEW not 0) it also fails on the Metrika counter
+# (mc.yandex.ru) anywhere in dist/ and on any HTML page without a robots meta.
+#
 # Greps dist/ for: _note _todo _draft hidden «МЕСТО ДЛЯ» seller-ai-course
 # studio-expert university-curator.
 # - Everything the build generates (Astro pages, _astro/ assets, work.html,
@@ -61,6 +64,22 @@ if [ -n "$soft" ]; then
   else
     echo "leakcheck: note, \"hidden\"/\"_note\" occur in $(echo "$soft" | wc -l) legacy file(s) copied from the old site (CSS/HTML usage; review with --strict):"
     echo "$soft" | sed 's/^/  /'
+  fi
+fi
+
+# Preview builds (PREVIEW not 0): no analytics anywhere and noindex on every
+# HTML page, legacy pages included (tools/legacy-preview.mjs adds it there).
+if [ "$(echo "${PREVIEW:-1}" | tr -d '[:space:]')" != "0" ]; then
+  if grep -rIl 'mc.yandex.ru' . >/dev/null 2>&1; then
+    echo "leakcheck: preview build contains the Yandex Metrika counter:" >&2
+    grep -rIl 'mc.yandex.ru' . | sed 's/^/  /' >&2
+    fail=1
+  fi
+  mapfile -t noindex_missing < <(find . -name '*.html' -type f -print0 | xargs -0 grep -L 'name="robots"' | sort)
+  if [ "${#noindex_missing[@]}" -gt 0 ]; then
+    echo "leakcheck: preview build has HTML pages without a robots meta:" >&2
+    printf '  %s\n' "${noindex_missing[@]}" >&2
+    fail=1
   fi
 fi
 

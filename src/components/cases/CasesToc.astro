@@ -1,0 +1,214 @@
+---
+// /cases/ table of contents by service (block type "cases-toc").
+// Mirrors render_cases() in the texts renderer: groups in the block's order,
+// rows = published cases whose service codeword matches, then the group's
+// visible products («Свой продукт, Разработка», linking to /products/#anchor);
+// empty groups are skipped. Under the table one small line about the labels.
+//
+// Layout: a typographic table. From 1080px the service name sits in the first
+// 3 columns and the rows take columns 4-12 (title 4, industry 3, duration 2),
+// so the table lines up with the case sections below. Below 1080px the
+// service name stands above its rows; on phones a row shows only the title
+// and the industry.
+import Section from '../Section.astro';
+import { cases, getService, visibleProducts, type Block } from '../../lib/content';
+import { url } from '../../lib/url';
+
+interface Props {
+  block: Block;
+}
+
+const { block } = Astro.props;
+const fields: string[] = block.row?.fields ?? ['shortTitle', 'industry', 'duration'];
+const [titleField, ...metaFields] = fields;
+const productLabels: string[] = block.productRow?.labels ?? [];
+const productHrefPattern: string = block.productRow?.hrefPattern ?? '/products/#{anchor}';
+
+type Row = { key: string; title: string; href: string; meta: string[]; extra: string[] };
+
+const groups = (block.groups ?? [])
+  .map((g: { service: string; products?: string[] }) => {
+    const service = getService(g.service);
+    const caseRows: Row[] = cases
+      .filter((c) => c.data.service === service.data.codeword)
+      .map((c) => {
+        const d = c.data as Record<string, unknown>;
+        const values = metaFields.map((f) => d[f]).filter((v) => v !== undefined && v !== null && v !== '').map(String);
+        return {
+          key: c.id,
+          title: String(d[titleField] ?? c.data.shortTitle),
+          href: `#${c.data.anchor}`,
+          // first meta field (industry) in its own cell, the rest (duration) in the last cell
+          meta: values.slice(0, 1),
+          extra: values.slice(1),
+        };
+      });
+    const productRows: Row[] = visibleProducts(g.products).map((p) => ({
+      key: p.id,
+      title: p.data.title,
+      href: url(productHrefPattern.replace('{anchor}', p.data.anchor)),
+      meta: [productLabels.join(', ')].filter(Boolean),
+      extra: [],
+    }));
+    return { id: service.id, name: service.data.short, rows: [...caseRows, ...productRows] };
+  })
+  .filter((g: { rows: Row[] }) => g.rows.length > 0);
+
+const legend: string[] = [block.legend?.origin, block.legend?.direction].filter(Boolean);
+---
+
+<Section id="toc" heading={block.heading} pad="s4">
+  <nav class="toc" aria-labelledby="toc-heading">
+    {
+      groups.map((g: { id: string; name: string; rows: Row[] }) => (
+        <div class="toc__group">
+          <h3 class="toc__service">{g.name}</h3>
+          <ul class="toc__rows" role="list">
+            {g.rows.map((r) => (
+              <li class="toc__row">
+                <a class="toc__title" href={r.href}>
+                  {r.title}
+                </a>
+                {r.meta.length > 0 && (
+                  <span class="toc__meta">
+                    <span class="sr-only">, </span>
+                    {r.meta.join(', ')}
+                  </span>
+                )}
+                {r.extra.length > 0 && (
+                  <span class="toc__extra">
+                    <span class="sr-only">, </span>
+                    {r.extra.join(', ')}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </nav>
+  {legend.length > 0 && <p class="toc__legend label">{legend.join(' ')}</p>}
+</Section>
+
+<style>
+  .toc {
+    border-bottom: var(--hair);
+  }
+
+  .toc__group {
+    border-top: var(--hair);
+    padding-top: var(--s2);
+    padding-bottom: var(--s3);
+  }
+
+  .toc__group:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .toc__service {
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+    letter-spacing: 0;
+    margin-bottom: var(--s1);
+  }
+
+  .toc__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding-block: 0.6rem;
+    border-top: var(--hair);
+  }
+
+  .toc__row:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .toc__title {
+    font-weight: var(--bold);
+    line-height: 1.35;
+    justify-self: start;
+  }
+
+  .toc__meta,
+  .toc__extra {
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+    color: var(--muted);
+  }
+
+  .toc__meta {
+    margin-top: 0.2rem;
+  }
+
+  /* phones: title and industry only (structure hint) */
+  .toc__extra {
+    display: none;
+  }
+
+  .toc__legend {
+    margin-top: var(--s2);
+    max-width: 92ch;
+  }
+
+  /* tablets: service name above, rows as a 12-column table */
+  @media (min-width: 720px) {
+    .toc__row {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--gap);
+      align-items: baseline;
+    }
+
+    .toc__title {
+      grid-column: 1 / span 6;
+    }
+
+    .toc__meta {
+      grid-column: 7 / span 3;
+      margin-top: 0;
+    }
+
+    .toc__extra {
+      display: block;
+      grid-column: 10 / span 3;
+    }
+  }
+
+  /* desktop: service name in columns 1-3, rows in 4-12 (title 4, industry 3, duration 2) */
+  @media (min-width: 1080px) {
+    .toc__group {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--gap);
+      align-items: start;
+    }
+
+    .toc__service {
+      grid-column: 1 / span 3;
+      margin-bottom: 0;
+    }
+
+    .toc__rows {
+      grid-column: 4 / span 9;
+    }
+
+    .toc__row {
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+    }
+
+    .toc__title {
+      grid-column: 1 / span 4;
+    }
+
+    .toc__meta {
+      grid-column: 5 / span 3;
+    }
+
+    .toc__extra {
+      grid-column: 8 / span 2;
+    }
+  }
+</style>

@@ -114,14 +114,23 @@ for (const file of htmlFiles) {
       for (const part of value.split(',')) refs.push(part.trim().split(/\s+/)[0]);
     } else refs.push(value);
   }
-  // preview images: <meta property="og:image" content="https://…/portfolio-v2/assets/og.jpg">
-  for (const m of html.matchAll(/<meta\s[^>]*?property="og:image"[^>]*?content="([^"]*)"/gi)) refs.push(decode(m[1]));
+  // Self-references of the page: canonical, og:url and the preview image
+  // (<meta property="og:image" content="https://…/portfolio-v2/assets/og.jpg">).
+  // Only these absolute URLs are checked like internal links; any other
+  // absolute link is external, even when it shares the host (with BASE=/ the
+  // sibling sites imevstratov-pixel.github.io/skrizhal/ start with SITE + BASE).
+  const selfRefs = new Set();
+  for (const m of html.matchAll(/<link\s[^>]*?rel="canonical"[^>]*?href="([^"]*)"/gi)) selfRefs.add(decode(m[1]).trim());
+  for (const m of html.matchAll(/<meta\s[^>]*?property="og:(?:url|image)"[^>]*?content="([^"]*)"/gi)) {
+    const v = decode(m[1]).trim();
+    selfRefs.add(v);
+    refs.push(v);
+  }
   for (let ref of refs) {
     if (!ref || ref === '#' || ref.startsWith('#/') || ref.includes('${') || SKIP.test(ref)) continue;
     if (/^https?:\/\//i.test(ref) || ref.startsWith('//')) {
       const abs = ref.startsWith('//') ? 'https:' + ref : ref;
-      // absolute links to this deployment (canonical, og:image of Astro pages) are checked like internal ones
-      if (!page(file).astro || !abs.startsWith(SITE + BASE)) continue;
+      if (!page(file).astro || !abs.startsWith(SITE + BASE) || !selfRefs.has(ref)) continue;
       ref = abs.slice(SITE.length);
     }
     checked++;

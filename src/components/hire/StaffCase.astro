@@ -1,0 +1,161 @@
+---
+// A staff case in full under its place of work in «Опыт» (show: full). It
+// carries the case anchor as id (/hire/#case-course-factory). Title, then the
+// sections from experience.caseDisplay.sections (Контекст, Что сделал,
+// Результат) with small mono labels, without the case labels, links and
+// «Что из этого сделаю для вас»; the pipeline scheme under the text when the
+// item asks for it; the reel beside the text.
+// Layout inside the 9 columns of the place body (from 1080px): text on 7,
+// reel on 2, the scheme under the text on 7. Tablets (12 columns): text 8,
+// reel 3 at the right edge. Phones: the reel at half the width right after
+// the text, before the scheme.
+import Media from '../Media.astro';
+import Prose from '../Prose.astro';
+import CaseLabels from '../CaseLabels.astro';
+import PipelineScheme from '../PipelineScheme.astro';
+import { bodySections, getCase } from '../../lib/content';
+import { url, isExternal } from '../../lib/url';
+
+interface Props {
+  /** Case slug. */
+  slug: string;
+  /** experience.caseDisplay from pages/hire.md. */
+  display: {
+    sections?: string[];
+    showReel?: boolean;
+    showLabels?: boolean;
+    showLinks?: boolean;
+    anchorFrom?: string;
+  };
+  /** Show the case scheme («Как устроен конвейер»). */
+  scheme?: boolean;
+  /** Heading level of the case title (default 4: inside a place, inside «Опыт»). */
+  level?: 3 | 4;
+}
+
+const { slug, display = {}, scheme = false, level = 4 } = Astro.props;
+const c = getCase(slug);
+const d = c.data;
+const sections = bodySections(c, display.sections?.length ? display.sections : undefined);
+const reel = display.showReel !== false && d.reel?.video ? d.reel : null;
+const links = display.showLinks ? (d.links ?? []).filter((l) => l?.url && l?.label) : [];
+const id = display.anchorFrom === undefined || display.anchorFrom === 'case.anchor' ? d.anchor : undefined;
+const showScheme = scheme && !!d.scheme;
+const Tag = `h${level}` as 'h3' | 'h4';
+const SubTag = `h${level + 1}` as 'h4' | 'h5';
+---
+
+<article class="sc" id={id} aria-labelledby={id ? `${id}-title` : undefined}>
+  <div class="sc__text">
+    <Tag id={id ? `${id}-title` : undefined} class="sc__title">{d.title}</Tag>
+    {display.showLabels && <CaseLabels case={c} />}
+    {
+      sections.map((s) => (
+        <div class="sc__part">
+          {s.title && <SubTag class="sc__label label">{s.title}</SubTag>}
+          <Prose html={s.html} />
+        </div>
+      ))
+    }
+  </div>
+  {
+    reel && (
+      <div class="sc__reel">
+        <Media type="video" src={reel.video} poster={reel.poster ?? undefined} ratio="9 / 16" label={d.shortTitle ?? d.title} />
+      </div>
+    )
+  }
+  {
+    (showScheme || links.length > 0) && (
+      <div class="sc__more">
+        {showScheme && <PipelineScheme scheme={d.scheme!} compact level={(level + 1) as 4 | 5} idPrefix={id} />}
+        {links.length > 0 && (
+          <ul class="sc__links list-plain" role="list">
+            {links.map((l) => (
+              <li>
+                <a
+                  href={url(l.url)}
+                  target={isExternal(l.url) ? '_blank' : undefined}
+                  rel={isExternal(l.url) ? 'noopener' : undefined}
+                >
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    )
+  }
+</article>
+
+<style>
+  .sc {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--gap);
+    row-gap: var(--s3);
+    align-items: start;
+    padding-top: var(--s3);
+    border-top: var(--hair);
+  }
+
+  .sc__text {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: var(--s3);
+    min-width: 0;
+  }
+
+  .sc__reel {
+    grid-column: 1 / span 2;
+  }
+
+  .sc__more {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: var(--s3);
+    min-width: 0;
+  }
+
+  .sc__title {
+    max-width: 30em;
+  }
+
+  .sc__part {
+    display: grid;
+    gap: var(--s1);
+  }
+
+  @media (min-width: 720px) {
+    .sc {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .sc__text,
+    .sc__more {
+      grid-column: 1 / span 8;
+    }
+
+    .sc__reel {
+      grid-column: 10 / span 3;
+      grid-row: 1;
+    }
+  }
+
+  /* the place body is 9 of the 12 page columns: text 7, reel 2 */
+  @media (min-width: 1080px) {
+    .sc {
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+    }
+
+    .sc__text,
+    .sc__more {
+      grid-column: 1 / span 7;
+    }
+
+    .sc__reel {
+      grid-column: 8 / span 2;
+    }
+  }
+</style>

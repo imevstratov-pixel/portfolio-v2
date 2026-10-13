@@ -1,0 +1,219 @@
+---
+// One product on /products/ (block type "products"), anchored by its anchor.
+// Content follows render_products() in the texts renderer: kind and one-liner,
+// body, «Что внутри», «Статус» (status and its note), «Где работает», the
+// screenshot if there is one, the action button (none for the party games),
+// secondary links with their notes, the quiet Telegram link with the
+// product's message template.
+//
+// Layout (12 columns from 720px): an ink line on top, the kind as a mono label,
+// the name in huge type across the row; below it the text in columns 1-7
+// (one-liner, body, facts, button, links, quiet link) and the side column
+// 9-12: the phone screenshot if there is one, otherwise the facts (three
+// labelled rows under hairlines), so the two columns stay about equal.
+// Phones: one column; the screenshot comes first, right under the name.
+import Prose from '../Prose.astro';
+import Button from '../Button.astro';
+import Media from '../Media.astro';
+import TelegramButton from '../TelegramButton.astro';
+import ProductFacts from './ProductFacts.astro';
+import { bodyHtml, productTemplate, visible, type ProductEntry } from '../../lib/content';
+import { isExternal, url } from '../../lib/url';
+
+interface Props {
+  product: ProductEntry;
+  labels: { inside: string; status: string; platform: string };
+}
+
+const { product: p, labels } = Astro.props;
+const d = p.data;
+const id = d.anchor;
+const titleId = `${id}-title`;
+
+// «Статус: Ранняя версия, бесплатно. Играйте на компьютере: …» (renderer: f"{status}. {note}".strip())
+const statusLine = `${d.status}. ${d.statusNote ?? ''}`.trim();
+const facts = [
+  { label: labels.inside, value: d.inside },
+  { label: labels.status, value: statusLine },
+  { label: labels.platform, value: d.platform },
+].filter((f) => f.value);
+
+const media = d.media?.src ? d.media : null;
+// The side column holds the screenshot when there is one (the facts then go
+// under the body), otherwise the facts. Keeps both columns about equal.
+const factsInMain = !!media;
+const secondary = visible(d.secondaryLinks);
+---
+
+<article id={id} class="product" aria-labelledby={titleId}>
+  <div class="wrap">
+    <div class="product__inner">
+      <header class="product__head">
+        <p class="label">{d.kind}</p>
+        <h2 id={titleId} class="product__title t-huge">{d.title}</h2>
+      </header>
+
+      <div class="product__grid">
+        <div class="product__main">
+          <p class="product__lead lead">{d.oneLiner}</p>
+          <Prose class="product__body" html={bodyHtml(p)} />
+          {factsInMain && <ProductFacts class="product__facts" facts={facts} />}
+          {
+            (d.action || secondary.length > 0) && (
+              <div class="product__actions">
+                {d.action && (
+                  <Button href={d.action.url} variant="primary" goal="product">
+                    {d.action.label}
+                  </Button>
+                )}
+                {secondary.length > 0 && (
+                  <ul class="product__links" role="list">
+                    {secondary.map((l) => (
+                      <li>
+                        <a
+                          href={isExternal(l.url) ? l.url : url(l.url)}
+                          target={/^https?:/i.test(l.url) ? '_blank' : undefined}
+                          rel={/^https?:/i.test(l.url) ? 'noopener' : undefined}
+                          data-goal="product"
+                        >
+                          {l.label}
+                        </a>
+                        {l.note && <span class="label">{l.note}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )
+          }
+          <p class="product__message">
+            <TelegramButton
+              codeword={d.codeword}
+              template={productTemplate(p)}
+              label={d.messageLink.label}
+              variant="link"
+              goal="product"
+            />
+          </p>
+        </div>
+
+        <div class="product__side">
+          {!factsInMain && <ProductFacts class="product__facts" facts={facts} />}
+          {
+            media && (
+              <div class="product__media">
+                <Media src={media.src} alt={media.alt} />
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</article>
+
+<style>
+  .product {
+    margin-top: var(--s5);
+  }
+
+  .product__inner {
+    border-top: var(--line);
+    padding-top: var(--s2);
+  }
+
+  .product__title {
+    margin-top: var(--s1);
+  }
+
+  /* phones: one column in reading order, the screenshot first */
+  .product__grid {
+    margin-top: var(--s3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s3);
+  }
+
+  .product__main,
+  .product__side {
+    display: contents;
+  }
+
+  .product__media {
+    order: -1;
+    width: min(100%, 15rem);
+  }
+
+  .product__lead {
+    order: 0;
+  }
+
+  .product__main > :global(.product__body) {
+    order: 1;
+  }
+
+  .product__grid :global(.product__facts) {
+    order: 2;
+  }
+
+  .product__actions {
+    order: 3;
+  }
+
+  .product__message {
+    order: 4;
+  }
+
+  .product__media :global(.media) {
+    outline: var(--hair);
+  }
+
+  .product__actions {
+    display: grid;
+    justify-items: start;
+    gap: var(--s2);
+  }
+
+  .product__links {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--s1);
+  }
+
+  .product__links li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s1) var(--s2);
+  }
+
+  @media (min-width: 720px) {
+    .product__grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--gap);
+      align-items: start;
+    }
+
+    .product__main,
+    .product__side {
+      display: grid;
+      align-content: start;
+      gap: var(--s3);
+    }
+
+    .product__main {
+      grid-column: 1 / span 7;
+    }
+
+    .product__side {
+      grid-column: 9 / span 4;
+    }
+
+    .product__media {
+      order: 0;
+      width: min(100%, 18rem);
+    }
+  }
+</style>

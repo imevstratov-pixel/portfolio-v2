@@ -1,0 +1,207 @@
+---
+// «Как устроен конвейер» (case field `scheme`, staff-c2), drawn with numbers
+// and lines instead of arrows. One component for /cases/ (CaseArticle) and
+// /hire/ (StaffCase), so both pages show the same diagram. Order and words
+// follow render_case() in the texts renderer: the person line above the
+// steps; each step «**title.** text.» with its repair line (grey) and the
+// human check (bold) on their own lines; the shared base under the steps;
+// the facts as one comma line in the medium size. Sentences in the content
+// come without the final period; the renderer adds it, and so does this.
+//
+// Layout:
+//   default (full container width): heading in columns 1-3 with the person
+//     line beside it (from 1080px), the steps as a 3-column table (2 on
+//     tablets, 1 on phones), each step under a hairline with its number;
+//   compact (a narrow text column, e.g. 7 of 12 on /hire/): the same parts as
+//     one numbered list, the number to the left of each step.
+interface Step {
+  n: number;
+  title: string;
+  text: string;
+  repair?: string;
+  check?: string;
+}
+
+interface Props {
+  scheme: {
+    heading?: string;
+    person?: string;
+    steps?: Step[];
+    base?: string;
+    facts?: string[];
+  };
+  /** One list for a narrow column (default false: the 3-column table). */
+  compact?: boolean;
+  /** Heading level (default 3). */
+  level?: 3 | 4 | 5 | 6;
+  /** Id prefix (the case anchor) for the heading id. */
+  idPrefix?: string;
+  class?: string;
+}
+
+const { scheme: s, compact = false, level = 3, idPrefix, class: className } = Astro.props;
+const Tag = `h${level}` as 'h3' | 'h4' | 'h5' | 'h6';
+const headingId = idPrefix && s.heading ? `${idPrefix}-scheme` : undefined;
+const steps = s.steps ?? [];
+const facts = (s.facts ?? []).filter(Boolean);
+const sentence = (t: string) => (/[.!?…]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
+---
+
+<section class:list={['scheme', compact && 'scheme--compact', className]} aria-labelledby={headingId}>
+  {
+    (s.heading || s.person) && (
+      <div class="scheme__head">
+        {s.heading && (
+          <Tag id={headingId} class="scheme__title">
+            {s.heading}
+          </Tag>
+        )}
+        {s.person && <p class="scheme__person">{sentence(s.person)}</p>}
+      </div>
+    )
+  }
+  {
+    steps.length > 0 && (
+      <ol class="scheme__steps" role="list">
+        {steps.map((st) => (
+          <li class="scheme__step">
+            <span class="scheme__n">{st.n}</span>
+            <div class="scheme__what">
+              <p>
+                <strong>{sentence(st.title)}</strong> {sentence(st.text)}
+              </p>
+              {st.repair && <p class="scheme__repair">{sentence(st.repair)}</p>}
+              {st.check && <p class="scheme__check">{sentence(st.check)}</p>}
+            </div>
+          </li>
+        ))}
+      </ol>
+    )
+  }
+  {s.base && <p class="scheme__base">{sentence(s.base)}</p>}
+  {facts.length > 0 && <p class="scheme__facts">{sentence(facts.join(', '))}</p>}
+</section>
+
+<style>
+  .scheme {
+    display: grid;
+    gap: var(--s3);
+  }
+
+  .scheme__head {
+    display: grid;
+    gap: var(--s1);
+  }
+
+  .scheme__title {
+    font-size: var(--fs-medium);
+    line-height: var(--lh-medium);
+    letter-spacing: var(--track-medium);
+  }
+
+  .scheme__person {
+    max-width: var(--measure);
+  }
+
+  .scheme__steps {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s3) var(--gap);
+  }
+
+  .scheme__step {
+    border-top: var(--hair);
+    padding-top: var(--s1);
+    display: grid;
+    align-content: start;
+    gap: 0.35rem;
+  }
+
+  .scheme__n {
+    font-family: var(--font-mono);
+    font-size: var(--fs-medium);
+    line-height: 1.2;
+  }
+
+  .scheme__what {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .scheme__repair {
+    color: var(--muted);
+  }
+
+  .scheme__check {
+    font-weight: var(--bold);
+  }
+
+  .scheme__base {
+    border-top: var(--hair);
+    padding-top: var(--s1);
+  }
+
+  .scheme__facts {
+    font-size: var(--fs-medium);
+    line-height: 1.35;
+    letter-spacing: var(--track-medium);
+    max-width: 40em;
+  }
+
+  /* compact: one list, the number beside each step */
+  .scheme--compact {
+    gap: var(--s2);
+  }
+
+  /* in a narrow column the heading stays below the case title */
+  .scheme--compact .scheme__title {
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
+    letter-spacing: 0;
+  }
+
+  .scheme--compact .scheme__steps {
+    gap: 0;
+    border-bottom: var(--hair);
+  }
+
+  .scheme--compact .scheme__step {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    column-gap: var(--gap);
+    padding-block: var(--s2);
+  }
+
+  /* the list already ends with a hairline */
+  .scheme--compact .scheme__base {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  @media (min-width: 720px) {
+    .scheme:not(.scheme--compact) .scheme__steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1080px) {
+    .scheme:not(.scheme--compact) .scheme__head {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--gap);
+      align-items: baseline;
+    }
+
+    .scheme:not(.scheme--compact) .scheme__title {
+      grid-column: 1 / span 3;
+    }
+
+    .scheme:not(.scheme--compact) .scheme__person {
+      grid-column: 4 / span 7;
+    }
+
+    .scheme:not(.scheme--compact) .scheme__steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

@@ -50,7 +50,11 @@ const text = template ?? telegramButton(codeword).template;
     gap: var(--s1);
   }
 
+  /* the same measure as the hint in ContactBlock; a little air before the
+     email line so button, hint and email do not read as one block */
   .tg-action__hint {
-    max-width: 44ch;
+    max-width: 52ch;
+    margin-top: 2px;
+    margin-bottom: var(--s1);
   }
 </style>

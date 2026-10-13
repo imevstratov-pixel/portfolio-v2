@@ -1,0 +1,62 @@
+---
+// One part of a service on /services/: a small mono label («Для кого»,
+// «Как идёт работа», …) and its content, with a hairline on top.
+// Phones: label above the content. 720–1079px (service text on 12 columns):
+// label 3, content 9. From 1080px (service text on 8 of 12 columns):
+// label 2, content 6, so both stay on the page grid.
+// Without a label the content sits in the content column (price and button).
+interface Props {
+  label?: string;
+  class?: string;
+}
+
+const { label, class: className } = Astro.props;
+---
+
+<div class:list={['part', !label && 'part--bare', className]}>
+  {label && <h4 class="part__label label">{label}</h4>}
+  <div class="part__body"><slot /></div>
+</div>
+
+<style>
+  .part {
+    display: grid;
+    gap: var(--s1);
+    padding-top: var(--s2);
+    border-top: var(--hair);
+  }
+
+  .part__body {
+    min-width: 0;
+  }
+
+  @media (min-width: 720px) {
+    .part {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--gap);
+      align-items: baseline;
+    }
+
+    .part__label {
+      grid-column: 1 / span 3;
+    }
+
+    .part__body {
+      grid-column: 4 / -1;
+    }
+  }
+
+  @media (min-width: 1080px) {
+    .part {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+    }
+
+    .part__label {
+      grid-column: 1 / span 2;
+    }
+
+    .part__body {
+      grid-column: 3 / -1;
+    }
+  }
+</style>

@@ -13,9 +13,10 @@
 // Order follows contact_block() in the texts renderer.
 import Section from './Section.astro';
 import TelegramButton from './TelegramButton.astro';
+import TelegramEmailButtons from './TelegramEmailButtons.astro';
 import EmailLine from './EmailLine.astro';
-import Button from './Button.astro';
-import { gref, mailtoHref, singleHint, telegramButton, workloadLine, type Block } from '../lib/content';
+import Resumes from './Resumes.astro';
+import { gref, singleHint, telegramButton, workloadLine, type Block } from '../lib/content';
 import { url } from '../lib/url';
 
 interface Props {
@@ -58,19 +59,7 @@ const resumes: Array<{ label: string; meta?: string; href: string }> = block.res
     {
       single ? (
         <div class="contact__single">
-          <div class="cluster contact__buttons">
-            <TelegramButton
-              codeword={single}
-              label={block.button.label}
-              caption={block.button.caption}
-              variant="primary"
-            />
-            {emailObj && (
-              <Button href={mailtoHref({ codeword: single, template, subject: emailObj.subject })} goal="email">
-                {emailObj.text}
-              </Button>
-            )}
-          </div>
+          <TelegramEmailButtons button={block.button} email={emailObj} />
           {block.button.hint && <p class="contact__hint label">{singleHint(single)}</p>}
           {!emailObj && <EmailLine line={emailLine} codeword={single} template={template} />}
           {block.telegramText && <p>{block.telegramText}</p>}
@@ -99,18 +88,7 @@ const resumes: Array<{ label: string; meta?: string; href: string }> = block.res
         </div>
       )
     }
-    {
-      resumes.length > 0 && (
-        <ul class="contact__resumes list-plain" role="list">
-          {resumes.map((r) => (
-            <li>
-              <a href={url(r.href)}>{r.label}</a>
-              {r.meta && <span class="label"> {r.meta}</span>}
-            </li>
-          ))}
-        </ul>
-      )
-    }
+    {resumes.length > 0 && <Resumes items={resumes} />}
   </div>
 </Section>
 
@@ -124,19 +102,16 @@ const resumes: Array<{ label: string; meta?: string; href: string }> = block.res
     max-width: 52ch;
   }
 
+  /* one button: the hint belongs to the button, air before the email line
+     (the same spacing as TelegramAction) */
+  .contact__single .contact__hint {
+    margin-top: 2px;
+    margin-bottom: var(--s1);
+  }
+
   .contact__single {
     display: grid;
     justify-items: start;
-    gap: var(--s1);
-  }
-
-  .contact__buttons {
-    align-items: stretch;
-    gap: var(--s1);
-  }
-
-  .contact__resumes {
-    display: grid;
     gap: var(--s1);
   }
 

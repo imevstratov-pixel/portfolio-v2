@@ -5,8 +5,8 @@ the helpers, the shared components and the CSS classes. Build pages only from
 these pieces; add a new shared piece here when two pages need it.
 
 Stack: Astro 7.3.8 (static output), no UI framework, TypeScript in components,
-fonts from @fontsource (Inter Tight 400/700, IBM Plex Mono 400, Latin and
-Cyrillic subsets). One small client script (Telegram copy and analytics goals).
+fonts from @fontsource (Inter Tight 400/700 and 400 italic, IBM Plex Mono 400,
+Latin and Cyrillic subsets). One small client script (Telegram copy and analytics goals).
 
 ## 1. Rules that every page follows
 
@@ -45,6 +45,11 @@ Cyrillic subsets). One small client script (Telegram copy and analytics goals).
 - **Images and video.** Fixed aspect ratios (component `Media`), lazy below the
   fold, alt text from the content. Video: native player, `preload="none"`,
   poster, no autoplay, no loop. The `loop` fields in the content are not used.
+- **A `class` passed to a child component does not get the parent's scoped
+  styles.** Astro scopes a component's CSS to the elements it renders itself,
+  so `<Resumes class="hero__resumes" />` styled in the parent does nothing.
+  Wrap the child in an element of your own (`<div class="hero__resumes">…`)
+  and style the wrapper, or use `:global()` on purpose.
 - **Empty means absent.** A block, line or media item without content is not
   rendered (no placeholders). `Media` renders nothing for `src: ''`.
 
@@ -56,16 +61,19 @@ Cyrillic subsets). One small client script (Telegram copy and analytics goals).
 | `npm run build` | Static build into `dist/` |
 | `npm run preview` | Serves `dist/` (Astro 7 may start it in the background; stop with `npx astro preview stop`) |
 | `npm run check` | `astro check`: TypeScript and template types (0 errors expected) |
-| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/` |
-| `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too |
+| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external |
+| `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. In preview it also fails on the Metrika counter anywhere in `dist/` and on any HTML page without a robots meta |
 | `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
 | `npm run verify` | build, check-links, leakcheck |
 | `npm run content` | Re-run the content export (needs `SITE_CONTENT`) |
 
 Environment: `BASE` (default `/portfolio-v2/`), `SITE` (default
 `https://imevstratov-pixel.github.io`), `PREVIEW` (on unless `0`). In preview
-every page has `noindex,nofollow` and no analytics; with `PREVIEW=0` the Yandex
-Metrika counter 111316684 is added and `<html data-metrika>` enables goals.
+every page has `noindex,nofollow` and no analytics, the legacy pages too
+(`tools/legacy-preview.mjs`, an Astro integration, strips the Metrika snippet
+from `dist/en/index.html` and adds the robots meta to legacy pages after the
+build; `public/` stays verbatim); with `PREVIEW=0` the Yandex Metrika counter
+111316684 is added and `<html data-metrika>` enables goals.
 Test another base with `BASE=/x/ npm run build && BASE=/x/ npm run check-links`.
 
 ## 3. Helpers (`src/lib`)
@@ -192,7 +200,9 @@ all footer links (incl. «Работодателям» with goal `hire`, «Engli
 <Section id="numbers" label="Цифры" heading={b.heading} level={2} size="large" wrap={false}>…</Section>
 ```
 
-Props: `id` (anchor; adds `aria-labelledby` to `<id>-heading`), `label`
+Props: `id` (anchor; adds `aria-labelledby` to `<id>-heading`),
+`labelledby` (id of a heading inside the slot that names the section, when
+`heading` is not passed; e.g. the `Steps` heading on the home page), `label`
 (small mono line above), `heading`, `level` (2 or 3), `size` (`huge`, `large`,
 `medium`), `rule` (`line` ink 1px on top, default; `hair` grey; `none`), `pad`
 (space above: `s3`, `s4`, `s5` default), `wrap` (content inside `.wrap`,
@@ -285,27 +295,40 @@ Takes the page block as is and renders it inside a `Section` with its
 - `button: { codeword, hint }` (guide): one primary button, its hint, email
   line, lines;
 - `button: { codeword, label, caption }` + `email: { text, subject }` (hire):
-  primary Telegram button and the email as a second button, `telegramText`,
-  `resumes` links with their meta;
+  primary Telegram button and the email as a second button
+  (`TelegramEmailButtons`), `telegramText`, `resumes` (`Resumes`);
 - `links` (products): a comma list of links under the text.
 Props: `block`, `size` (`large` default, `huge`), `rule`, `class`.
 On the home page the block shows the workload line; the texts renderer
 describes the other pages' blocks as «как на главной», and the content of
 those blocks already carries the same fields.
 
+### TelegramEmailButtons, Resumes
+
+```astro
+<TelegramEmailButtons button={b.button} email={b.email} />   <!-- /hire/ first screen -->
+<Resumes items={b.resumes} />
+```
+
+`TelegramEmailButtons`: the primary Telegram button (codeword, `label`,
+`caption`) and, when `email.text` is given, the email as a second framed
+button (subject and template from the codeword). No hint. `Resumes`: the PDF
+links as sans text links with the meta in small grey mono. ContactBlock uses
+both, so the /hire/ first screen and its contact block look the same.
+
 ### Steps
 
 ```astro
-<Section id="how-we-start"><Steps showConsultationNote={b.showConsultationNote}
-  showPrepare={b.showPrepare} showWorkload={b.showWorkload} /></Section>
+<Section id="how-we-start" labelledby="how-we-start-heading"><Steps headingId="how-we-start-heading"
+  showConsultationNote={b.showConsultationNote} showPrepare={b.showPrepare} showWorkload={b.showWorkload} /></Section>
 <Steps heading={false} level={3} showConsultationNote={false} showPrepare showWorkload={false} />
 ```
 
 «Что будет после вашего сообщения» from `site.work.howWeStart`: heading, four
 steps (large mono numbers from a CSS counter, «**Вы пишете.** text»), then the
-optional lines. Props: `heading` (bool), `level` (2 or 3), the three `show…`
-flags (take them from the block: home `steps`, services `formats.howWeStart`),
-`class`.
+optional lines. Props: `heading` (bool), `level` (2 or 3), `headingId` (id
+of the heading, for `Section labelledby`), the three `show…` flags (take them
+from the block: home `steps`, services `formats.howWeStart`), `class`.
 
 ### Numbers
 
@@ -329,14 +352,33 @@ Props: `text`, `cite`, `size` (`large` default, `medium`, `base`), `marks`
 ### VideoTestimonial
 
 ```astro
-<VideoTestimonial testimonial="evgenia" />
-<VideoTestimonial testimonial={it.testimonial} extra={[it.company, it.relation]} />
+<VideoTestimonial testimonial="evgenia" size="medium" />
+<VideoTestimonial testimonial={it.testimonial} extra={[it.company, it.relation]} size="medium" />
 ```
 
 Poster in the native player (9:16) and the quote beside it with the
-signature. Use it at the full container width: video 3 of 12 columns, quote 6
-of 12; on phones 2 + 2 of 4. Props: `testimonial` (slug or entry), `extra`,
-`quote` (default true), `class`.
+signature. The one design for every video testimonial (home, /hire/, the
+cases on /cases/). Use it at the full container width: video 3 of 12
+columns, quote 6 of 12; on phones a 7.5rem video column and the quote at the
+base size beside it. Props: `testimonial` (slug or entry), `extra`, `quote`
+(default true), `size` (quote size from 720px: `large` default, kept for
+client quotes; `medium` for colleagues' quotes), `class`.
+
+### PipelineScheme
+
+```astro
+<PipelineScheme scheme={c.data.scheme} idPrefix={c.data.anchor} />          <!-- /cases/ -->
+<PipelineScheme scheme={c.data.scheme} compact level={5} idPrefix={id} />  <!-- /hire/ -->
+```
+
+«Как устроен конвейер» (case field `scheme`, staff-c2), one component for
+both pages: the person line, numbered steps (number in mono, «**title.**
+text.», the repair line grey, the human check bold), the base line, the facts
+as one line in the medium size. Default: a 3-column table at the full width
+(2 on tablets, 1 on phones), heading in columns 1–3 with the person line
+beside it from 1080px. `compact`: one list for a narrow column, heading at
+the base size. Props: `scheme`, `compact`, `level` (default 3), `idPrefix`,
+`class`.
 
 ### Media
 
@@ -362,7 +404,8 @@ screenshots are phone screens (554×1220 and 536×1170), use their own ratio.
 ```
 
 CaseLabels props: `case`, `fields` (default origin, industry, year, duration,
-direction), `status` (default true), `class`. CaseCard props: `case`, `line`,
+direction), `status` (default true), `class`. The labels show in grey mono
+capitals (CSS `text-transform`), the status in bold black. CaseCard props: `case`, `line`,
 `linkLabel` (no link when omitted; the link goes to `/cases/#<anchor>`),
 `title` (`shortTitle` default or `title`; the home featured cards use
 `title`), `labels` (fields or `false`; default origin, industry, year,
@@ -386,18 +429,14 @@ link (`href` override from the content, default `/services/#anchor`). From
 `linkLabel`, `href`, `duration`, `size` (`large`, `small`), `title`
 (`title` or `short`), `level`.
 
-### ServiceCard
+### Services on /services/ (`components/services/`)
 
-```astro
-<ServiceCard service="guide" labels={page.serviceTemplate.labels} />
-```
-
-The short service variant (group «Мост» on /services/): title, summary, «Для
-кого», «Что получите на руки», `more` link, price line, `TelegramAction`.
-Carries the service anchor as id. Props: `service`, `labels`, `number`
-(optional «07» label), `id` (`false` for none), `level`, `class`. The full
-service template is built by the services page from the same fields
-(section 5.3).
+`ServiceFull` renders every service on /services/ from the service fields
+(section 5.3): the full template, and with `short` the short variant of the
+group «Мост» (title, summary, «Для кого», «Что получите на руки», `more`
+link, price, `TelegramAction`). Number, title and the italic summary sit in a
+sticky left column of 4, the parts in the right 8 (`ServicePart` rows).
+There is no separate card component for the short variant.
 
 ### FAQ
 
@@ -432,7 +471,7 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 
 **services**: `serviceTemplate { labels { forWhom, youGet, duration, steps, fromYou, notIncluded, ai, proof, proofLinks, proofCasesBuilt, proofProducts, testimonials, readCase, more }, button { source, hint, email } }`
 - `intro` (intro): `heading` (h1), `lead[]`, `toc.items[]` (service slugs, show `short`), `other { text, button }` (codeword «Другое»)
-- `group-learning`, `group-development`, `group-bridge` (service-group): `heading`, `lead?`, `note? { text, links[{ label, service | case }] }`, `services[]`, `variant?` (`short` → `ServiceCard`)
+- `group-learning`, `group-development`, `group-bridge` (service-group): `heading`, `lead?`, `note? { text, links[{ label, service | case }] }`, `services[]`, `variant?` (`short` → `ServiceFull short`)
 - `formats` (formats, anchor `formats`): `heading`, `howWeStart { showConsultationNote, showPrepare, showWorkload }`, `pricing { heading, items[{ title, points[] }] }`, `predictable { heading, items[{ title, text }] }`, `terms { heading, items[{ id, text } | { id, source }] }` (`gref(source)`)
 - `faq` (faq): `anchor`, `heading`, `items[{ q, a }]`
 - `contact`
@@ -544,7 +583,10 @@ Focus: 2px ink outline, offset 3px, on everything.
 
 **Rules and lists.** `hr`/`.rule` (hairline), `.rule--ink`, `.top-hair`,
 `.top-line`; `.list-plain`; `.list-rules` (hairline between items and at the
-end, `--s2` padding); `.list-comma` (inline list joined by commas).
+end, `--s2` padding); `.list-comma` (inline list joined by commas);
+`.list-dash` (a grey dash hangs in front of each item) and `.list-num` (a
+small grey mono number in front of each item), both at `--measure`. Numbered
+lists inside `.prose` get the same number treatment as `.list-num`.
 
 **Grid.** `.wrap` (centred container with side gutters). `.grid`: 4 columns
 below 720px, 12 from 720px; children span the full row unless given:
@@ -562,8 +604,10 @@ Example: portrait 4 of 12 and text 8 of 12:
 
 `.cols` equal columns that wrap: `.cols-2`, `.cols-3` (from 720px), `.cols-4`
 (2 from 720px, 4 from 1080px), `.m-cols-2` (2 below 720px).
-`.scroll-row`: sideways scrolling row on phones and tablets, an even row of
-`--row-items` (default 6) from 1080px (reels).
+`.scroll-row`: sideways scrolling row on phones and tablets (items 42% of
+the row, at least 9.5rem; from 720px 28%, at least 11rem, so the row scrolls
+instead of shrinking), an even row of `--row-items` (default 6) from 1080px
+(reels).
 
 **Spacing.** `.stack` with `.flow-1`…`.flow-5` (gap between children),
 `.cluster` (wrapping flex row), `.mt-0`…`.mt-5`, `.mb-1`…`.mb-5`,
@@ -579,17 +623,19 @@ data-metrika>` is set (production), sends `reachGoal` for elements with
 `hire` (footer link to /hire/), `product` (product buttons; pass
 `goal="product"`). No other scripts: no `/#hire` redirect, no autoplay.
 
-## 8. Routes and placeholders
+## 8. Routes
 
 `src/pages/index.astro` (/), `services/`, `cases/`, `products/`, `hire/`,
 `guide/` (`index.astro` each), `404.astro`, and `work.html.ts` (redirect to
-`/services/#formats` with meta refresh, canonical and a link). Phase 1 pages
-render only the h1 and an empty element for each block anchor so that links
-and anchors already resolve; replace the whole body when building a page.
+`/services/#formats` with meta refresh, canonical and a link). Every page
+renders its content blocks in the content order, as the texts renderer does.
 
 ## 9. Static files (`public/`)
 
-Copied from the old site, unchanged, with their relative paths: `assets/`
+Copied from the old site with their relative paths (unchanged, except the
+posters `assets/testimonials/posters/evgenia.jpg` and `liza.jpg`, re-cut from
+a frame without the burned-in subtitles that named the person in full):
+`assets/`
 (reels, posters, case images, testimonial videos and posters, approach
 images, portrait, og.jpg, both PDF résumés), `resume/`, `demo/`
 (`/demo/ai-competencies/`, `/demo/chatgpt-praktikum/`, `/demo/wishlist/`),

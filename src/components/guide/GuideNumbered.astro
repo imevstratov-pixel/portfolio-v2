@@ -1,0 +1,52 @@
+---
+// A numbered block on /guide/ (type "numbered": «Что входит», «Что будет с
+// данными вашего близкого»): heading, optional lead, the items in large type
+// with numbers on the left, then the visible notes in small type.
+import Section from '../Section.astro';
+import NumberedItems from './NumberedItems.astro';
+import { visible, type Block } from '../../lib/content';
+
+interface Props {
+  block: Block;
+}
+
+const { block } = Astro.props;
+const items = visible(block.items as Array<{ title: string; text: string }>);
+const notes: string[] = visible(block.notes as Array<{ text: string }>)
+  .map((n) => n?.text)
+  .filter((t): t is string => typeof t === 'string' && t.length > 0);
+---
+
+<Section id={block.anchor ?? block.id} heading={block.heading}>
+  {
+    block.lead && (
+      <p slot="head" class="lead numbered__lead">
+        {block.lead}
+      </p>
+    )
+  }
+  <NumberedItems items={items} />
+  {
+    notes.length > 0 && (
+      <div class="numbered__lines">
+        {notes.map((n) => (
+          <p>{n}</p>
+        ))}
+      </div>
+    )
+  }
+</Section>
+
+<style>
+  .numbered__lead {
+    margin-top: var(--s3);
+  }
+
+  .numbered__lines {
+    margin-top: var(--s3);
+    display: grid;
+    gap: var(--s1);
+    max-width: var(--measure);
+    color: var(--muted);
+  }
+</style>

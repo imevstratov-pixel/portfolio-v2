@@ -95,10 +95,16 @@ const isCurrent = (href: string) => (current && href === current ? 'page' : unde
     border-bottom: var(--hair);
   }
 
+  /* the padding sits on the links, so each is a ~43px tall tap target */
   .site-subnav__links {
-    padding-block: 0.6rem;
+    padding-block: 0;
     font-size: 0.9375rem;
-    gap: var(--s1) var(--s2);
+    gap: 0 var(--s2);
+  }
+
+  .site-subnav__links a {
+    display: inline-block;
+    padding-block: 0.6rem;
   }
 
   @media (min-width: 720px) {

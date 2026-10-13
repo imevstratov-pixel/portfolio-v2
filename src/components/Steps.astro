@@ -14,6 +14,8 @@ interface Props {
   showConsultationNote?: boolean;
   showPrepare?: boolean;
   showWorkload?: boolean;
+  /** Id of the heading, so a section around it can be named by it (aria-labelledby). */
+  headingId?: string;
   class?: string;
 }
 
@@ -23,6 +25,7 @@ const {
   showConsultationNote = true,
   showPrepare = true,
   showWorkload = false,
+  headingId,
   class: className,
 } = Astro.props;
 const hws = site.work.howWeStart;
@@ -34,7 +37,13 @@ const notes = [showConsultationNote && hws.consultationNote, showPrepare && hws.
 ---
 
 <div class:list={['steps', className]}>
-  {heading && <Tag class:list={['steps__heading', level === 3 && 't-medium']}>{hws.heading}</Tag>}
+  {
+    heading && (
+      <Tag id={headingId} class:list={['steps__heading', level === 3 && 't-medium']}>
+        {hws.heading}
+      </Tag>
+    )
+  }
   <ol class="steps__list" role="list">
     {
       hws.steps.map((s) => (

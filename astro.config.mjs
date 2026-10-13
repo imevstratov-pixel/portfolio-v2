@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import { satteri } from '@astrojs/markdown-satteri';
+import legacyPreview from './tools/legacy-preview.mjs';
 
 // Deploy target comes from the environment so the same code builds the preview
 // (imevstratov-pixel.github.io/portfolio-v2/) and, later, the live site.
@@ -16,6 +17,8 @@ export default defineConfig({
   trailingSlash: 'ignore',
   build: { format: 'directory' },
   devToolbar: { enabled: false },
+  // preview builds: noindex and no Metrika in the copied legacy pages too
+  integrations: [legacyPreview()],
   markdown: {
     syntaxHighlight: false,
     // Approved texts already carry their own typography («», —, non-breaking
