@@ -1,0 +1,16 @@
+---
+// /hire/ (placeholder for phase 1): the h1 from content and the page's anchors.
+// Linked only from the footer; it has its own header (pages/hire.md header).
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPage, getBlock, pageBlocks } from '../../lib/content';
+
+const page = getPage('hire');
+const hero = getBlock(page, 'hero');
+---
+
+<BaseLayout page={page} current="/hire/">
+  <div class="wrap pt-5">
+    <h1>{hero.name}</h1>
+  </div>
+  {pageBlocks(page).filter((b) => b.anchor).map((b) => <div id={b.anchor} />)}
+</BaseLayout>

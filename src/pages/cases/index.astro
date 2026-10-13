@@ -1,0 +1,15 @@
+---
+// /cases/ (placeholder for phase 1): the h1 from content and the page's anchors.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPage, getBlock, pageBlocks } from '../../lib/content';
+
+const page = getPage('cases');
+const intro = getBlock(page, 'intro');
+---
+
+<BaseLayout page={page} current="/cases/">
+  <div class="wrap pt-5">
+    <h1>{intro.heading}</h1>
+  </div>
+  {pageBlocks(page).filter((b) => b.anchor).map((b) => <div id={b.anchor} />)}
+</BaseLayout>

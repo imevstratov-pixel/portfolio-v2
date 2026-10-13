@@ -1,0 +1,91 @@
+---
+// A compact service block (the "short" variant of render_service on
+// /services/, used for «Тренажёр для близкого» in the group «Мост»):
+// title, summary, «Для кого», «Что получите на руки», the «Подробнее…» link,
+// the price line and the Telegram button with hint and email.
+// The full service template (duration, steps, proof, …) is built by the
+// services page from the same fields.
+import TelegramAction from './TelegramAction.astro';
+import { getService, type ServiceEntry } from '../lib/content';
+import { url } from '../lib/url';
+
+interface Props {
+  service: string | ServiceEntry;
+  /** pages/services.md serviceTemplate.labels (forWhom, youGet, …). */
+  labels: Record<string, string>;
+  /** Number shown before the title («7»), optional. */
+  number?: number;
+  /** Anchor id; default the service anchor ("guide"). false for none. */
+  id?: string | false;
+  level?: 2 | 3;
+  class?: string;
+}
+
+const { service, labels, number, id, level = 3, class: className } = Astro.props;
+const s = typeof service === 'string' ? getService(service) : service;
+const d = s.data;
+const Tag = `h${level}` as 'h2' | 'h3';
+const anchorId = id === false ? undefined : (id ?? d.anchor);
+const titleId = `${d.anchor}-title`;
+---
+
+<article id={anchorId} class:list={['service-card', className]} aria-labelledby={titleId}>
+  <header class="service-card__head">
+    {number !== undefined && <p class="label service-card__num">{String(number).padStart(2, '0')}</p>}
+    <Tag id={titleId} class="t-medium">{d.title}</Tag>
+    <p class="service-card__summary">{d.summary}</p>
+  </header>
+  <div class="service-card__lists">
+    <section>
+      <h4 class="label">{labels.forWhom}</h4>
+      <ul class="list-rules" role="list">{d.forWhom.map((x) => <li>{x}</li>)}</ul>
+    </section>
+    <section>
+      <h4 class="label">{labels.youGet}</h4>
+      <ul class="list-rules" role="list">{d.youGet.map((x) => <li>{x}</li>)}</ul>
+    </section>
+  </div>
+  {
+    d.more && (
+      <p class="service-card__more">
+        <a href={url(d.more.url)}>{d.more.label}</a>
+      </p>
+    )
+  }
+  <p class="service-card__price">{d.price}.</p>
+  <TelegramAction codeword={d.codeword} />
+</article>
+
+<style>
+  .service-card {
+    display: grid;
+    gap: var(--s3);
+  }
+
+  .service-card__head {
+    display: grid;
+    gap: var(--s1);
+  }
+
+  .service-card__summary {
+    font-size: var(--fs-medium);
+    line-height: 1.35;
+    letter-spacing: var(--track-medium);
+    max-width: 34em;
+  }
+
+  .service-card__lists {
+    display: grid;
+    gap: var(--s3) var(--gap);
+  }
+
+  .service-card__lists h4 {
+    margin-bottom: var(--s1);
+  }
+
+  @media (min-width: 720px) {
+    .service-card__lists {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

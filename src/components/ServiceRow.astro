@@ -1,0 +1,85 @@
+---
+// One service in a list (home «Чем могу помочь»): title in bold, optional
+// «Срок: …», the result line and «Подробнее» to /services/#anchor.
+// size="large" for the main line, "small" for «Ещё делаю на заказ».
+// Put rows in <ul class="list-rules" role="list"> for the thin rules between.
+import { getService, serviceHref, type ServiceEntry } from '../lib/content';
+import { url } from '../lib/url';
+
+interface Props {
+  service: string | ServiceEntry;
+  line?: string;
+  linkLabel?: string;
+  /** Link target override (content `href`, e.g. "/guide/"); default /services/#anchor. */
+  href?: string;
+  /** Show «Срок: …» from the service duration. */
+  duration?: boolean;
+  size?: 'large' | 'small';
+  /** Title text: "title" (default) or "short". */
+  title?: 'title' | 'short';
+  level?: 3 | 4;
+}
+
+const { service, line, linkLabel, href, duration = false, size = 'large', title = 'title', level = 3 } = Astro.props;
+const s = typeof service === 'string' ? getService(service) : service;
+const d = s.data.duration;
+const durationText = duration && d ? `Срок: ${d.charAt(0).toLowerCase()}${d.slice(1)}.` : undefined;
+const Tag = `h${level}` as 'h3' | 'h4';
+const link = href ? url(href) : serviceHref(s);
+const titleId = `${s.data.anchor}-row`;
+---
+
+<li class:list={['service-row', `service-row--${size}`]}>
+  <Tag id={titleId} class:list={['service-row__title', size === 'large' ? 't-medium' : 't-base']}>
+    {s.data[title]}
+  </Tag>
+  <div class="service-row__body">
+    {durationText && <p class="service-row__duration label">{durationText}</p>}
+    {line && <p class="service-row__line">{line}</p>}
+    {
+      linkLabel && (
+        <p class="service-row__link">
+          <a href={link} aria-describedby={titleId}>
+            {linkLabel}
+          </a>
+        </p>
+      )
+    }
+  </div>
+</li>
+
+<style>
+  .service-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--s1) var(--gap);
+  }
+
+  .service-row__title,
+  .service-row__body {
+    grid-column: 1 / -1;
+  }
+
+  .service-row__body {
+    display: grid;
+    gap: var(--s1);
+  }
+
+  .service-row__line {
+    max-width: var(--measure);
+  }
+
+  @media (min-width: 720px) {
+    .service-row {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .service-row__title {
+      grid-column: 1 / span 5;
+    }
+
+    .service-row__body {
+      grid-column: 6 / span 7;
+    }
+  }
+</style>

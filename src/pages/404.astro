@@ -1,0 +1,15 @@
+---
+// 404 (placeholder for phase 1): the h1 from content. No contact block here,
+// so «Написать» points to the contact block of the home page.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPage, getBlock } from '../lib/content';
+
+const page = getPage('404');
+const nf = getBlock(page, 'not-found');
+---
+
+<BaseLayout page={page} ctaHref="/#contact">
+  <div class="wrap pt-5">
+    <h1>{nf.heading}</h1>
+  </div>
+</BaseLayout>

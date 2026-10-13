@@ -1,0 +1,86 @@
+---
+// A video testimonial: the poster in the native player (plays on click, with
+// sound and controls) and the quote beside it, so it can be read without
+// starting the video. Phones: narrow video column left, quote right.
+// Use it at the full container width: its columns match the page grid
+// (video 3 of 12, quote 6 of 12; 2 + 2 of 4 on phones).
+import Media from './Media.astro';
+import { getTestimonial, testimonialSignature, type TestimonialEntry } from '../lib/content';
+
+interface Props {
+  /** Testimonial slug ("evgenia") or entry. */
+  testimonial: string | TestimonialEntry;
+  /** Extra signature parts appended when new, e.g. ["Школа маркетплейсов Лео Шевченко", "мой руководитель"]. */
+  extra?: Array<string | null | undefined>;
+  /** Show the quote next to the video (default true). */
+  quote?: boolean;
+  class?: string;
+}
+
+const { testimonial, extra = [], quote = true, class: className } = Astro.props;
+const t = typeof testimonial === 'string' ? getTestimonial(testimonial) : testimonial;
+const sign = testimonialSignature(t, extra);
+---
+
+<figure class:list={['vt', className]}>
+  <div class="vt__media">
+    <Media type="video" src={t.data.video} poster={t.data.poster} ratio="9 / 16" label={sign} />
+  </div>
+  <figcaption class="vt__text">
+    {quote && <blockquote class="vt__quote"><p>{t.data.quote}</p></blockquote>}
+    <p class="vt__sign label">{sign}</p>
+  </figcaption>
+</figure>
+
+<style>
+  .vt {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--gap);
+    align-items: start;
+  }
+
+  .vt__media {
+    grid-column: span 2;
+  }
+
+  .vt__text {
+    grid-column: span 2;
+    display: grid;
+    gap: var(--s2);
+  }
+
+  .vt__quote {
+    font-size: var(--fs-medium);
+    line-height: 1.3;
+    letter-spacing: var(--track-medium);
+  }
+
+  .vt__quote p::before {
+    content: '«';
+  }
+
+  .vt__quote p::after {
+    content: '»';
+  }
+
+  @media (min-width: 720px) {
+    .vt {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .vt__media {
+      grid-column: span 3;
+    }
+
+    .vt__text {
+      grid-column: span 6;
+    }
+
+    .vt__quote {
+      font-size: var(--fs-large);
+      line-height: 1.12;
+      letter-spacing: var(--track-large);
+    }
+  }
+</style>
