@@ -18,8 +18,7 @@ import TelegramButton from './TelegramButton.astro';
 import TelegramEmailButtons from './TelegramEmailButtons.astro';
 import EmailLine from './EmailLine.astro';
 import Resumes from './Resumes.astro';
-import { gref, serviceByCodeword, singleHint, telegramButton, workloadLine, type Block } from '../lib/content';
-import { url } from '../lib/url';
+import { contentHref, gref, serviceByCodeword, singleHint, telegramButton, workloadLine, type Block } from '../lib/content';
 
 interface Props {
   block: Block;
@@ -54,7 +53,7 @@ const singleButton = single ? (verb ? { ...block.button, label: verb, caption: f
         <ul class="contact__links list-comma" role="list">
           {links.map((l) => (
             <li>
-              <a href={url(l.href)}>{l.label}</a>
+              <a href={contentHref(l.href)}>{l.label}</a>
             </li>
           ))}
         </ul>

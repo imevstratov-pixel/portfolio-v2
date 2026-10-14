@@ -125,13 +125,54 @@ export function serviceHref(service: string | ServiceEntry): string {
 
 const endDot = (t: string) => (/[.!?…]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
 
+/** A service price (decision 16 of 14.10): the figure, what it covers, sub-prices. */
+export type Price = { main: string; note?: string; more: string[] };
+
 /**
- * Price line of a service card: its own `price`, else the global line
- * (site work.price), with a final period. Mirrors price_line() in the renderer.
+ * The service's own price, or null when it has none (the card then shows the
+ * global line site.work.price). Mirrors price_of() in the renderer.
+ */
+export function servicePrice(service: string | ServiceEntry): Price | null {
+  const s = typeof service === 'string' ? getService(service) : service;
+  const p = s.data.price;
+  const main = p?.main?.trim();
+  if (!p || !main) return null;
+  return {
+    main,
+    note: p.note?.trim() || undefined,
+    more: visible(p.more ?? []).map((x) => x.trim()).filter(Boolean),
+  };
+}
+
+/**
+ * One-line price as text: «Цена: 70 000–100 000 ₽.» from the service's own
+ * price, else the global line with a final period. Mirrors price_line() in the
+ * renderer; the components show prices with PriceBlock.
  */
 export function servicePriceLine(service: string | ServiceEntry): string {
-  const s = typeof service === 'string' ? getService(service) : service;
-  return endDot(s.data.price || site.work.price);
+  const p = servicePrice(service);
+  return p ? `Цена: ${endDot(p.main)}` : endDot(site.work.price);
+}
+
+/** The global price line («Точную цену называю письменно до старта. …»). */
+export function globalPriceLine(): string {
+  return endDot(site.work.price);
+}
+
+// «12 000 ₽», «от 250 000 ₽», «70 000–100 000 ₽» at the start of a line
+// (spaces inside the figure are usually non-breaking).
+const LEADING_PRICE = /^((?:от[\s\u00a0]+)?\d[\d\s\u00a0\u202f]*(?:[–-][\s\u00a0]*\d[\d\s\u00a0\u202f]*)?[\s\u00a0\u202f]*₽)[\s\u00a0]*([\s\S]*)$/u;
+
+/**
+ * Split a text line that starts with a price into the figure and the rest:
+ * «12 000 ₽ за весь тренажёр, без доплат.» -> { main: «12 000 ₽», rest:
+ * «за весь тренажёр, без доплат.» }. Null when the line does not start with
+ * a figure in roubles. The text itself stays as approved; PriceBlock only
+ * sets the figure large (/guide/).
+ */
+export function splitLeadingPrice(text: string): { main: string; rest: string } | null {
+  const m = text.trim().match(LEADING_PRICE);
+  return m ? { main: m[1].trim(), rest: m[2].trim() } : null;
 }
 
 /** «Срок: около недели.» from the service duration (the renderer's label). */
@@ -162,10 +203,58 @@ export function publishedCases(slugs: string[] | null | undefined): CaseEntry[] 
   return (slugs ?? []).filter(isPublished).map(getCase);
 }
 
-/** /cases/#anchor for a case slug (or entry). */
+/** Site path of a case page: /cases/<slug>/ (slug = file name). */
+export function casePath(c: string | CaseEntry): string {
+  const e = typeof c === 'string' ? getCase(c) : c;
+  return `/cases/${e.id}/`;
+}
+
+/** Link to the case page <base>/cases/<slug>/ (decision 17 of 14.10). */
 export function caseHref(c: string | CaseEntry): string {
+  return url(casePath(c));
+}
+
+/**
+ * Link to the case's card on /cases/ (<base>/cases/#anchor). The cards keep
+ * the old anchors, so links written before the case pages still land.
+ */
+export function caseCardHref(c: string | CaseEntry): string {
   const e = typeof c === 'string' ? getCase(c) : c;
   return url(`/cases/#${e.data.anchor}`);
+}
+
+/**
+ * Words of the case pages and the /cases/ cards. The cases-list block of
+ * pages/cases.md may carry them (`cardLink`, `allLink`, `prevLabel`,
+ * `nextLabel`, `voicesLabel`, `navLabel`: the name of the bottom navigation
+ * with the previous, the next case and «Все кейсы»); until it does, these
+ * defaults are used.
+ */
+export function caseWords(): {
+  cardLink: string;
+  allLink: string;
+  prev: string;
+  next: string;
+  voices: string;
+  nav: string;
+} {
+  const b = getPage('cases').blocks.find((x) => x.type === 'cases-list') ?? ({} as Block);
+  const pick = (v: unknown, d: string) => (typeof v === 'string' && v.trim() ? v.trim() : d);
+  return {
+    cardLink: pick(b.cardLink, 'Читать кейс'),
+    allLink: pick(b.allLink, 'Все кейсы'),
+    prev: pick(b.prevLabel, 'Предыдущий кейс'),
+    next: pick(b.nextLabel, 'Следующий кейс'),
+    voices: pick(b.voicesLabel, 'Что говорят коллеги'),
+    nav: pick(b.navLabel, 'Другие кейсы'),
+  };
+}
+
+/** Previous and next published case by `order` (null at the ends). */
+export function caseNeighbours(c: string | CaseEntry): { prev: CaseEntry | null; next: CaseEntry | null } {
+  const e = typeof c === 'string' ? getCase(c) : c;
+  const i = cases.findIndex((x) => x.id === e.id);
+  return { prev: i > 0 ? cases[i - 1] : null, next: i >= 0 && i < cases.length - 1 ? cases[i + 1] : null };
 }
 
 /** The service a case belongs to (cases store the service codeword). */
@@ -295,6 +384,83 @@ export function bodySections(entry: Rendered, only?: string[]): Section[] {
   if (tail || title) out.push({ title, html: tail });
   if (!only) return out;
   return only.map((t) => out.find((s) => s.title === t)).filter((s): s is Section => !!s);
+}
+
+/* ------------------------------------------------------------ case texts */
+
+const decodeEntities = (t: string) =>
+  t
+    .replace(/&nbsp;/g, '\u00a0')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&#x27;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+
+/** Plain text of the first paragraph of an HTML chunk. */
+function firstParagraph(html: string): string {
+  const m = html.match(/<p\b[^>]*>([\s\S]*?)<\/p>/);
+  return decodeEntities((m ? m[1] : html).replace(/<[^>]+>/g, '')).replace(/[ \t\r\n]+/g, ' ').trim();
+}
+
+/** First sentence of a paragraph (it ends at . ! ? … followed by a capital, a quote or a digit). */
+function firstSentence(text: string): string {
+  return text.split(/(?<=[.!?…]) +(?=[А-ЯЁA-Z«"0-9])/u)[0]?.trim() ?? '';
+}
+
+/**
+ * The one line under the infographic on a /cases/ card: the case's own
+ * `summary`; else its approved line in the home «featured-cases» block; else
+ * the first sentence of «Контекст» (the text as approved, only cut at the
+ * sentence end; it often describes the client rather than the work).
+ */
+export function caseSummary(c: string | CaseEntry): string {
+  const e = typeof c === 'string' ? getCase(c) : c;
+  if (e.data.summary?.trim()) return e.data.summary.trim();
+  const featured = findBlock(getPage('home'), 'featured-cases');
+  const homeLine = (featured?.items as Array<{ case: string; line?: string }> | undefined)?.find((it) => it.case === e.id)?.line;
+  if (typeof homeLine === 'string' && homeLine.trim()) return homeLine.trim();
+  const ctx = bodySections(e, ['Контекст'])[0];
+  return ctx ? firstSentence(firstParagraph(ctx.html)) : '';
+}
+
+/**
+ * Search title and description of a case page: the case's `seo` fields when
+ * set; otherwise «<shortTitle> — <site name>» (the full title of 100+
+ * characters is cut in search results and fills a Telegram link preview; it
+ * stays the h1) and the first sentence of «Контекст»
+ * followed by the first sentence of «Результат» (only the first one when both
+ * together are longer than 220 characters).
+ */
+export function caseSeo(c: string | CaseEntry): { title: string; description: string } {
+  const e = typeof c === 'string' ? getCase(c) : c;
+  const name = e.data.shortTitle?.trim() || e.data.title;
+  const title = e.data.seo?.title?.trim() || `${name} — ${site.site.name}`;
+  let description = e.data.seo?.description?.trim() || '';
+  if (!description) {
+    const [ctx, res] = ['Контекст', 'Результат'].map((t) => {
+      const sec = bodySections(e, [t])[0];
+      return sec ? firstSentence(firstParagraph(sec.html)) : '';
+    });
+    const both = [ctx, res].filter(Boolean).join(' ');
+    description = both.length <= 220 ? both : ctx || res;
+  }
+  return { title, description };
+}
+
+/* ----------------------------------------------------------- content links */
+
+const CASE_BY_ANCHOR = new Map(caseList.map((c) => [c.data.anchor, c]));
+
+/**
+ * A link written in the content, through url(). A link to a case card
+ * (/cases/#case-…) goes to the case page instead while the case is
+ * published (decision 17 of 14.10); every other link is url(href).
+ */
+export function contentHref(href: string): string {
+  const m = href.match(/^\/?cases\/#([^#?\s]+)$/);
+  const c = m ? CASE_BY_ANCHOR.get(m[1]) : undefined;
+  return c && c.data.published !== false ? caseHref(c) : url(href);
 }
 
 /* ------------------------------------------------------------- validation */

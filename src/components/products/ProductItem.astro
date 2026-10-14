@@ -28,7 +28,7 @@ import Media from '../Media.astro';
 import Carousel from '../Carousel.astro';
 import TelegramButton from '../TelegramButton.astro';
 import ProductFacts from './ProductFacts.astro';
-import { bodyHtml, productTemplate, visible, type ProductEntry } from '../../lib/content';
+import { bodyHtml, contentHref, productTemplate, visible, type ProductEntry } from '../../lib/content';
 import { isExternal, url } from '../../lib/url';
 import { imageSize } from '../../lib/media';
 
@@ -135,7 +135,7 @@ const secondary = visible(d.secondaryLinks);
                     {secondary.map((l) => (
                       <li>
                         <a
-                          href={isExternal(l.url) ? l.url : url(l.url)}
+                          href={isExternal(l.url) ? l.url : contentHref(l.url)}
                           target={/^https?:/i.test(l.url) ? '_blank' : undefined}
                           rel={/^https?:/i.test(l.url) ? 'noopener' : undefined}
                           data-goal="product"

@@ -2,7 +2,7 @@
 // Full-page screenshots of built pages at 375, 768 and 1280 px.
 //
 //   npm run build && npm run shots -- --out shots/v1 / /services/ /cases/
-//   npm run shots -- --out shots/all              (every route)
+//   npm run shots -- --out shots/all              (every route, the case pages too)
 //   npm run shots -- --widths 360,375 /           (other widths)
 //
 // Serves dist/ under the base path (BASE, default /portfolio-v2/) with a small
@@ -10,7 +10,7 @@
 // scrolls each page once so lazy images load, then saves
 // <out>/<route>-<width>.png. Also reports horizontal overflow per width.
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
 import { chromium } from 'playwright';
 
@@ -29,10 +29,20 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] === '--widths') widths = args[++i].split(',').map(Number).filter(Boolean);
   else routes.push(args[i]);
 }
-if (!routes.length) routes.push(...ALL_ROUTES);
 if (!existsSync(join(DIST, 'index.html'))) {
   console.error('dist/ is empty: run `npm run build` first');
   process.exit(1);
+}
+if (!routes.length) {
+  // the case pages /cases/<slug>/ as built
+  const casesDir = join(DIST, 'cases');
+  const casePages = existsSync(casesDir)
+    ? readdirSync(casesDir)
+        .filter((n) => existsSync(join(casesDir, n, 'index.html')))
+        .sort()
+        .map((n) => `/cases/${n}/`)
+    : [];
+  routes.push(...ALL_ROUTES, ...casePages);
 }
 mkdirSync(out, { recursive: true });
 

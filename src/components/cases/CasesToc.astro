@@ -3,7 +3,8 @@
 // Mirrors render_cases() in the texts renderer: groups in the block's order,
 // rows = published cases whose service codeword matches (the fields of
 // block.row.fields: today the short title only, decision 10 of 14.10 and the
-// review of 14.10), then the group's visible products with their labels
+// review of 14.10) linking to the case pages /cases/<slug>/ (decision 17),
+// then the group's visible products with their labels
 // («Свой продукт, Разработка», linking to /products/#anchor); empty groups are
 // skipped. Under the table one small line about the labels.
 //
@@ -16,7 +17,7 @@
 // (display: none removes the other from the accessibility tree too).
 import Section from '../Section.astro';
 import TocGroups, { type TocGroup, type TocRow } from './TocGroups.astro';
-import { cases, getService, visibleProducts, type Block } from '../../lib/content';
+import { caseHref, cases, getService, visibleProducts, type Block } from '../../lib/content';
 import { url } from '../../lib/url';
 
 interface Props {
@@ -39,7 +40,7 @@ const groups: TocGroup[] = (block.groups ?? [])
         return {
           key: c.id,
           title: String(d[titleField] ?? c.data.shortTitle),
-          href: `#${c.data.anchor}`,
+          href: caseHref(c),
           meta: metaFields
             .map((f) => d[f])
             .filter((v) => v !== undefined && v !== null && v !== '')

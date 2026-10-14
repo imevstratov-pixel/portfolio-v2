@@ -15,6 +15,13 @@
 // It also checks that the base path is never written by hand: no file in src/
 // may contain "/portfolio-v2/", and when BASE is set to anything else the
 // built Astro pages must not contain it either.
+//
+// Expected pages: the routes of the site (/, /services/, /cases/, /products/,
+// /hire/, /guide/, 404) and one page /cases/<slug>/ for every published case
+// in src/content/cases (slug = file name, decision 17 of 14.10) must exist;
+// /cases/ must link to every case page and keep every case anchor (the old
+// links /cases/#case-… land on the case's card); no other page may sit under
+// /cases/.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 
@@ -186,9 +193,40 @@ if (BASE !== DEFAULT_BASE) {
   }
 }
 
+// Expected pages, read from the content (not from the build).
+function frontmatter(file) {
+  const m = readFileSync(file, 'utf8').match(/^---\n([\s\S]*?)\n---/);
+  const field = (name) => m?.[1].match(new RegExp(`^${name}:\\s*(.*)$`, 'm'))?.[1].trim().replace(/^['"]|['"]$/g, '');
+  return { published: field('published'), anchor: field('anchor') };
+}
+const CASES_DIR = join(ROOT, 'src', 'content', 'cases');
+const publishedCases = readdirSync(CASES_DIR)
+  .filter((f) => f.endsWith('.md'))
+  .map((f) => ({ slug: f.replace(/\.md$/, ''), ...frontmatter(join(CASES_DIR, f)) }))
+  .filter((c) => c.published !== 'false');
+const expected = ['', 'services/', 'cases/', 'products/', 'hire/', 'guide/', '404.html', ...publishedCases.map((c) => `cases/${c.slug}/`)];
+for (const route of expected) {
+  if (!fileFor(BASE + route)) errors.push(`expected page ${BASE}${route} was not built`);
+}
+const casesIndex = fileFor(BASE + 'cases/');
+if (casesIndex) {
+  const { html, ids } = page(casesIndex);
+  for (const c of publishedCases) {
+    if (!html.includes(`href="${BASE}cases/${c.slug}/"`)) err(casesIndex, `no link to the case page ${BASE}cases/${c.slug}/`);
+    if (c.anchor && !ids.has(c.anchor)) err(casesIndex, `case anchor "#${c.anchor}" (${c.slug}) is missing: old /cases/#… links would break`);
+  }
+  const known = new Set(publishedCases.map((c) => c.slug));
+  const casesDir = join(DIST, 'cases');
+  for (const name of readdirSync(casesDir)) {
+    if (statSync(join(casesDir, name)).isDirectory() && !known.has(name)) {
+      errors.push(`cases/${name}/: a page for a case that is not published (or not in src/content/cases)`);
+    }
+  }
+}
+
 const astroPages = htmlFiles.filter((f) => page(f).astro).length;
 console.log(
-  `check-links: ${htmlFiles.length} HTML files (${astroPages} Astro pages), ${checked} internal links, base ${BASE}`,
+  `check-links: ${htmlFiles.length} HTML files (${astroPages} Astro pages, ${publishedCases.length} case pages expected), ${checked} internal links, base ${BASE}`,
 );
 if (errors.length) {
   console.error(`\n${errors.length} problem(s):\n  ` + errors.join('\n  '));

@@ -283,11 +283,25 @@ summary:focus-visible {
   line-height: var(--lh-small);
 }
 
-/* Disclosure: native <details class="disclose"> with a <summary> that looks
-   like a small framed button and ends with «+» / «−» (no arrows, no
-   animation, no script). Services «Подробнее», cases «Читать кейс полностью». */
+/* Disclosure: native <details class="disclose"> (component Disclosure). The
+   <summary> holds a small framed button «Подробнее +», which reads «Свернуть −»
+   while open (no arrows, no animation; the swap is CSS only). Services
+   «Подробнее». */
 .disclose > summary {
   list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: fit-content;
+  max-width: 100%;
+  cursor: pointer;
+}
+
+.disclose > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclose__btn {
   display: inline-flex;
   align-items: baseline;
   gap: var(--s2);
@@ -299,26 +313,125 @@ summary:focus-visible {
   font-size: 0.9375rem;
   font-weight: var(--bold);
   line-height: 1.2;
-  cursor: pointer;
+  white-space: nowrap;
 }
 
-.disclose > summary::-webkit-details-marker {
-  display: none;
-}
-
-.disclose > summary::after {
+.disclose__btn::after {
   content: '+';
   font-family: var(--font-mono);
   font-weight: var(--regular);
 }
 
-.disclose[open] > summary::after {
+.disclose[open] > summary .disclose__btn::after {
   content: '−';
 }
 
-.disclose > summary:hover {
+.disclose > summary:hover .disclose__btn {
   background: var(--ink);
   color: var(--paper);
+}
+
+/* the focus ring on the button, not around the whole bar */
+.disclose > summary:focus-visible {
+  outline: none;
+}
+
+.disclose > summary:focus-visible .disclose__btn {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.disclose__less,
+.disclose[open] > summary .disclose__more,
+.disclose__ctx {
+  display: none;
+}
+
+.disclose[open] > summary .disclose__less {
+  display: inline;
+}
+
+/* open and long: the summary sticks under the site header as a full-width
+   bar on paper, the context (the service's name) beside the button */
+.disclose--sticky[open] > summary {
+  position: sticky;
+  top: calc(var(--header-h) + 1px);
+  z-index: 5;
+  width: auto;
+  padding-block: var(--s1);
+  background: var(--paper);
+  border-bottom: var(--hair);
+}
+
+.disclose--sticky[open] > summary .disclose__ctx {
+  display: block;
+  min-width: 0;
+  overflow: clip;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* While a sticky disclosure is open, whatever the browser scrolls into view
+   (focus with Tab and Shift+Tab, a find, an anchor) stops under its bar, not
+   behind it (WCAG 2.4.11): the page's scroll padding grows by the bar's
+   height (the button, its padding, the hairline and the 1px offset). Chrome
+   ignores scroll-margin when it decides whether a focused element needs
+   scrolling at all, so the padding of the page has to grow, not the margin
+   of the elements. */
+:root {
+  --disclose-bar: calc(2.75rem + 2 * var(--s1) + 2px);
+}
+
+html:has(.disclose--sticky[open]) {
+  scroll-padding-top: calc(var(--header-h) + var(--disclose-bar) + var(--s2));
+}
+
+/* the second «Свернуть −» at the end: only once the script is there. The
+   same framed button as the summary (not the filled Telegram button). */
+.disclose__end {
+  display: none;
+}
+
+.disclose[data-ready] > .disclose__end {
+  display: flex;
+  margin-top: var(--s3);
+  padding-top: var(--s2);
+  border-top: var(--hair);
+}
+
+.disclose__close {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.disclose__close .disclose__btn::after {
+  content: '−';
+}
+
+.disclose__close:hover .disclose__btn {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.disclose__close:focus-visible {
+  outline: none;
+}
+
+.disclose__close:focus-visible .disclose__btn {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
 }
 
 /* ---------------------------------------------------------------- rules */

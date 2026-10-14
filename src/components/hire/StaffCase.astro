@@ -12,8 +12,8 @@
 import Media from '../Media.astro';
 import Prose from '../Prose.astro';
 import CaseLabels from '../CaseLabels.astro';
-import { bodySections, getCase } from '../../lib/content';
-import { url, isExternal } from '../../lib/url';
+import { bodySections, contentHref, getCase } from '../../lib/content';
+import { isExternal } from '../../lib/url';
 
 interface Props {
   /** Case slug. */
@@ -69,7 +69,7 @@ const SubTag = `h${level + 1}` as 'h4' | 'h5';
             {links.map((l) => (
               <li>
                 <a
-                  href={url(l.url)}
+                  href={contentHref(l.url)}
                   target={isExternal(l.url) ? '_blank' : undefined}
                   rel={isExternal(l.url) ? 'noopener' : undefined}
                 >

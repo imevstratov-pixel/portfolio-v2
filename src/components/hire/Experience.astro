@@ -14,8 +14,8 @@
 import Section from '../Section.astro';
 import StaffCase from './StaffCase.astro';
 import AgentsScheme from '../scheme/AgentsScheme.astro';
-import { getCase, isPublished, visible, type Block } from '../../lib/content';
-import { isExternal, url } from '../../lib/url';
+import { contentHref, getCase, isPublished, visible, type Block } from '../../lib/content';
+import { isExternal } from '../../lib/url';
 
 interface Props {
   block: Block;
@@ -98,7 +98,7 @@ const dot = (t: string) => (/[.!?…]$/.test(t) ? t : t + '.');
                       {l.links.map((k) => (
                         <p class="exp__link">
                           <a
-                            href={url(k.url)}
+                            href={contentHref(k.url)}
                             target={isExternal(k.url) ? '_blank' : undefined}
                             rel={isExternal(k.url) ? 'noopener' : undefined}
                           >

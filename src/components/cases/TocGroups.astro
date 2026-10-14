@@ -2,7 +2,7 @@
 // The groups of the /cases/ table of contents (used twice by CasesToc: the
 // open table from 720px and the folded one on phones). A group: the
 // service's short name, then its rows: the published cases' titles (fields
-// from block.row.fields, today only shortTitle) linking to their anchors,
+// from block.row.fields, today only shortTitle) linking to their pages,
 // then the group's products with their labels in small mono.
 export type TocRow = { key: string; title: string; href: string; meta: string[] };
 export type TocGroup = { id: string; name: string; rows: TocRow[] };

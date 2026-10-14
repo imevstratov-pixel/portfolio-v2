@@ -144,8 +144,12 @@ const cases = defineCollection({
         beforeAfter: z.looseObject({ before: str, after: str }).optional(),
       })
       .optional(),
-    // optional one-line summary under the infographic (not in the content yet)
+    // one line under the infographic on the /cases/ card (not in the content
+    // yet: the card falls back to the first sentence of «Контекст»)
     summary: optStr,
+    // search title and description of the case page /cases/<slug>/ (optional:
+    // the page builds them from the title and the text, see caseSeo())
+    seo: z.looseObject({ title: optStr, description: optStr }).optional(),
     testimonials: z.array(str).optional(),
   }),
 });
@@ -180,8 +184,17 @@ const services = defineCollection({
     testimonials: z.array(str).optional(),
     more: z.looseObject({ label: str, url: str }).optional(),
     related: z.looseObject({ text: str, service: optStr, case: optStr }).optional(),
-    // own price line; absent means the global one (site work.price)
-    price: optStr,
+    // price block of the card (decision 16 of 14.10): the figure or range
+    // («15 000 ₽», «от 250 000 ₽», «70 000–100 000 ₽»), what it covers in one
+    // short line, then sub-prices or variants; absent means the global line
+    // (site work.price)
+    price: z
+      .looseObject({
+        main: str,
+        note: optStr,
+        more: z.array(str).optional(),
+      })
+      .optional(),
     scheme: schemeName.optional(),
   }),
 });

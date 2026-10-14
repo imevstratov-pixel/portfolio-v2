@@ -6,7 +6,7 @@
 // the card, «Для кого», «Что получите на руки» and the link to /guide/).
 import Section from '../Section.astro';
 import ServiceCard from './ServiceCard.astro';
-import { caseHref, getService, isPublished, type Block } from '../../lib/content';
+import { caseHref, contentHref, getService, isPublished, type Block } from '../../lib/content';
 import { url } from '../../lib/url';
 
 interface Props {
@@ -39,7 +39,7 @@ function segments(text: string, links: NoteLink[]): Segment[] {
           ? caseHref(l.case)
           : undefined
         : l.href
-          ? url(l.href)
+          ? contentHref(l.href)
           : undefined;
     out.push({ text: l.label, href });
     at = i + l.label.length;

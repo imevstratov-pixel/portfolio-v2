@@ -5,12 +5,17 @@
 // service whose codeword it carries («Заказать тренажёр» for «Гайд»), no
 // caption, the same as the service card on /services/; it still copies the
 // «Гайд» template, and the hint still names the word «Гайд».
+// The price line («12 000 ₽ за весь тренажёр, без доплат. …») is a
+// PriceBlock: the figure large on its own line, the rest of the sentence
+// under it (decision 16 of 14.10). The only large price on the site: this is
+// a one-product page; everywhere else the figure has the service title's size.
 // The screenshot of the trainer (media) is still pending: while its src is
 // empty the text uses the width; once it exists it stands to the right of the
 // text from 1080px (a plain rectangle, no phone frame) and under it on phones.
 import Section from '../Section.astro';
 import Media from '../Media.astro';
 import TelegramAction from '../TelegramAction.astro';
+import PriceBlock from '../PriceBlock.astro';
 import { serviceByCodeword, type Block } from '../../lib/content';
 
 interface Props {
@@ -38,7 +43,7 @@ const verb: string | undefined = block.button?.codeword ? serviceByCodeword(bloc
           />
         )
       }
-      {block.price && <p class="hero__price">{block.price}</p>}
+      {block.price && <PriceBlock text={block.price} size="large" class="hero__price" />}
     </div>
     {
       media && (
@@ -63,8 +68,12 @@ const verb: string | undefined = block.button?.codeword ? serviceByCodeword(bloc
     margin-bottom: var(--s1);
   }
 
-  .hero__price {
-    max-width: var(--measure);
+  /* the price under the button and the email line, after a hairline */
+  .hero__text :global(.hero__price) {
+    width: 100%;
+    max-width: 34rem;
+    padding-top: var(--s2);
+    border-top: var(--hair);
   }
 
   @media (min-width: 1080px) {

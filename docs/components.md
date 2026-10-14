@@ -6,8 +6,9 @@ these pieces; add a new shared piece here when two pages need it.
 
 Stack: Astro 7.3.8 (static output), no UI framework, TypeScript in components,
 fonts from @fontsource (Inter Tight 400/700 and 400 italic, IBM Plex Mono 400,
-Latin and Cyrillic subsets). Two small client scripts: Telegram copy and
-analytics goals on every page, the carousel buttons on pages with a Carousel.
+Latin and Cyrillic subsets). Three small client scripts: Telegram copy and
+analytics goals on every page, the carousel buttons on pages with a Carousel,
+the second «Свернуть» of the long disclosures on /services/.
 
 ## 1. Rules that every page follows
 
@@ -40,11 +41,12 @@ analytics goals on every page, the carousel buttons on pages with a Carousel.
 - **Anchors.** Every block with `anchor` in the content must render that id
   (`contact`, `formats`, `faq`, `numbers`, `experience`, …). Services use their
   `anchor` (`consulting`, `ai-agents`, `audit`, `course`, `app`, `game`,
-  `guide`) on /services/, cases their `anchor` (`case-…`) on /cases/, products
-  their `anchor` on /products/. Other pages link to these; `check-links` fails
-  when one is missing. Anchors sit on elements that are always visible (the
-  case article and its header, the service card), never inside a closed
-  `<details>`.
+  `guide`) on /services/, cases their `anchor` (`case-…`) on their card on
+  /cases/ (so old /cases/#case-… links still land), products their `anchor`
+  on /products/. Links to a case go to its page /cases/<slug>/ (`caseHref`).
+  Other pages link to these; `check-links` fails when one is missing. Anchors
+  sit on elements that are always visible (the case card, the service card),
+  never inside a closed `<details>`.
 - **Words.** No «Мост» and not the old production-line word for the AI
   service anywhere, in components, comments, drawings and anchors included
   (decisions 2 and 6 of 14.10): the service is «AI-агенты» (codeword
@@ -53,10 +55,20 @@ analytics goals on every page, the carousel buttons on pages with a Carousel.
 - **Images and video.** Fixed aspect ratios (component `Media`), lazy below the
   fold, alt text from the content. Video: native player, `preload="none"`,
   poster, no autoplay, no loop. The `loop` fields in the content are not used.
-- **Less text, more pictures (decision 10 of 14.10).** Long texts fold into a
-  native `<details class="disclose">` (no animation, no script): services
-  «Подробнее», cases «Читать кейс полностью». Rows of people or screenshots
-  are a `Carousel`.
+- **Less text, more pictures (decisions 10 and 17 of 14.10).** The services'
+  long texts fold into `Disclosure` («Подробнее», a native `<details>`: no
+  animation; while open its «Свернуть» sticks under the header and a second
+  «Свернуть», framed like it, closes it from the end). A case does not fold: /cases/ shows
+  cards, the full case is its own page /cases/<slug>/. Rows of people or
+  screenshots are a `Carousel`.
+- **Prices (decision 16 of 14.10).** Always through `PriceBlock` (or
+  `ServiceTerms`, which puts it beside «Срок»): one style everywhere, the
+  figure in the sans face, regular weight, sized to its context and never
+  larger than the title it belongs to (the service title's size on /services/
+  cards, home rows and the case page offer; the body size in the small home
+  rows; large only in the /guide/ hero), the note under it, the sub-prices as
+  a small list; a service without a price shows the global line
+  `site.work.price`.
 - **A `class` passed to a child component does not get the parent's scoped
   styles.** Astro scopes a component's CSS to the elements it renders itself,
   so `<Resumes class="hero__resumes" />` styled in the parent does nothing.
@@ -73,9 +85,9 @@ analytics goals on every page, the carousel buttons on pages with a Carousel.
 | `npm run build` | Static build into `dist/` |
 | `npm run preview` | Serves `dist/` (Astro 7 may start it in the background; stop with `npx astro preview stop`) |
 | `npm run check` | `astro check`: TypeScript and template types (0 errors expected) |
-| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external |
+| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external. Expected pages: every route and one /cases/<slug>/ per published case in `src/content/cases` must be built, /cases/ must link to each and keep each case anchor, and no other page may sit under /cases/ |
 | `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. Fails on any file under `dist/media/` that no generated page references (a screenshot waiting for Daniil's OK must stay outside `public/`). In preview it also fails on the Metrika counter anywhere in `dist/` and on any HTML page without a robots meta |
-| `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
+| `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Without routes: every page, the built case pages too. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
 | `npm run verify` | build, check-links, leakcheck |
 | `npm run content` | Re-run the content export (needs `SITE_CONTENT`) |
 
@@ -108,8 +120,10 @@ anchor('contact')         // '#contact'
 ```ts
 import {
   site, getPage, pageBlocks, getBlock, findBlock, gref, workloadLine, visible, isHidden,
-  services, getService, serviceByCodeword, serviceHref, servicePriceLine, serviceDurationLine,
-  cases, getCase, isPublished, publishedCases, caseHref, caseService, caseLabels, CASE_LABEL_FIELDS,
+  services, getService, serviceByCodeword, serviceHref, serviceDurationLine,
+  servicePrice, servicePriceLine, globalPriceLine, splitLeadingPrice,
+  cases, getCase, isPublished, publishedCases, caseHref, casePath, caseCardHref, caseNeighbours,
+  caseWords, caseSummary, caseSeo, caseService, caseLabels, CASE_LABEL_FIELDS, contentHref,
   products, getProduct, isProductVisible, visibleProducts, productHref, productTemplate,
   getTestimonial, testimonialSignature,
   telegramButton, telegramUrl, singleHint, mailtoHref,
@@ -129,14 +143,41 @@ import {
   use it anyway for FAQ items, rows, notes, as the renderer does).
 - Services: `services` (all, by `order`), `getService('audit')`,
   `serviceByCodeword('Аудит')`, `serviceHref(slugOrEntry)` gives
-  `<base>/services/#<anchor>`. `servicePriceLine(s)` is the service's own
-  `price` or the global `work.price`, with a final period («Стоимость — после
-  первого созвона.»); `serviceDurationLine(s)` gives «Срок: около недели.».
-- Cases: `cases` (published, by `order`, the order of /cases/),
-  `getCase(slug)`, `isPublished(slug)`, `publishedCases(slugs)` keeps only
-  published ones, `caseHref(c)` gives `<base>/cases/#<anchor>`,
-  `caseService(c)` the service entry of a case (cases store a codeword),
-  `caseLabels(c, fields)` the non-empty label values.
+  `<base>/services/#<anchor>`. `serviceDurationLine(s)` gives «Срок: около
+  недели.».
+- Prices: `servicePrice(s)` is the service's own price `{ main, note?, more[] }`
+  or `null` (then the global line shows); `servicePriceLine(s)` the same as one
+  line of text («Цена: 15 000 ₽.» or «Точную цену называю письменно до старта.
+  Первый созвон бесплатный.», as price_line() in the renderer);
+  `globalPriceLine()` the global line; `splitLeadingPrice(text)` splits «12 000
+  ₽ за весь тренажёр, …» into `{ main: '12 000 ₽', rest }` (or `null`).
+  Components show prices with `PriceBlock` / `ServiceTerms`.
+- Cases: `cases` (published, by `order`, the order of /cases/ and of
+  previous/next), `getCase(slug)`, `isPublished(slug)`, `publishedCases(slugs)`
+  keeps only published ones, `casePath(c)` `/cases/<slug>/`, `caseHref(c)`
+  `<base>/cases/<slug>/` (the case page: use it for every link to a case),
+  `caseCardHref(c)` `<base>/cases/#<anchor>` (the card on /cases/: «Все кейсы»
+  on a case page), `caseNeighbours(c)` `{ prev, next }` by order (null at the
+  ends), `caseService(c)` the service entry of a case (cases store a
+  codeword), `caseLabels(c, fields)` the non-empty label values.
+  `caseSummary(c)`: the one line of a /cases/ card, the case's `summary`,
+  else its line in the home featured-cases block, else the first sentence of
+  «Контекст» (cut, not rewritten).
+  `caseSeo(c)`: `{ title, description }` of the case page, the case's `seo`
+  fields or «<shortTitle> — Даниил Евстратов» (short for search results and
+  Telegram previews; the full title stays the h1) and the first sentences of
+  «Контекст» and «Результат» (only the first one when together over 220
+  characters).
+  `caseWords()`: «Читать кейс», «Все кейсы», «Предыдущий кейс», «Следующий
+  кейс», «Что говорят коллеги», `nav` «Другие кейсы» (the name of the case
+  page's bottom navigation); the cases-list block of pages/cases.md overrides
+  them with `cardLink`, `allLink`, `prevLabel`, `nextLabel`, `voicesLabel`,
+  `navLabel` once the content has them.
+- Content links: `contentHref(href)` is `url(href)`, except that a link to a
+  case card written in the content (`/cases/#case-…`, e.g. the links of
+  staff-c1) goes to the case page. Components that render link fields of the
+  content (case links, proof links, hire facts and lines, product links,
+  contact and group notes) use it.
 - Products: `products` (visible, by `order`), `getProduct`,
   `visibleProducts(slugs)`, `productHref`, `productTemplate(p)` the message
   of the quiet link (global product template with the title, or the
@@ -376,7 +417,7 @@ Props: `text`, `cite`, `size` (`large` default, `medium`, `base`), `marks`
 ```
 
 Poster in the native player (9:16) and the quote beside it with the
-signature. `layout="card"` (home, /hire/, /cases/, always inside a
+signature. `layout="card"` (home, /hire/, the case pages, always inside a
 `Carousel`): a hairline on top, the video on 2 parts and the quote on 3 parts
 of the card at every width, the quote at the base size on phones and in the
 `size` from 720px. `layout="row"` (default, kept for client quotes): video 3
@@ -396,7 +437,7 @@ of 12 columns, quote 6 of 12; on phones a 7.5rem video column. Props:
 ```
 
 A horizontal row of slides (decision 11 of 14.10): «Что говорят коллеги» on
-the home page, /hire/ and the cases, and the product galleries. Pass the
+the home page, /hire/ and the case pages, and the product galleries. Pass the
 items and a function child that renders one slide (`Astro.slots.render` with
 the item and its index). The row scrolls with scroll snap (swipe on phones)
 and always shows part of the next slide; under it «1 из 5» / «1–2 из 5» (the
@@ -420,7 +461,7 @@ Props: `items`, `label`, `id` (unique prefix), `kind` (`cards` default:
 ### AgentsScheme (`components/scheme/`)
 
 ```astro
-<AgentsScheme idPrefix={`${c.data.anchor}-scheme`} level={3} facts={false} />       <!-- /cases/ -->
+<AgentsScheme idPrefix={`${id}-scheme`} level={2} facts={false} />                 <!-- case page -->
 <AgentsScheme level={5} titleSize="base" idPrefix={`${anchor}-scheme`} />         <!-- /hire/ -->
 <AgentsScheme heading={false} facts={false} idPrefix={`${d.anchor}-scheme`} />    <!-- /services/ «Подробнее» -->
 ```
@@ -440,8 +481,8 @@ tablets in portrait) the same labels as a vertical list (stages Вход,
 Распределение, AI-агенты with the three groups and the two human checks,
 Выход, the shared base; 1px frames, rules with small arrowheads). The facts
 under it: a wrapping line with hairlines, a two-column list below 720px;
-/cases/ passes `facts={false}` (the case infographic carries the numbers).
-Give it the full container width (1184px at a 1280px window): on /cases/
+the case page passes `facts={false}` (the case infographic carries the numbers).
+Give it the full container width (1184px at a 1280px window): on the case page
 under the case, on /hire/ as its own full-width row under the staff case, on
 /services/ inside the AI-agents «Подробнее».
 Props: `heading` (text or `false`), `level` (default 3), `titleSize`
@@ -473,8 +514,10 @@ screenshots are phone screens (554×1220 and 536×1170), use their own ratio.
 
 CaseLabels props: `case`, `fields` (default origin, industry, year, duration,
 direction), `status` (default true), `class`. The labels show in grey mono
-capitals (CSS `text-transform`), the status in bold black. CaseCard props: `case`, `line`,
-`linkLabel` (no link when omitted; the link goes to `/cases/#<anchor>`),
+capitals (CSS `text-transform`), the status in bold black. A number stays on
+the line of the word after it («23 дня»: a non-breaking space, typography only). CaseCard props: `case`, `line`,
+`linkLabel` (no link when omitted; the link goes to the case page
+`/cases/<slug>/`),
 `title` (`shortTitle` default or `title`; the home featured cards use
 `title`), `labels` (fields or `false`; default origin, industry, year,
 direction, as on the home page), `service` (show the service short name),
@@ -492,10 +535,16 @@ direction, as on the home page), `service` (show the service short name),
 ```
 
 An `<li>` with the compact logic of the service cards: title (full `title`,
-bold), the line, «Срок: …» and the price line one under the other in the
-same treatment as on the /services/ cards (base sans, the price line bold;
-`duration`, `price`), then the verb link (`action`: the service's `button`, a Telegram
-link that copies the start of the message, in bold) and «Подробнее»
+bold), the line, then «Срок» and «Цена» on the rail of the /services/ cards
+(`ServiceTerms`; `duration`, `price`): the duration as written, then the
+price, never louder than the title. Main rows (`size="large"`, title medium
+bold): the figure at the medium size, regular, and the `note` under it, so
+«15 000 ₽» reads as a session, not as the price of the framework the line
+also names (`show="note"`). Small rows (`size="small"`, title base bold): the
+figure only, at the body size (`show="main" size="base"`). The sub-prices
+stay on /services/, as the texts renderer asks (`price_line`). Then
+the verb link (`action`: the service's `button`, a Telegram link that copies
+the start of the message, in bold) and «Подробнее»
 (`linkLabel`; `href` override from the content, default `/services/#anchor`).
 From 720px title on 5 columns and the rest on 7. Props: `service`, `line`,
 `linkLabel`, `href`, `duration`, `price`, `action`, `size` (`large`,
@@ -506,13 +555,16 @@ From 720px title on 5 columns and the rest on 7. Props: `service`, `line`,
 `ServiceCard` renders every service as a compact card (decisions 8 and 10 of
 14.10, `render_card()` and `render_service()` in the texts renderer): number,
 title and the italic one-line `summary` (the full 6 columns) in columns 1–6;
-the three `highlights` (dash list), «Срок: …» and the price line
-(`servicePriceLine`, bold), the verb button (`TelegramAction` with
+the three `highlights` (dash list), «Срок» and «Цена» (`ServiceTerms`: the
+duration, then the `PriceBlock` with the figure, the note and the sub-prices,
+or the global line in bold), the verb button (`TelegramAction` with
 `label={button}`, no caption, no hint, no email line, so the Telegram
 template mechanism stays) in columns 7–12. The copy hint and the email line
 stand once in `ServicesIntro`, under «Не нашли своё?» (`intro.other.hint`,
-`intro.other.email`). Under the card «Подробнее» (`details.disclose`)
-opens the full template on the spot: body, `AgentsScheme` without heading and
+`intro.other.email`). Under the card «Подробнее» (`Disclosure`, sticky, with
+the service's `short` name as context; «Свернуть» is
+`serviceTemplate.labels.less` or the default) opens the full template on the
+spot: body, `AgentsScheme` without heading and
 facts for `scheme: "ai-agents"` (full width), «Для кого», «Что получите на
 руки», «Сколько длится», «Как идёт работа», «Что нужно от вас», «Что не
 входит», «Нейросеть и расходы», proof, «Мои продукты», «Что говорят
@@ -531,45 +583,123 @@ fills its column, the others are as wide as that height allows); on phones
 one under the other, at most 24rem high; the caption under each in small
 mono, a click opens the full image in a new tab (a plain link, no lightbox).
 
-### Disclosure (`.disclose`, global.css)
+### PriceBlock, ServiceTerms
 
 ```astro
-<details class="disclose"><summary>{labels.more}</summary>…</details>
+<PriceBlock service={s} />                                 <!-- figure, note, sub-prices; or the global line -->
+<PriceBlock service={s} show="note" />                     <!-- the figure and what it covers -->
+<PriceBlock service={s} show="main" size="base" />         <!-- the figure only, body size -->
+<PriceBlock text={hero.price} size="large" />              <!-- /guide/ hero: «12 000 ₽ за весь тренажёр, …» -->
+<ServiceTerms service={s} />                               <!-- /services/ card: «Срок» and «Цена» -->
+<ServiceTerms service={s} show="note" />                   <!-- home main rows, case page offer -->
+<ServiceTerms service={s} show="main" size="base" />       <!-- home rows «Ещё делаю на заказ» -->
 ```
 
-A native `<details>` whose `<summary>` looks like a small framed button and
-ends with «+» / «−» (hover inverts, no animation, no script). Used by
-`ServiceCard` («Подробнее») and `CaseArticle` («Читать кейс полностью»).
+`PriceBlock` (decision 16 of 14.10): `main` in the sans face, regular
+weight, at `--fs-medium` (default `size="medium"`, the size of a service
+title: the weight tells them apart), `--fs-base` (`size="base"`) or
+`--fs-large` (`size="large"`, only the /guide/ hero), `note` under it in the body size,
+`more` as a small dash list (0.9375rem). Typography only: a dash stays on the
+line of the word before it and «от», «до», «около» stay with the figure
+(non-breaking spaces), the words are as approved. Props: `service` (its
+price), `price` (an object), `text` (a line that starts with a figure: the
+figure on its own line, the rest of the sentence under it, one
+paragraph; a line without a figure renders as is), `show` (`full`, `note`:
+figure and note, `main`: the figure only), `size` (`medium`, `base`,
+`large`), `fallback` (show `site.work.price` in bold when
+there is no price; default true), `class`.
+`ServiceTerms`: a `<dl>` of two rows on one rail, the small mono name
+(«Срок», «Цена», the renderer's labels) in 4.5rem on the left, the value
+beside it on the baseline of its first line; a hairline above each row. Props:
+`service`, `duration`, `price` (rows on/off), `show`, `size` (passed to
+`PriceBlock`), `class`. /guide/ uses `PriceBlock text size="large"` in the
+hero (under a hairline, under the button and the email line) and `PriceBlock
+text` at the medium size for a note of a numbered block that starts with a
+figure («Что входит»).
 
-### Cases on /cases/ (`components/cases/`)
+### Disclosure (`components/Disclosure.astro`, `.disclose` in global.css)
 
-`CaseArticle`: an ink line, `CaseLabels`, the title (h2); then
-`CaseInfographic` (`infographic`), the optional one-line `summary`, «Что из
-этого сделаю для вас» (name in columns 1–3, the text in the medium size
-beside it, the service title linked to /services/); a vertical reel beside
-them (columns 11–12 from 1080px, 10–12 on tablets, a 7.5rem column beside
-the service line on phones), spanning exactly the rows that render
-(`--reel-rows`), so no empty row adds a gap. The full text (Контекст, Что сделал, Результат)
-in «Читать кейс полностью» (`details.disclose`, rows: name 1–3, text 4–10).
-After it, in the renderer's order: `AgentsScheme` (staff-c2), the links
-(framed small buttons), the case testimonials as a `Carousel` of cards. The
-anchor is on the article, so /cases/#case-… lands on the title.
+```astro
+<Disclosure more={labels.more} less="Свернуть" context={d.short} class="svc__more">…</Disclosure>
+```
+
+A native `<details class="disclose">` (decision 17 of 14.10). The summary
+holds a small framed button «Подробнее +»; while open it reads «Свернуть −»
+(both texts are in the markup, CSS shows one, so it works without JS; hover
+inverts the button). `sticky` (default): while open, the summary sticks under
+the site header (`top: header-h + 1px`) as a full-width bar on paper with a
+hairline under it and shows `context` beside the button in small grey mono
+capitals, so the text can be closed from its middle. While the bar is
+stuck, everything inside the details has `scroll-margin-top` of the bar's
+height (`--disclose-bar`), so focus moved with Tab or Shift+Tab stops under
+the bar, not behind it (WCAG 2.4.11). At the end of the content a second
+«Свернуть −» (`.disclose__close`, the same framed `.disclose__btn` as the
+summary, not a filled button: that is the Telegram CTA's look) closes it,
+moves the focus to the summary and jumps at once (`scrollBy`, behavior
+`instant`) to the top of the closest `[data-disclose-root]` (the service
+card) under the header, but never so far that the summary leaves the screen:
+on a phone, where a card is taller than the screen, the summary lands at the
+bottom edge with the price and the button above it. Closing from the stuck
+summary makes the same jump only when the summary's own place is above the
+header after closing; closing it where it opened moves nothing. The end button shows only
+once `src/scripts/disclose.ts` ran (`data-ready` on the details), so without
+JS there is no dead button. Props: `more`, `less`, `context`, `sticky`,
+`class` (style it from the parent with `:global()`). Used by `ServiceCard`.
+
+### Cases (`components/cases/`, decision 17 of 14.10)
+
+/cases/ is a list of cards; every published case has its page
+/cases/<slug>/ (`src/pages/cases/[slug].astro`, slug = file name).
+`CaseListCard` (a card on /cases/): an ink line, `CaseLabels` with the status,
+the title (h2, medium, a link to the case page: people tap titles first),
+the infographic facts (`CaseInfographic parts={['facts']}`), the one line
+`caseSummary(c)`, «Читать кейс» (small framed button to the case page,
+`caseWords().cardLink`). The card carries the case
+`anchor` as its id, so /cases/#case-… still lands on it. From 1080px the text
+in columns 1-5 and the facts in 6-12 beside it; below that one column.
+`CaseFull` (the case page): «Все кейсы» (to the card on /cases/,
+`caseCardHref`), the labels, the title (h1 at the large size), the whole
+infographic at the full width, the text rows (Контекст, Что сделал,
+Результат; from 1080px the name in 1-3 and the text in 4-10, or 4-9 when the
+vertical reel stands in 10-12 beside them; below 1080px the name above the
+text, the reel in 10-12 from 720px and at half the width after the text on
+phones), the `AgentsScheme` (staff-c2, full width, h2), the links (framed
+small buttons, `contentHref`), the testimonials as a `Carousel` of cards,
+then «Что из этого сделаю для вас» (an ink line, the name in 1-3, the text
+in the medium size in 4-10 with the service title linked to /services/, the
+service's «Срок» and «Цена» (`ServiceTerms show="note"`: the figure at the
+medium size and what it covers), and the verb `TelegramAction`:
+`label={button}`, no caption, its hint, no email line), then the bottom
+navigation `<nav aria-label={caseWords().nav}>` («Другие кейсы»): the
+previous and next case by order (`caseNeighbours`: a mono label and the short
+title; two halves from 720px, next at the right edge) and «Все кейсы» on its
+own row under them (`caseCardHref`, back to this case's card).
+The route adds `ContactShort` and takes the title and description from
+`caseSeo`.
+`ContactShort`: the short contact block of a case page (anchor `contact`):
+the heading of the /cases/ contact block at the medium size, the plain
+«Написать в Telegram» button (opens the chat), the email line, the workload
+and the global price line in grey. Props: `block`, `lines` (default
+`['global.work.price']`), `class`.
 `CaseInfographic`: the facts as large mono values with their labels under an
 ink line (only the number is large: a qualifier before it, «около», «почти»,
 «в», and a unit after it, «дня», «млн ₽», are set small beside it; a value
 without a digit is bold sans at the medium size; every value box has the
-height of one large mono line, so the labels of a row line up), two per row and all in one row from 560px of
-available width; `flow` as numbered steps joined by 1px rules (a row from
-560px, a column with a vertical rule below); `beforeAfter` as «Было» (grey)
-and «Стало» (bold, ink line) side by side. Container queries, so it works
-beside a reel and at the full width. «Шаги», «Было», «Стало» are the
-renderer's labels. `CasesToc`: the groups (`TocGroups`: the service's short
-name in small mono capitals, then the rows of `row.fields`, today the short
-titles only, and the group's products with their labels in small mono on the
-title's line). From 720px the table is open, the groups flow in 2 columns
-(3 from 1080px); on phones it is folded in a native `<details>` whose summary
-is the heading (h2) with «+» / «−». The two renderings carry the same links,
-only one is displayed. The legend line under each.
+height of one large mono line, so the labels of a row line up), two per row;
+three in a row from 560px of available width, four from 760px (so labels
+like «уровня самостоятельности» never break inside a word); `flow` as
+numbered steps joined by 1px rules (a row from 560px, a column with a
+vertical rule below); `beforeAfter` as «Было» (grey) and «Стало» (bold, ink
+line) side by side. Container queries, so it works on a card and at the full
+width. «Шаги», «Было», «Стало» are the renderer's labels. Prop `parts`
+(default facts, flow, beforeAfter). `CasesToc`: the groups (`TocGroups`: the
+service's short name in small mono capitals, then the rows of `row.fields`,
+today the short titles only, linking to the case pages, and the group's
+products with their labels in small mono on the title's line). From 720px the
+table is open, the groups flow in 2 columns (3 from 1080px); on phones it is
+folded in a native `<details>` whose summary is the heading (h2) with «+» /
+«−». The two renderings carry the same links, only one is displayed. The
+legend line under each.
 
 ### Products on /products/ (`components/products/`)
 
@@ -627,7 +757,7 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 - `about` (about): `heading`, `portrait`, `portraitAlt`, `photo? { src, alt }` (hidden until Daniil sends the photo; when visible it replaces `portrait` here), `text[]`, `experience[{ years, place, role, note }]`, `experienceLink { label, href }` (`/hire/#experience`), `productsLine { text, linkLabel, href }`
 - `contact` (contact): `anchor`, `heading`, `hint`, `buttons[]`, `email`, `lines[]`, `workload`
 
-**services**: `serviceTemplate { labels { forWhom, youGet, duration, steps, fromYou, notIncluded, ai, proof, proofLinks, proofCasesBuilt, proofProducts, testimonials, readCase, more }, button { source, hint, email } }`
+**services**: `serviceTemplate { labels { forWhom, youGet, duration, steps, fromYou, notIncluded, ai, proof, proofLinks, proofCasesBuilt, proofProducts, testimonials, readCase, more, less? }, button { source, hint, email } }` (`less`, «Свернуть», is not in the content yet: `ServiceCard` falls back to «Свернуть»)
 - `intro` (intro): `heading` (h1), `lead[]`, `toc.items[]` (service slugs, show `short`), `other { text, button }` (codeword «Другое»)
 - `group-learning`, `group-development`, `group-personal` (service-group): `heading`, `lead?`, `note? { text, links[{ label, service | case }] }`, `services[]`, `variant?` (`short` → `ServiceCard short`)
 - `formats` (formats, anchor `formats`): `heading`, `howWeStart { showConsultationNote, showPrepare, showWorkload }`, `pricing { heading, items[{ title, points[] }] }`, `predictable { heading, items[{ title, text }] }`, `proofImages[{ src, alt, caption, status? }]` (the work screenshots under «Почему со мной предсказуемо»; hidden ones are dropped by the export), `terms { heading, items[{ id, text } | { id, source }] }` (`gref(source)`)
@@ -637,8 +767,9 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 **cases**
 - `intro`: `heading` (h1), `lead`
 - `toc` (cases-toc): `heading`, `groups[{ service, products? }]` (rows: published cases whose `service` codeword matches; skip empty groups), `row.fields` (`shortTitle, industry, duration`), `productRow { labels[], hrefPattern }` (`/products/#{anchor}`), `legend { origin, direction }`
-- `cases` (cases-list): `sort`, `sections[]` (the four h2 sections), `labels[]` (label fields), `statusField`, `serviceLinkLabel` («Что из этого сделаю для вас»: link to the case's service, `serviceHref(caseService(c))`)
-- `contact`
+- `cases` (cases-list): `sort`, `sections[]` (the four h2 sections), `labels[]` (label fields), `statusField`, `serviceLinkLabel` («Что из этого сделаю для вас»: link to the case's service, `serviceHref(caseService(c))`); optional, not in the content yet: `cardLink`, `allLink`, `prevLabel`, `nextLabel`, `voicesLabel`, `navLabel` (`caseWords()`). The same block drives the case pages /cases/<slug>/ (sections, labels, status, service line)
+- `contact` is also the source of the case pages' `ContactShort` (heading, workload, email)
+- `contact` (the full block on /cases/)
 
 **products**
 - `intro`: `heading` (h1), `lead[]`
@@ -646,9 +777,9 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 - `custom` (cta-line, anchor `contact`): `heading`, `text`, `links[{ label, service, href }]`, `buttons[]`, `hint`, `email`, `lines[]`
 
 **guide** (`header.ctaTarget: '#contact'`)
-- `hero`: `heading` (h1), `lead`, `button { codeword, hint }`, `email`, `price`, `media` (pending)
+- `hero`: `heading` (h1), `lead`, `button { codeword, hint }`, `email`, `price` («12 000 ₽ за весь тренажёр, …»: `PriceBlock text`), `media` (pending)
 - `recognize`: `heading`, `scenes[]`, `story { heading, case, text[] }`, `quote { text, attribution }`, `task { caption, source, instruction, prompt, notice, media }`, `demo { label, url, note, tryFirst }`
-- `included`, `safety` (numbered): `heading`, `lead?`, `items[{ title, text }]`, `notes[]`
+- `included`, `safety` (numbered): `heading`, `lead?`, `items[{ title, text }]`, `notes[{ text }]` (a note that starts with a figure in roubles is a `PriceBlock text`, the others grey lines)
 - `faq`, `about` (`heading`, `portrait`, `portraitAlt`, `text[]`, `link { label, href }`), `contact` (single button)
 
 **hire** (own `header { name, links, cta }`)
@@ -681,11 +812,16 @@ points), `forWhom[]`, `youGet[]`, `duration`, `durationNote?`,
 `steps[]`, `fromYou?`, `ai?`, `notIncluded[]`, `proofCases[]`,
 `proofNotes? { caseSlug: note }`, `proofLinks?[{ label, url, note?, case?, product? }]`,
 `proofProducts?[]`, `testimonials?[]`, `more? { label, url }`,
-`related? { text, service?, case? }`, `price?` (absent for now: the card
-shows `site.work.price`), `scheme?` (`"ai-agents"` on ai-agents); body: one
+`related? { text, service?, case? }`, `price? { main, note?, more?[] }`
+(decision 16 of 14.10; all seven services have one now: `main` the figure or
+range, «15 000 ₽», «от 250 000 ₽», «70 000–100 000 ₽», `note` what it covers
+in one short line, `more` sub-prices or variants as «что — цена»; the spaces
+inside figures are non-breaking; without `price` the card shows
+`site.work.price`), `scheme?` (`"ai-agents"` on ai-agents); body: one
 paragraph (`bodyHtml`). Slugs and anchors: consulting, ai-agents, audit,
-course, app, game, guide. Card (render_card): highlights, «Срок: …» and the
-price line, the verb button. Full template order (render_service, inside
+course, app, game, guide. Card (render_card): highlights, «Срок» and the
+price block (render_price: main large, note under it, more as a small list),
+the verb button. Home rows (price_line): the figure only. Full template order (render_service, inside
 «Подробнее»): body, the scheme, «Для кого»,
 «Что получите на руки», «Сколько длится» (`duration + '. ' + durationNote`),
 «Как идёт работа» (numbered), «Что нужно от вас», «Что не входит»,
@@ -702,8 +838,12 @@ price line, the verb button. Full template order (render_service, inside
 `published`, `hire? { place, line? }`, `links?[{ label, url, note? }]`,
 `reel? { video, loop, poster }`, `scheme?` (`"ai-agents"`, staff-c2 only:
 `AgentsScheme`), `infographic? { facts[2–4]{ value, label }, flow?[2–5], beforeAfter? { before, after } }`
-(every case has one; facts only from the case text), `summary?` (optional
-one-liner under the infographic; no case has it yet), `testimonials?[]`.
+(every case has one; facts only from the case text), `summary?` (the one
+line of the /cases/ card: what was done and for whom; every published case
+has it since the review of 14.10; without it the card shows the home line or
+the first sentence of «Контекст»), `seo? { title?, description? }` (the case page's
+search title and description; absent, `caseSeo` builds them), `testimonials?[]`.
+Every published case has the page /cases/<slug>/ (slug = file name).
 Body sections: «Контекст», «Что сделал», «Результат», «Что из этого сделаю
 для вас» (`bodySections`).
 
@@ -784,9 +924,15 @@ instead of shrinking), an even row of `--row-items` (default 6) from 1080px
 
 ## 7. Behaviour and analytics
 
-Two client scripts. `src/scripts/carousel.ts` (bundled by `Carousel` only
-on pages with a carousel: home, /cases/, /products/, /hire/) wires «Назад»
-and «Дальше», the arrow keys and the counter (section 4, Carousel).
+Three client scripts. `src/scripts/carousel.ts` (bundled by `Carousel` only
+on pages with a carousel: home, /products/, /hire/ and the case pages with
+testimonials) wires «Назад» and «Дальше», the arrow keys and the counter
+(section 4, Carousel). `src/scripts/disclose.ts` (bundled by `Disclosure`,
+/services/) shows the second «Свернуть» at the end of a long disclosure and
+makes it close the details, focus the summary and jump to the card's top
+(keeping the summary on screen); closing from the stuck summary jumps back
+too, only when the summary's own place is above the header after closing
+(section 4, Disclosure).
 `src/scripts/telegram.ts` is bundled into every page by `BaseLayout`. It copies `data-tg-template` on click and swaps the
 label for `data-tg-copied` during `data-tg-ms`, and, when `<html
 data-metrika>` is set (production), sends `reachGoal` for elements with
@@ -794,13 +940,15 @@ data-metrika>` is set (production), sends `reachGoal` for elements with
 `hire` (footer link to /hire/), `product` (product buttons; pass
 `goal="product"`). No other scripts: no `/#hire` redirect, no autoplay, no
 lightbox (the work screenshots open as plain links), the disclosures are
-native `<details>`.
+native `<details>` that work without the script.
 
 ## 8. Routes
 
 `src/pages/index.astro` (/), `services/`, `cases/`, `products/`, `hire/`,
-`guide/` (`index.astro` each), `404.astro`, and `work.html.ts` (redirect to
-`/services/#formats` with meta refresh, canonical and a link). Every page
+`guide/` (`index.astro` each), `cases/[slug].astro` (one page per published
+case, /cases/<slug>/, slug = file name: `CaseFull` and `ContactShort`),
+`404.astro`, and `work.html.ts` (redirect to `/services/#formats` with meta
+refresh, canonical and a link). Every page
 renders its content blocks in the content order, as the texts renderer does.
 
 ## 9. Static files (`public/`)

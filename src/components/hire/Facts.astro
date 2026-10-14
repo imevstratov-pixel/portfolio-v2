@@ -5,8 +5,8 @@
 // Phones: name above value. Extra lines (education) follow the value on
 // their own lines; links (profiles) form a comma list. Empty rows are skipped.
 import Section from '../Section.astro';
-import { visible, type Block } from '../../lib/content';
-import { isExternal, url } from '../../lib/url';
+import { contentHref, visible, type Block } from '../../lib/content';
+import { isExternal } from '../../lib/url';
 
 interface Props {
   block: Block;
@@ -41,7 +41,7 @@ const rows = visible<Row>(b.rows)
                   {r.links.map((l) => (
                     <li>
                       <a
-                        href={url(l.url)}
+                        href={contentHref(l.url)}
                         target={isExternal(l.url) ? '_blank' : undefined}
                         rel={isExternal(l.url) ? 'noopener' : undefined}
                       >

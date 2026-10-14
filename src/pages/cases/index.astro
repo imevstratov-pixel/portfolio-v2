@@ -1,16 +1,20 @@
 ---
-// /cases/: intro, table of contents by service, every published case as an
-// article with its anchor (the order of render_cases() in the texts
-// renderer), the contact block. Blocks are rendered in content order.
+// /cases/: intro, table of contents by service, every published case as a
+// card (CaseListCard: labels, title, the infographic facts, one line, «Читать
+// кейс» to /cases/<slug>/) with its anchor, so old /cases/#case-… links
+// land on the card; the contact block. Blocks are rendered in content order.
+// The full cases live on their own pages (src/pages/cases/[slug].astro,
+// decision 17 of 14.10).
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/Section.astro';
 import ContactBlock from '../../components/ContactBlock.astro';
 import CasesToc from '../../components/cases/CasesToc.astro';
-import CaseArticle from '../../components/cases/CaseArticle.astro';
-import { cases, getPage, pageBlocks } from '../../lib/content';
+import CaseListCard from '../../components/cases/CaseListCard.astro';
+import { cases, caseWords, getPage, pageBlocks } from '../../lib/content';
 
 const page = getPage('cases');
 const blocks = pageBlocks(page);
+const words = caseWords();
 ---
 
 <BaseLayout page={page} current="/cases/">
@@ -27,15 +31,9 @@ const blocks = pageBlocks(page);
       if (b.type === 'cases-toc') return <CasesToc block={b} />;
       if (b.type === 'cases-list') {
         return (
-          <div class="cases-list">
+          <div class="wrap cases-list">
             {cases.map((c) => (
-              <CaseArticle
-                case={c}
-                sections={b.sections}
-                labels={b.labels}
-                serviceLinkLabel={b.serviceLinkLabel}
-                status={!!b.statusField}
-              />
+              <CaseListCard case={c} labels={b.labels} status={!!b.statusField} linkLabel={words.cardLink} />
             ))}
           </div>
         );
@@ -45,3 +43,11 @@ const blocks = pageBlocks(page);
     })
   }
 </BaseLayout>
+
+<style>
+  .cases-list {
+    margin-top: var(--s5);
+    display: grid;
+    row-gap: var(--s4);
+  }
+</style>

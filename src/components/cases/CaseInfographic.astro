@@ -12,18 +12,22 @@
 //   of available width, a column with a vertical rule below that;
 // - beforeAfter (optional): two columns «Было» and «Стало».
 // The words «Шаги», «Было», «Стало» are the texts renderer's labels.
-// The strip adapts to its own width (container queries), so it works in the
-// 10 columns beside a reel and at the full width.
+// The strip adapts to its own width (container queries), so it works on the
+// /cases/ cards and at the full width of a case page.
+// `parts` picks what to show (default all three; the /cases/ cards show the
+// facts only, the case page everything).
 interface Props {
   infographic: {
     facts: Array<{ value: string; label: string }>;
     flow?: string[];
     beforeAfter?: { before: string; after: string };
   };
+  /** Which parts to show (default facts, flow and beforeAfter). */
+  parts?: Array<'facts' | 'flow' | 'beforeAfter'>;
   class?: string;
 }
 
-const { infographic: ig, class: className } = Astro.props;
+const { infographic: ig, parts = ['facts', 'flow', 'beforeAfter'], class: className } = Astro.props;
 
 // «около 1000» -> pre «около», num «1000»; «5–6 часов» -> num «5–6», post «часов»;
 // «100+ млн ₽» -> num «100+», post «млн ₽»; «1‑е», «×26», «2982%», «500 000», «30 ₽» stay whole.
@@ -34,9 +38,9 @@ const split = (value: string): Parts => {
   if (!m) return null;
   return { pre: m[1].trim(), num: m[2], post: (m[3] ?? '').trim() };
 };
-const facts = (ig.facts ?? []).filter((f) => f.value && f.label).map((f) => ({ ...f, parts: split(f.value) }));
-const flow = (ig.flow ?? []).filter(Boolean);
-const ba = ig.beforeAfter?.before && ig.beforeAfter?.after ? ig.beforeAfter : null;
+const facts = (parts.includes('facts') ? (ig.facts ?? []) : []).filter((f) => f.value && f.label).map((f) => ({ ...f, parts: split(f.value) }));
+const flow = parts.includes('flow') ? (ig.flow ?? []).filter(Boolean) : [];
+const ba = parts.includes('beforeAfter') && ig.beforeAfter?.before && ig.beforeAfter?.after ? ig.beforeAfter : null;
 ---
 
 <div class:list={['ig', className]}>
@@ -161,7 +165,11 @@ const ba = ig.beforeAfter?.before && ig.beforeAfter?.after ? ig.beforeAfter : nu
     .ig__facts--3 {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+  }
 
+  /* four in a row only when each gets about 170px: labels like
+     «уровня самостоятельности» must not break inside a word */
+  @container (min-width: 760px) {
     .ig__facts--4 {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
