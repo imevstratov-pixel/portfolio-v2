@@ -2,30 +2,44 @@
 // One product on /products/ (block type "products"), anchored by its anchor.
 // Content follows render_products() in the texts renderer: kind and one-liner,
 // body, «Что внутри», «Статус» (status and its note), «Где работает», the
-// screenshot if there is one, the action button (none for the party games),
-// secondary links with their notes, the quiet Telegram link with the
-// product's message template.
+// gallery (or the one screenshot in `media` when there is no gallery), the
+// action button (none for the party games), secondary links with their
+// notes, the quiet Telegram link with the product's message template.
 //
 // Layout (12 columns from 720px): an ink line on top, the kind as a mono label,
-// the name in huge type across the row; below it the text in columns 1-7
-// (one-liner, body, facts, button, links, quiet link) and the side column
-// 9-12: the phone screenshot if there is one, otherwise the facts (three
-// labelled rows under hairlines), so the two columns stay about equal.
-// Phones: one column; the screenshot comes first, right under the name.
+// the name in huge type across the row.
+// - Gallery of two or more (decision 14 of 14.10): a Carousel row right under
+//   the name (screenshots and native videos with posters, one row height,
+//   each as wide as its own ratio, the caption under each), then the text in
+//   columns 1-7 and the facts in 9-12.
+// - One picture: the text in columns 1-7 (facts under the body) and the
+//   screenshot with its caption in the side column 9-12.
+// - Nothing: the facts in the side column.
+// Phones: one column; the gallery or the screenshot comes first, under the name.
+// The gallery's first shot is also `media` in the content: it is shown once.
+// Every screenshot of the gallery is a plain link to the full file (new tab,
+// no lightbox), as the work screenshots on /services/: on phones the slides
+// are about 290px wide and their interface text is too small to read.
+// Loading: only the first slide of the first product (`first`) is eager, the
+// rest lazy (the brief: lazy below the fold).
 import Prose from '../Prose.astro';
 import Button from '../Button.astro';
 import Media from '../Media.astro';
+import Carousel from '../Carousel.astro';
 import TelegramButton from '../TelegramButton.astro';
 import ProductFacts from './ProductFacts.astro';
 import { bodyHtml, productTemplate, visible, type ProductEntry } from '../../lib/content';
 import { isExternal, url } from '../../lib/url';
+import { imageSize } from '../../lib/media';
 
 interface Props {
   product: ProductEntry;
   labels: { inside: string; status: string; platform: string };
+  /** The first product on the page: its first picture loads eagerly. */
+  first?: boolean;
 }
 
-const { product: p, labels } = Astro.props;
+const { product: p, labels, first = false } = Astro.props;
 const d = p.data;
 const id = d.anchor;
 const titleId = `${id}-title`;
@@ -38,10 +52,23 @@ const facts = [
   { label: labels.platform, value: d.platform },
 ].filter((f) => f.value);
 
-const media = d.media?.src ? d.media : null;
-// The side column holds the screenshot when there is one (the facts then go
-// under the body), otherwise the facts. Keeps both columns about equal.
-const factsInMain = !!media;
+type Shot = { type: 'image' | 'video'; src: string; poster?: string; alt: string; caption?: string };
+const gallery: Shot[] = visible(d.gallery).filter((g) => g.src);
+const shots: Shot[] = gallery.length
+  ? gallery
+  : d.media?.src
+    ? [{ type: /\.(mp4|webm|mov)$/i.test(d.media.src) ? 'video' : 'image', src: d.media.src, alt: d.media.alt }]
+    : [];
+// width / height of every shot (a video takes its poster's)
+const ratio = (g: Shot) => {
+  const size = imageSize(g.type === 'video' ? (g.poster ?? '') : g.src);
+  return size ? size.width / size.height : g.type === 'video' ? 16 / 9 : 1;
+};
+const row = shots.length > 1 ? shots : [];
+const single = shots.length === 1 ? shots[0] : null;
+// The side column holds the single screenshot (the facts then go under the
+// body), otherwise the facts. Keeps both columns about equal.
+const factsInMain = !!single;
 const secondary = visible(d.secondaryLinks);
 ---
 
@@ -52,6 +79,43 @@ const secondary = visible(d.secondaryLinks);
         <p class="label">{d.kind}</p>
         <h2 id={titleId} class="product__title t-huge">{d.title}</h2>
       </header>
+
+      {
+        row.length > 0 && (
+          <div class="product__gallery">
+            <Carousel items={row} kind="media" ratios={row.map(ratio)} label={d.title} id={`${id}-gallery`} bleed>
+              {(g: Shot, i: number) => (
+                <figure class="shot">
+                  <div class:list={['shot__frame', g.type === 'image' && 'shot__frame--image']}>
+                    {g.type === 'image' ? (
+                      <a class="shot__link" href={url(g.src)} target="_blank" rel="noopener">
+                        <Media
+                          type="image"
+                          src={g.src}
+                          alt={g.alt}
+                          ratio={`${ratio(g).toFixed(4)}`}
+                          loading={first && i === 0 ? 'eager' : 'lazy'}
+                        />
+                      </a>
+                    ) : (
+                      <Media
+                        type="video"
+                        src={g.src}
+                        poster={g.poster}
+                        alt={g.alt}
+                        label={g.caption ?? g.alt}
+                        ratio={`${ratio(g).toFixed(4)}`}
+                        loading={first && i === 0 ? 'eager' : 'lazy'}
+                      />
+                    )}
+                  </div>
+                  {g.caption && <figcaption class="shot__caption">{g.caption}</figcaption>}
+                </figure>
+              )}
+            </Carousel>
+          </div>
+        )
+      }
 
       <div class="product__grid">
         <div class="product__main">
@@ -100,10 +164,19 @@ const secondary = visible(d.secondaryLinks);
         <div class="product__side">
           {!factsInMain && <ProductFacts class="product__facts" facts={facts} />}
           {
-            media && (
-              <div class="product__media">
-                <Media src={media.src} alt={media.alt} />
-              </div>
+            single && (
+              <figure class="product__media shot">
+                <div class:list={['shot__frame', single.type === 'image' && 'shot__frame--image']}>
+                  {single.type === 'image' ? (
+                    <a class="shot__link" href={url(single.src)} target="_blank" rel="noopener">
+                      <Media type="image" src={single.src} alt={single.alt} loading={first ? 'eager' : 'lazy'} />
+                    </a>
+                  ) : (
+                    <Media type={single.type} src={single.src} poster={single.poster} alt={single.alt} label={single.caption ?? single.alt} />
+                  )}
+                </div>
+                {single.caption && <figcaption class="shot__caption">{single.caption}</figcaption>}
+              </figure>
             )
           }
         </div>
@@ -164,8 +237,31 @@ const secondary = visible(d.secondaryLinks);
     order: 4;
   }
 
-  .product__media :global(.media) {
+  /* screenshots often have a white edge: a hairline frame keeps them apart
+     from the page (videos have their own black box) */
+  .shot__frame--image :global(.media) {
     outline: var(--hair);
+    outline-offset: -1px;
+  }
+
+  .shot {
+    display: grid;
+    gap: var(--s1);
+  }
+
+  .shot__link {
+    display: block;
+  }
+
+  .shot__caption {
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+    max-width: 44ch;
+  }
+
+  .product__gallery {
+    margin-top: var(--s3);
   }
 
   .product__actions {

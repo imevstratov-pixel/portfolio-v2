@@ -4,7 +4,9 @@
 //   type "contact" (home, services, cases): heading, hint, grid of buttons,
 //     email line, workload line, lines (price, payment, languages);
 //   type "contact" with one `button` (guide): heading, text, one button with
-//     its hint, email line, lines;
+//     its hint, email line, lines; when the codeword belongs to a service and
+//     the block gives no label, the button shows the service's verb label
+//     («Заказать тренажёр»), no caption (decision 8 of 14.10);
 //   type "contact" with `email: { text, subject }` (hire): heading, text, the
 //     Telegram button with its own label and caption, the email as a second
 //     button, telegramText, resume links (no hint);
@@ -16,7 +18,7 @@ import TelegramButton from './TelegramButton.astro';
 import TelegramEmailButtons from './TelegramEmailButtons.astro';
 import EmailLine from './EmailLine.astro';
 import Resumes from './Resumes.astro';
-import { gref, singleHint, telegramButton, workloadLine, type Block } from '../lib/content';
+import { gref, serviceByCodeword, singleHint, telegramButton, workloadLine, type Block } from '../lib/content';
 import { url } from '../lib/url';
 
 interface Props {
@@ -40,6 +42,8 @@ const emailObj: { text: string; subject?: string } | undefined =
 const emailLine: string = emailObj ? '' : (block.email ?? 'global.email.line');
 const template: string | undefined = single ? telegramButton(single).template : undefined;
 const resumes: Array<{ label: string; meta?: string; href: string }> = block.resumes ?? [];
+const verb: string | undefined = single && !block.button.label ? serviceByCodeword(single)?.data.button : undefined;
+const singleButton = single ? (verb ? { ...block.button, label: verb, caption: false as const } : block.button) : undefined;
 ---
 
 <Section id={block.anchor ?? 'contact'} heading={block.heading} size={size} rule={rule} class:list={['contact', className]}>
@@ -59,7 +63,7 @@ const resumes: Array<{ label: string; meta?: string; href: string }> = block.res
     {
       single ? (
         <div class="contact__single">
-          <TelegramEmailButtons button={block.button} email={emailObj} />
+          <TelegramEmailButtons button={singleButton} email={emailObj} />
           {block.button.hint && <p class="contact__hint label">{singleHint(single)}</p>}
           {!emailObj && <EmailLine line={emailLine} codeword={single} template={template} />}
           {block.telegramText && <p>{block.telegramText}</p>}

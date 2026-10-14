@@ -5,11 +5,15 @@
 // «Коротко»), everything else on the right 9: «role, place» (h3), the full
 // name and the note in grey, the description, results as a dash list, the
 // tools line, the case lines (show: line, with their links) and the staff
-// cases in full (show: full, StaffCase with the reel beside the text).
+// cases in full (show: full, StaffCase with the reel beside the text, in
+// columns 4-12 like the body). A case with `scheme: true` gets the
+// AgentsScheme of the case right under it across all 12 columns: the drawing
+// needs 1180px at 1:1 and would scroll in the 9 columns of the body.
 // Below 1080px the dates stand above the heading. Order and words follow
 // render_hire() in the texts renderer.
 import Section from '../Section.astro';
 import StaffCase from './StaffCase.astro';
+import AgentsScheme from '../scheme/AgentsScheme.astro';
 import { getCase, isPublished, visible, type Block } from '../../lib/content';
 import { isExternal, url } from '../../lib/url';
 
@@ -43,7 +47,12 @@ const items = visible<Item>(b.items).map((it) => {
       .filter((c) => c.show === 'line')
       .map((c) => ({ text: getCase(c.case).data.hire?.line ?? '', links: visible(c.links).filter((l) => l?.url && l?.label) }))
       .filter((l) => l.text),
-    full: refs.filter((c) => c.show !== 'line'),
+    full: refs
+      .filter((c) => c.show !== 'line')
+      .map((c) => {
+        const scheme = c.scheme ? getCase(c.case).data.scheme : undefined;
+        return { ...c, scheme, anchor: getCase(c.case).data.anchor };
+      }),
   };
 });
 const dot = (t: string) => (/[.!?…]$/.test(t) ? t : t + '.');
@@ -102,14 +111,19 @@ const dot = (t: string) => (/[.!?…]$/.test(t) ? t : t + '.');
                 ))}
               </ul>
             )}
-            {it.full.length > 0 && (
-              <div class="exp__cases">
-                {it.full.map((c) => (
-                  <StaffCase slug={c.case} display={display} scheme={!!c.scheme} />
-                ))}
-              </div>
-            )}
           </div>
+          {it.full.map((c) => (
+            <>
+              <div class="exp__case">
+                <StaffCase slug={c.case} display={display} />
+              </div>
+              {c.scheme === 'ai-agents' && (
+                <div class="exp__scheme">
+                  <AgentsScheme level={5} titleSize="base" idPrefix={`${c.anchor}-scheme`} />
+                </div>
+              )}
+            </>
+          ))}
         </li>
       ))
     }
@@ -160,7 +174,7 @@ const dot = (t: string) => (/[.!?…]$/.test(t) ? t : t + '.');
     min-width: 0;
   }
 
-  .exp__body > :not(.exp__cases) {
+  .exp__body > * {
     max-width: var(--measure);
   }
 
@@ -181,9 +195,16 @@ const dot = (t: string) => (/[.!?…]$/.test(t) ? t : t + '.');
     margin-top: 0.25rem;
   }
 
-  .exp__cases {
-    display: grid;
-    gap: var(--s4);
-    margin-top: var(--s1);
+  /* staff cases under the body: columns 4-12 from 1080px; the scheme of a
+     case under it at the full width */
+  .exp__case,
+  .exp__scheme {
+    margin-top: var(--s2);
+  }
+
+  @media (min-width: 1080px) {
+    .exp__item > .exp__case {
+      grid-column: 4 / -1;
+    }
   }
 </style>

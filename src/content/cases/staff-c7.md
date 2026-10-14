@@ -1,6 +1,6 @@
 ---
-title: 'Школа вожатых №1 в России: учил преподавателей вести занятия'
-shortTitle: Школа вожатых №1 в России
+title: 'Учил преподавателей школы вожатых вести занятия: первое место среди таких школ в России'
+shortTitle: Наставник преподавателей школы вожатых
 origin: В штате
 industry: высшее образование
 year: 2018–2020
@@ -11,6 +11,12 @@ anchor: case-counselor-school
 featured: false
 order: 170
 published: true
+infographic:
+  facts:
+  - value: 1‑е
+    label: место среди школ вожатых в России
+  - value: 90%
+    label: студентов работодатели оценили как хорошо подготовленных
 hire:
   place: university
 reel:

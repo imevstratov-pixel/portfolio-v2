@@ -1,13 +1,17 @@
 ---
-// First screen of /guide/ (block "hero"): the h1, the lead, the «Гайд»
-// Telegram button with its hint and the email line, and the price line.
+// First screen of /guide/ (block "hero"): the h1, the lead, the Telegram
+// button with its hint and the email line, and the price line. The button
+// names the visitor's action (decision 8 of 14.10): the `button` label of the
+// service whose codeword it carries («Заказать тренажёр» for «Гайд»), no
+// caption, the same as the service card on /services/; it still copies the
+// «Гайд» template, and the hint still names the word «Гайд».
 // The screenshot of the trainer (media) is still pending: while its src is
 // empty the text uses the width; once it exists it stands to the right of the
 // text from 1080px (a plain rectangle, no phone frame) and under it on phones.
 import Section from '../Section.astro';
 import Media from '../Media.astro';
 import TelegramAction from '../TelegramAction.astro';
-import type { Block } from '../../lib/content';
+import { serviceByCodeword, type Block } from '../../lib/content';
 
 interface Props {
   block: Block;
@@ -15,6 +19,7 @@ interface Props {
 
 const { block } = Astro.props;
 const media = block.media?.src ? block.media : undefined;
+const verb: string | undefined = block.button?.codeword ? serviceByCodeword(block.button.codeword)?.data.button : undefined;
 ---
 
 <Section rule="none" pad="s4" class="hero">
@@ -24,7 +29,13 @@ const media = block.media?.src ? block.media : undefined;
       {block.lead && <p class="lead">{block.lead}</p>}
       {
         block.button?.codeword && (
-          <TelegramAction codeword={block.button.codeword} hint={!!block.button.hint} email={block.email ?? false} />
+          <TelegramAction
+            codeword={block.button.codeword}
+            label={verb}
+            caption={verb ? false : undefined}
+            hint={!!block.button.hint}
+            email={block.email ?? false}
+          />
         )
       }
       {block.price && <p class="hero__price">{block.price}</p>}

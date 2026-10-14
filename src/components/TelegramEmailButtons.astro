@@ -9,7 +9,7 @@ import Button from './Button.astro';
 import { mailtoHref, telegramButton } from '../lib/content';
 
 interface Props {
-  button: { codeword: string; label?: string; caption?: string };
+  button: { codeword: string; label?: string; caption?: string | false };
   email?: { text: string; subject?: string };
   class?: string;
 }

@@ -1,12 +1,16 @@
 ---
 // The first block of /services/ (block type "intro"): the h1, the lead
 // lines, a table of contents with the services' short names linking to their
-// anchors, and «Не нашли своё? Напишите как есть.» with the «Другое» button.
+// anchors, and «Не нашли своё? Напишите как есть.» with the «Другое» button,
+// then, once for the whole page, the copy hint of the service buttons
+// (other.hint) and the email line (other.email): the cards below show only
+// their verb buttons.
 // From 1080px the heading and lead sit on the left (7 of 12 columns) and the
 // table of contents on the right (4 columns); below that it follows the lead.
 import Section from '../Section.astro';
 import TelegramButton from '../TelegramButton.astro';
-import { getService, type Block } from '../../lib/content';
+import EmailLine from '../EmailLine.astro';
+import { getService, gref, telegramButton, type Block } from '../../lib/content';
 
 interface Props {
   block: Block;
@@ -21,6 +25,8 @@ const toc = ((block.toc?.items ?? []) as string[]).map((slug) => {
   return { slug, short: s.data.short, anchor: s.data.anchor, num: numbers.get(slug) };
 });
 const headingId = 'services-heading';
+const otherHint: string | undefined = block.other?.hint ? gref(block.other.hint) : undefined;
+const otherEmail: string | undefined = block.other?.email ? gref(block.other.email) : undefined;
 ---
 
 <Section rule="none" pad="s4" class="intro">
@@ -60,6 +66,14 @@ const headingId = 'services-heading';
         <div class="intro__other">
           <p>{block.other.text}</p>
           <TelegramButton codeword={block.other.button} />
+          {otherHint && <p class="intro__hint label">{otherHint}</p>}
+          {otherEmail && (
+            <EmailLine
+              line={otherEmail}
+              codeword={block.other.button}
+              template={telegramButton(block.other.button).template}
+            />
+          )}
         </div>
       )
     }
@@ -104,6 +118,10 @@ const headingId = 'services-heading';
     display: grid;
     justify-items: start;
     gap: var(--s2);
+  }
+
+  .intro__hint {
+    max-width: 52ch;
   }
 
   @media (min-width: 1080px) {

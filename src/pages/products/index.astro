@@ -33,8 +33,8 @@ const blocks = pageBlocks(page);
       if (b.type === 'products') {
         return (
           <div class="products-list">
-            {visibleProducts(b.items).map((p) => (
-              <ProductItem product={p} labels={b.labels} />
+            {visibleProducts(b.items).map((p, i) => (
+              <ProductItem product={p} labels={b.labels} first={i === 0} />
             ))}
           </div>
         );

@@ -1,5 +1,5 @@
 ---
-title: 'Консультации для HealthTech-стартапа: 5 сессий и руководство по разработке курсов'
+title: 5 консультаций и руководство по разработке курсов для HealthTech-стартапа
 shortTitle: Консультации для HealthTech-стартапа
 origin: На заказ
 industry: HealthTech, фитнес-обучение
@@ -11,6 +11,12 @@ anchor: case-healthtech-course-consulting
 featured: false
 order: 110
 published: true
+infographic:
+  facts:
+  - value: '5'
+    label: платных консультаций
+  - value: '1'
+    label: 'подробное руководство: как устроена разработка курса и как проектировать программу'
 ---
 
 ## Контекст

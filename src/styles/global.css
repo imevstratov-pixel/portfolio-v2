@@ -283,6 +283,44 @@ summary:focus-visible {
   line-height: var(--lh-small);
 }
 
+/* Disclosure: native <details class="disclose"> with a <summary> that looks
+   like a small framed button and ends with «+» / «−» (no arrows, no
+   animation, no script). Services «Подробнее», cases «Читать кейс полностью». */
+.disclose > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s2);
+  min-height: 2.75rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: var(--bold);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.disclose > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclose > summary::after {
+  content: '+';
+  font-family: var(--font-mono);
+  font-weight: var(--regular);
+}
+
+.disclose[open] > summary::after {
+  content: '−';
+}
+
+.disclose > summary:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 /* ---------------------------------------------------------------- rules */
 
 hr,

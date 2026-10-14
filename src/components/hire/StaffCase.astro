@@ -1,18 +1,17 @@
 ---
 // A staff case in full under its place of work in «Опыт» (show: full). It
-// carries the case anchor as id (/hire/#case-course-factory). Title, then the
+// carries the case anchor as id (/hire/#case-ai-agents). Title, then the
 // sections from experience.caseDisplay.sections (Контекст, Что сделал,
 // Результат) with small mono labels, without the case labels, links and
-// «Что из этого сделаю для вас»; the pipeline scheme under the text when the
-// item asks for it; the reel beside the text.
+// «Что из этого сделаю для вас»; the reel beside the text. The AgentsScheme
+// of a case (`scheme: true` in the experience item) is drawn by Experience
+// under this case at the full page width, so the drawing does not scroll.
 // Layout inside the 9 columns of the place body (from 1080px): text on 7,
-// reel on 2, the scheme under the text on 7. Tablets (12 columns): text 8,
-// reel 3 at the right edge. Phones: the reel at half the width right after
-// the text, before the scheme.
+// reel on 2. Tablets (12 columns): text 8, reel 3 at the right edge.
+// Phones: the reel at half the width right after the text.
 import Media from '../Media.astro';
 import Prose from '../Prose.astro';
 import CaseLabels from '../CaseLabels.astro';
-import PipelineScheme from '../PipelineScheme.astro';
 import { bodySections, getCase } from '../../lib/content';
 import { url, isExternal } from '../../lib/url';
 
@@ -27,20 +26,17 @@ interface Props {
     showLinks?: boolean;
     anchorFrom?: string;
   };
-  /** Show the case scheme («Как устроен конвейер»). */
-  scheme?: boolean;
   /** Heading level of the case title (default 4: inside a place, inside «Опыт»). */
   level?: 3 | 4;
 }
 
-const { slug, display = {}, scheme = false, level = 4 } = Astro.props;
+const { slug, display = {}, level = 4 } = Astro.props;
 const c = getCase(slug);
 const d = c.data;
 const sections = bodySections(c, display.sections?.length ? display.sections : undefined);
 const reel = display.showReel !== false && d.reel?.video ? d.reel : null;
 const links = display.showLinks ? (d.links ?? []).filter((l) => l?.url && l?.label) : [];
 const id = display.anchorFrom === undefined || display.anchorFrom === 'case.anchor' ? d.anchor : undefined;
-const showScheme = scheme && !!d.scheme;
 const Tag = `h${level}` as 'h3' | 'h4';
 const SubTag = `h${level + 1}` as 'h4' | 'h5';
 ---
@@ -66,9 +62,8 @@ const SubTag = `h${level + 1}` as 'h4' | 'h5';
     )
   }
   {
-    (showScheme || links.length > 0) && (
+    links.length > 0 && (
       <div class="sc__more">
-        {showScheme && <PipelineScheme scheme={d.scheme!} compact level={(level + 1) as 4 | 5} idPrefix={id} />}
         {links.length > 0 && (
           <ul class="sc__links list-plain" role="list">
             {links.map((l) => (

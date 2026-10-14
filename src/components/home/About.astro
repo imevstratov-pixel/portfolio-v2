@@ -1,13 +1,16 @@
 ---
 // «Обо мне» (block "about"): portrait on the left (4 of 12 columns; half the
-// width on phones), the paragraphs on the right (8 of 12). Under them the
-// short experience across the grid between thin rules: years in mono under
-// the portrait column, place, role and note under the text (stacked on
-// phones). Then «Весь опыт по годам» to /hire/#experience and the line about
+// width on phones), the paragraphs on the right (8 of 12). The real photo
+// (`photo { src, alt }`, decision 9 of 14.10) replaces the drawn portrait
+// when it is visible: same column (half the width on phones), a 4:5 frame;
+// while it is hidden (the export drops it) the drawn portrait stays. /hire/
+// keeps the drawn one. Under them the short experience across the grid
+// between thin rules: years in mono under the portrait column, place, role
+// and note under the text (stacked on phones). Then «Весь опыт по годам» to /hire/#experience and the line about
 // own products with «Мои продукты», aligned with the text column.
 import Section from '../Section.astro';
 import Media from '../Media.astro';
-import { visible, type Block } from '../../lib/content';
+import { isHidden, visible, type Block } from '../../lib/content';
 import { url } from '../../lib/url';
 
 interface Props {
@@ -18,20 +21,26 @@ const { block: b } = Astro.props;
 const text = visible<string>(b.text).filter(Boolean);
 const experience = visible(b.experience);
 const pl = b.productsLine;
+const photo = b.photo?.src && !isHidden(b.photo) ? (b.photo as { src: string; alt?: string }) : null;
+const picture = photo
+  ? { src: photo.src, alt: photo.alt ?? b.portraitAlt ?? '', ratio: '4 / 5' }
+  : b.portrait
+    ? { src: b.portrait as string, alt: b.portraitAlt as string, ratio: '1 / 1' }
+    : null;
 ---
 
 <Section id={b.anchor} heading={b.heading}>
   <div class="grid about">
     {
-      b.portrait && (
+      picture && (
         <div class="about__portrait col-4 m-col-2">
-          <Media src={b.portrait} alt={b.portraitAlt} ratio="1 / 1" />
+          <Media src={picture.src} alt={picture.alt} ratio={picture.ratio} />
         </div>
       )
     }
     {
       text.length > 0 && (
-        <div class:list={['about__text', b.portrait ? 'col-8' : 'col-8 start-5']}>
+        <div class:list={['about__text', picture ? 'col-8' : 'col-8 start-5']}>
           {text.map((p) => (
             <p>{p}</p>
           ))}

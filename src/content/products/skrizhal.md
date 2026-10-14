@@ -16,9 +16,22 @@ secondaryLinks:
   url: https://evstrd.itch.io/skrizhal
 media:
   type: screenshot
-  src: ''
-  alt: 'Скрижаль: экран партии'
-  status: pending
+  src: /media/products/skrizhal-start.jpg
+  alt: 'Скрижаль, начало партии: три тропы ведут к стене крепости, под стеной ряд клеток для башен и подсказка «Ты судья: удержи стену 20 волн — иначе Скрижаль перепишут под себя»'
+  status: ready
+gallery:
+- type: image
+  src: /media/products/skrizhal-start.jpg
+  alt: 'Скрижаль, начало партии: три тропы ведут к стене крепости, под стеной ряд клеток для башен и подсказка «Ты судья: удержи стену 20 волн — иначе Скрижаль перепишут под себя»'
+  caption: Первая партия сама объясняет правила
+- type: image
+  src: /media/products/skrizhal-battle.jpg
+  alt: 'Скрижаль, бой: скелеты идут по тропе к стене, лучник на башне стреляет'
+  caption: Волна нежити идёт на стену
+- type: image
+  src: /media/products/skrizhal-reward.jpg
+  alt: 'Скрижаль после первой волны: на выбор три карты — копейщик, расширение башни и маг, справа магазин с картами за золото'
+  caption: После волны выбираете одну карту из трёх
 messageLink:
   label: Написать о Скрижали
   template: global.telegram.productTemplate

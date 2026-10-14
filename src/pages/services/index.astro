@@ -2,7 +2,8 @@
 // /services/: the blocks of pages/services.md in content order, as
 // render_services() in the texts renderer: intro (h1, lead, table of
 // contents, «Другое»), the three service groups (services numbered 1–7 in
-// page order), #formats, #faq and #contact.
+// page order, each a compact ServiceCard whose «Подробнее» opens the full
+// template), #formats (with the work screenshots), #faq and #contact.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/Section.astro';
 import FAQ from '../../components/FAQ.astro';
@@ -15,7 +16,6 @@ import { getPage, pageBlocks } from '../../lib/content';
 const page = getPage('services');
 const template = page.serviceTemplate ?? {};
 const labels: Record<string, string> = template.labels ?? {};
-const email: string | undefined = template.button?.email;
 const blocks = pageBlocks(page);
 
 // renderer: num += 1 for every service of every group, in page order
@@ -36,7 +36,7 @@ for (const b of blocks) {
       b.type === 'intro' ? (
         <ServicesIntro block={b} numbers={numbers} />
       ) : b.type === 'service-group' ? (
-        <ServiceGroup block={b} labels={labels} numbers={numbers} email={email} />
+        <ServiceGroup block={b} labels={labels} numbers={numbers} />
       ) : b.type === 'formats' ? (
         <Formats block={b} />
       ) : b.type === 'faq' ? (

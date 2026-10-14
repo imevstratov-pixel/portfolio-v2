@@ -1,7 +1,7 @@
 ---
 seo:
-  title: 'Кейсы: консультации, AI-конвейер и курсы — Даниил Евстратов'
-  description: 'Кейсы из штата и заказы: модель компетенций, AI-конвейер производства курсов, разбор и пересборка курсов, ИИ-боты и тренажёры. В каждом кейсе задача, что я сделал и результат.'
+  title: 'Кейсы: консультации, AI-агенты и курсы — Даниил Евстратов'
+  description: 'Кейсы из штата и заказы: модель компетенций, AI-агенты для разработки курсов, разбор и пересборка курсов, AI-боты и тренажёры. В каждом кейсе задача, что я сделал и результат.'
 blocks:
 - id: intro
   type: intro
@@ -12,7 +12,7 @@ blocks:
   heading: Оглавление по услугам
   groups:
   - service: consulting
-  - service: pipeline
+  - service: ai-agents
   - service: audit
   - service: course
   - service: app
@@ -28,8 +28,6 @@ blocks:
   row:
     fields:
     - shortTitle
-    - industry
-    - duration
   productRow:
     labels:
     - Свой продукт
@@ -37,7 +35,7 @@ blocks:
     hrefPattern: /products/#{anchor}
   legend:
     origin: 'Происхождение: В штате, На заказ, Для близкого человека, Свой продукт.'
-    direction: 'Направление: Обучение, Разработка, Мост — методика и код в одних руках.'
+    direction: 'Направление: Обучение, Разработка, Обучение и разработка.'
 - id: cases
   type: cases-list
   sort: order
@@ -61,7 +59,7 @@ blocks:
   hint: global.telegram.gridHint
   buttons:
   - Консультация
-  - Конвейер
+  - AI-агенты
   - Аудит
   - Курс
   - Приложение

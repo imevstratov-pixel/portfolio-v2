@@ -3,11 +3,12 @@
 // first in the large size, one per row; the export keeps only testimonials
 // with consent, so every listed one may show. With no client quotes the
 // heading is headingColleaguesOnly («Что говорят коллеги»), as in the texts
-// renderer. Then the colleagues group: its caption and hint, and one video
-// testimonial per row (poster 3 of 12 columns, the quote beside it on 6 in
-// the medium size; on phones a narrow video column and the quote beside it).
+// renderer. Then the colleagues group: its caption and hint, and the video
+// testimonials as a Carousel row of cards (decision 11 of 14.10: a row
+// instead of one big block per person): the poster and the quote beside it.
 import Section from '../Section.astro';
 import Quote from '../Quote.astro';
+import Carousel from '../Carousel.astro';
 import VideoTestimonial from '../VideoTestimonial.astro';
 import { getTestimonial, testimonialSignature, visible, type Block } from '../../lib/content';
 
@@ -41,13 +42,9 @@ const heading: string = clients.length ? b.heading : (b.headingColleaguesOnly ??
               {b.colleagues.hint && <p class="label">{b.colleagues.hint}</p>}
             </div>
           )}
-          <ul class="testimonials__videos" role="list">
-            {colleagues.map((t) => (
-              <li>
-                <VideoTestimonial testimonial={t} size="medium" />
-              </li>
-            ))}
-          </ul>
+          <Carousel items={colleagues} label={heading} id="home-colleagues" bleed>
+            {(t: (typeof colleagues)[number]) => <VideoTestimonial testimonial={t} layout="card" size="medium" />}
+          </Carousel>
         </div>
       )}
     </Section>
@@ -68,14 +65,5 @@ const heading: string = clients.length ? b.heading : (b.headingColleaguesOnly ??
     display: grid;
     gap: 0.15rem;
     margin-bottom: var(--s3);
-  }
-
-  .testimonials__videos > li {
-    padding-block: var(--s3);
-    border-top: var(--hair);
-  }
-
-  .testimonials__videos > li:last-child {
-    padding-bottom: 0;
   }
 </style>

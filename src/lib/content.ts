@@ -104,7 +104,7 @@ export function workloadLine(ref: unknown): string | null {
 
 /* ---------------------------------------------------------------- services */
 
-/** All services in their content order (consulting, pipeline, audit, course, app, game, guide). */
+/** All services in their content order (consulting, ai-agents, audit, course, app, game, guide). */
 export const services: ServiceEntry[] = [...serviceList].sort(byOrder);
 
 export function getService(slug: string): ServiceEntry {
@@ -121,6 +121,24 @@ export function serviceByCodeword(codeword: string): ServiceEntry | undefined {
 export function serviceHref(service: string | ServiceEntry): string {
   const s = typeof service === 'string' ? getService(service) : service;
   return url(`/services/#${s.data.anchor}`);
+}
+
+const endDot = (t: string) => (/[.!?…]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
+
+/**
+ * Price line of a service card: its own `price`, else the global line
+ * (site work.price), with a final period. Mirrors price_line() in the renderer.
+ */
+export function servicePriceLine(service: string | ServiceEntry): string {
+  const s = typeof service === 'string' ? getService(service) : service;
+  return endDot(s.data.price || site.work.price);
+}
+
+/** «Срок: около недели.» from the service duration (the renderer's label). */
+export function serviceDurationLine(service: string | ServiceEntry): string {
+  const s = typeof service === 'string' ? getService(service) : service;
+  const d = s.data.duration;
+  return `Срок: ${d.charAt(0).toLowerCase()}${d.slice(1)}${/[.!?…]$/.test(d) ? '' : '.'}`;
 }
 
 /* ------------------------------------------------------------------- cases */
@@ -160,7 +178,7 @@ export function caseService(c: string | CaseEntry): ServiceEntry {
 
 export const CASE_LABEL_FIELDS = ['origin', 'industry', 'year', 'duration', 'direction'] as const;
 
-/** Non-empty label values of a case, e.g. ["В штате", "EdTech, …", "2025–2026", "Мост"]. */
+/** Non-empty label values of a case, e.g. ["В штате", "EdTech, …", "2025–2026", "Обучение"]. */
 export function caseLabels(c: CaseEntry, fields: readonly string[] = CASE_LABEL_FIELDS): string[] {
   const d = c.data as Record<string, unknown>;
   return fields.map((f) => d[f]).filter((v) => v !== undefined && v !== null && v !== '').map(String);

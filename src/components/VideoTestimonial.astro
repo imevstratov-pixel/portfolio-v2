@@ -6,6 +6,9 @@
 // container width: its columns match the page grid (video 3 of 12, quote 6).
 // size: "medium" for colleagues' quotes (home, /hire/, /cases/), "large" is
 // kept for client quotes.
+// layout "card": a slide of the Carousel (home, /hire/, /cases/): the video
+// on 2 parts and the quote on 3 parts of the card at every width, the quote
+// at the base size on phones and the medium size from 720px.
 import Media from './Media.astro';
 import { getTestimonial, testimonialSignature, type TestimonialEntry } from '../lib/content';
 
@@ -18,15 +21,17 @@ interface Props {
   quote?: boolean;
   /** Quote size from 720px (default "large"; "medium" for colleagues). */
   size?: 'large' | 'medium';
+  /** "row" (default): video 3 of 12 columns and the quote beside it; "card": a carousel slide. */
+  layout?: 'row' | 'card';
   class?: string;
 }
 
-const { testimonial, extra = [], quote = true, size = 'large', class: className } = Astro.props;
+const { testimonial, extra = [], quote = true, size = 'large', layout = 'row', class: className } = Astro.props;
 const t = typeof testimonial === 'string' ? getTestimonial(testimonial) : testimonial;
 const sign = testimonialSignature(t, extra);
 ---
 
-<figure class:list={['vt', `vt--${size}`, className]}>
+<figure class:list={['vt', `vt--${layout}`, `vt--${size}`, className]}>
   <div class="vt__media">
     <Media type="video" src={t.data.video} poster={t.data.poster} ratio="9 / 16" label={sign} />
   </div>
@@ -62,16 +67,22 @@ const sign = testimonialSignature(t, extra);
     content: '»';
   }
 
+  .vt--card {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    padding-top: var(--s2);
+    border-top: var(--hair);
+  }
+
   @media (min-width: 720px) {
-    .vt {
+    .vt--row {
       grid-template-columns: repeat(12, minmax(0, 1fr));
     }
 
-    .vt__media {
+    .vt--row .vt__media {
       grid-column: span 3;
     }
 
-    .vt__text {
+    .vt--row .vt__text {
       grid-column: span 6;
     }
 

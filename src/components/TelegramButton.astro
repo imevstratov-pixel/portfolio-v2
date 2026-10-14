@@ -47,7 +47,15 @@ const second = caption === false ? undefined : (caption ?? data?.caption);
 const isLink = variant === 'link';
 const cls = isLink
   ? ['tg-link', className]
-  : ['btn', `btn--${variant}`, 'tg-btn', size === 'small' && 'btn--small', block && 'btn--block', className];
+  : [
+      'btn',
+      `btn--${variant}`,
+      'tg-btn',
+      !second && 'tg-btn--one',
+      size === 'small' && 'btn--small',
+      block && 'btn--block',
+      className,
+    ];
 ---
 
 <a
@@ -76,6 +84,12 @@ const cls = isLink
   .tg-btn {
     min-height: 4rem;
     justify-content: flex-start;
+  }
+
+  /* one line (a verb label without a caption, e.g. «Заказать аудит курса») */
+  .tg-btn--one {
+    min-height: 3rem;
+    justify-content: center;
   }
 
   .tg-btn.btn--small {

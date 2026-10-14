@@ -14,6 +14,10 @@ media:
   src: /products/top-pick.jpg
   alt: 'Top Pick: экран комнаты с кодом для входа, игроки ещё не зашли'
   status: ready
+gallery:
+- type: image
+  src: /products/top-pick.jpg
+  alt: 'Top Pick: экран комнаты с кодом для входа, игроки ещё не зашли'
 messageLink:
   label: Хочу Top Pick на праздник
   template: 'Top Pick. Здравствуйте, Даниил! Хочу Top Pick на свой праздник или похожую игру. Когда праздник: … Сколько будет игроков: …'

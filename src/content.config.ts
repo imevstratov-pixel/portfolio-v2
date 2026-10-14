@@ -23,6 +23,9 @@ const str = z.string();
 const optStr = z.string().optional();
 const link = z.looseObject({ label: str, url: str, note: optStr });
 
+// Names of the drawn schemes (src/components/scheme/); "ai-agents" = AgentsScheme
+const schemeName = z.enum(['ai-agents']);
+
 const media = z.looseObject({
   type: optStr, // "screenshot" | "video" | ...
   src: z.string().default(''), // '' while the asset is pending: render nothing
@@ -121,7 +124,7 @@ const cases = defineCollection({
     year: z.coerce.string(),
     duration: optStr,
     direction: str,
-    service: str, // a service codeword, e.g. "Конвейер"
+    service: str, // a service codeword, e.g. "AI-агенты"
     anchor: str,
     status: optStr, // e.g. "в работе"
     featured: z.boolean().default(false),
@@ -130,23 +133,19 @@ const cases = defineCollection({
     hire: z.looseObject({ place: optStr, line: optStr }).nullish(),
     links: z.array(link).optional(),
     reel: z.looseObject({ video: str, loop: optStr, poster: str }).nullish(),
-    scheme: z
+    // `scheme: "ai-agents"` shows the AgentsScheme component (staff-c2)
+    scheme: schemeName.optional(),
+    // facts strip under the title (decision 10 of 14.10): 2–4 facts from the
+    // case text, optional steps and «было — стало»
+    infographic: z
       .looseObject({
-        heading: str,
-        person: str,
-        steps: z.array(
-          z.looseObject({
-            n: z.number(),
-            title: str,
-            text: str,
-            repair: optStr,
-            check: optStr,
-          }),
-        ),
-        base: str,
-        facts: z.array(str),
+        facts: z.array(z.looseObject({ value: z.coerce.string(), label: str })).min(2).max(4),
+        flow: z.array(str).min(2).max(5).optional(),
+        beforeAfter: z.looseObject({ before: str, after: str }).optional(),
       })
       .optional(),
+    // optional one-line summary under the infographic (not in the content yet)
+    summary: optStr,
     testimonials: z.array(str).optional(),
   }),
 });
@@ -158,9 +157,12 @@ const services = defineCollection({
     short: str,
     codeword: str,
     anchor: str,
-    line: str, // "Обучение" | "Разработка" | "Мост"
+    line: str, // "Обучение" | "Разработка"
     order: z.number(),
     summary: str,
+    // the compact card on /services/ (decisions 8 and 10 of 14.10)
+    button: str, // verb label of the visitor's action, «Заказать аудит курса»
+    highlights: z.array(str).length(3),
     forWhom: z.array(str),
     youGet: z.array(str),
     duration: str,
@@ -178,7 +180,9 @@ const services = defineCollection({
     testimonials: z.array(str).optional(),
     more: z.looseObject({ label: str, url: str }).optional(),
     related: z.looseObject({ text: str, service: optStr, case: optStr }).optional(),
-    price: str,
+    // own price line; absent means the global one (site work.price)
+    price: optStr,
+    scheme: schemeName.optional(),
   }),
 });
 
@@ -198,6 +202,18 @@ const products = defineCollection({
     action: z.looseObject({ label: str, url: str }).optional(),
     secondaryLinks: z.array(link).optional(),
     media: media.optional(),
+    // screenshots and videos in order (the first one stands in for `media`)
+    gallery: z
+      .array(
+        z.looseObject({
+          type: z.enum(['image', 'video']).default('image'),
+          src: str,
+          poster: optStr,
+          alt: z.string().default(''),
+          caption: optStr,
+        }),
+      )
+      .default([]),
     messageLink: z.looseObject({ label: str, template: str }),
     metrics: z.array(z.any()).default([]),
     order: z.number(),

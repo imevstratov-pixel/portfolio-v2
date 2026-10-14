@@ -1,6 +1,6 @@
 ---
-title: 'Команда методистов: 4 запуска за 3 месяца, план перевыполнен на 30–40%'
-shortTitle: 4 запуска за 3 месяца
+title: 'Руководил командой методистов Eduson Academy: 4 новых продукта за 3 месяца'
+shortTitle: Команда методистов Eduson Academy
 origin: В штате
 industry: онлайн-образование, курсы для людей и компаний
 year: 2024–2025
@@ -11,6 +11,16 @@ anchor: case-team
 featured: false
 order: 80
 published: true
+infographic:
+  facts:
+  - value: '4'
+    label: новых продукта за 3 месяца
+  - value: 30+ млн ₽
+    label: чистая выручка этих продуктов
+  - value: +30–40%
+    label: к плану производства полгода подряд
+  - value: 91%+
+    label: CSAT, средняя оценка удовлетворённости учеников
 hire:
   place: eduson-lead
 reel:

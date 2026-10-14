@@ -17,9 +17,26 @@ secondaryLinks:
   note: около 2 МБ
 media:
   type: screenshot
-  src: ''
-  alt: 'Barba: раскрытый пульт в чёлке MacBook'
-  status: pending
+  src: /media/products/barba-tasks.jpg
+  alt: 'Раскрытый пульт Barba, вкладка «Задачи»: поле новой задачи и список из четырёх задач, у одной записано 1 ч 20 мин'
+  status: ready
+gallery:
+- type: image
+  src: /media/products/barba-tasks.jpg
+  alt: 'Раскрытый пульт Barba, вкладка «Задачи»: поле новой задачи и список из четырёх задач, у одной записано 1 ч 20 мин'
+  caption: Наводите мышь на чёлку, и раскрывается пульт с задачами
+- type: image
+  src: /media/products/barba-peek.jpg
+  alt: 'Над заголовком сайта в чёлке всплыло сообщение из Telegram: «Скинула макеты, глянь, когда будет минутка»'
+  caption: Новое сообщение видно прямо в чёлке
+- type: image
+  src: /media/products/barba-claude.jpg
+  alt: 'Пульт Barba, вкладка «Claude»: лимиты на 5 часов и на неделю и три сессии, одна ждёт ответа'
+  caption: 'Вкладка Claude: лимиты и сессии, которые ждут ответа'
+- type: image
+  src: /media/products/barba-hero.jpg
+  alt: 'Сайт Barba: заголовок «У твоего Mac есть чёлка. Теперь это усы.», кнопки «Наведи на усы» и «Скачать для Mac» и маскот-усы'
+  caption: 'Сайт Barba: пульт можно попробовать прямо в браузере'
 messageLink:
   label: Написать о Barba
   template: global.telegram.productTemplate

@@ -1,10 +1,10 @@
 ---
-// One part of a service on /services/: a small mono label («Для кого»,
-// «Как идёт работа», …) and its content, with a hairline on top.
-// Phones: label above the content. 720–1079px (service text on 12 columns):
-// label 3, content 9. From 1080px (service text on 8 of 12 columns):
-// label 2, content 6, so both stay on the page grid.
-// Without a label the content sits in the content column (price and button).
+// One part of the full service template on /services/ (inside «Подробнее»):
+// a small mono label («Для кого», «Как идёт работа», …) and its content,
+// with a hairline on top. On the page grid: phones label above the content;
+// from 720px label in columns 1-3 and content in 4-12; from 1080px content
+// in 4-10 (the same rows as the case sections on /cases/).
+// Without a label the content sits in the content column (the body text).
 interface Props {
   label?: string;
   class?: string;
@@ -47,16 +47,8 @@ const { label, class: className } = Astro.props;
   }
 
   @media (min-width: 1080px) {
-    .part {
-      grid-template-columns: repeat(8, minmax(0, 1fr));
-    }
-
-    .part__label {
-      grid-column: 1 / span 2;
-    }
-
     .part__body {
-      grid-column: 3 / -1;
+      grid-column: 4 / span 7;
     }
   }
 </style>

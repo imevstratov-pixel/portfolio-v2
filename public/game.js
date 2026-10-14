@@ -1,4 +1,4 @@
-// «Смена методолога» — canvas-раннер по конвейеру производства курсов.
+// «Смена методолога» — canvas-раннер по ленте производства курсов.
 // Пробел/тап — прыжок. Demo-полоска под шапкой ведёт в полную игру.
 (function () {
   const PAPER = '#FAF8F4', INK = '#111110', RED = '#E63311', SOFT = '#4a4844';
@@ -160,7 +160,7 @@
       });
       R.bolts = R.bolts.filter(b => {
         if (Math.abs(b.x - (px + p.w / 2)) < 32 && Math.abs(b.y - (py + p.h / 2)) < 48) {
-          R.boostT = 2.5; R.toasts.push({ text: 'AI-конвейер запущен', t: 2.2 }); return false;
+          R.boostT = 2.5; R.toasts.push({ text: 'AI-агенты запущены', t: 2.2 }); return false;
         }
         return true;
       });
@@ -198,7 +198,7 @@
         });
       }
 
-      // конвейер: полотно, звенья с заклёпками, ролики, тень
+      // лента: полотно, звенья с заклёпками, ролики, тень
       const gy = R.GROUND, beltH = demo ? 18 : 26;
       ctx.fillStyle = '#e9e4d8'; ctx.fillRect(0, gy, R.W, beltH);
       ctx.strokeStyle = INK; ctx.lineWidth = 2.5;

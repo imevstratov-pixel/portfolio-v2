@@ -6,7 +6,8 @@ these pieces; add a new shared piece here when two pages need it.
 
 Stack: Astro 7.3.8 (static output), no UI framework, TypeScript in components,
 fonts from @fontsource (Inter Tight 400/700 and 400 italic, IBM Plex Mono 400,
-Latin and Cyrillic subsets). One small client script (Telegram copy and analytics goals).
+Latin and Cyrillic subsets). Two small client scripts: Telegram copy and
+analytics goals on every page, the carousel buttons on pages with a Carousel.
 
 ## 1. Rules that every page follows
 
@@ -38,13 +39,24 @@ Latin and Cyrillic subsets). One small client script (Telegram copy and analytic
 - **One `<h1>` per page.** Section headings are `h2`, items inside `h3`.
 - **Anchors.** Every block with `anchor` in the content must render that id
   (`contact`, `formats`, `faq`, `numbers`, `experience`, …). Services use their
-  `anchor` (`consulting`, `pipeline`, `audit`, `course`, `app`, `game`,
+  `anchor` (`consulting`, `ai-agents`, `audit`, `course`, `app`, `game`,
   `guide`) on /services/, cases their `anchor` (`case-…`) on /cases/, products
   their `anchor` on /products/. Other pages link to these; `check-links` fails
-  when one is missing.
+  when one is missing. Anchors sit on elements that are always visible (the
+  case article and its header, the service card), never inside a closed
+  `<details>`.
+- **Words.** No «Мост» and not the old production-line word for the AI
+  service anywhere, in components, comments, drawings and anchors included
+  (decisions 2 and 6 of 14.10): the service is «AI-агенты» (codeword
+  «AI-агенты», anchor `#ai-agents`, its case `#case-ai-agents`), the drawing
+  is AgentsScheme.
 - **Images and video.** Fixed aspect ratios (component `Media`), lazy below the
   fold, alt text from the content. Video: native player, `preload="none"`,
   poster, no autoplay, no loop. The `loop` fields in the content are not used.
+- **Less text, more pictures (decision 10 of 14.10).** Long texts fold into a
+  native `<details class="disclose">` (no animation, no script): services
+  «Подробнее», cases «Читать кейс полностью». Rows of people or screenshots
+  are a `Carousel`.
 - **A `class` passed to a child component does not get the parent's scoped
   styles.** Astro scopes a component's CSS to the elements it renders itself,
   so `<Resumes class="hero__resumes" />` styled in the parent does nothing.
@@ -62,7 +74,7 @@ Latin and Cyrillic subsets). One small client script (Telegram copy and analytic
 | `npm run preview` | Serves `dist/` (Astro 7 may start it in the background; stop with `npx astro preview stop`) |
 | `npm run check` | `astro check`: TypeScript and template types (0 errors expected) |
 | `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external |
-| `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. In preview it also fails on the Metrika counter anywhere in `dist/` and on any HTML page without a robots meta |
+| `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. Fails on any file under `dist/media/` that no generated page references (a screenshot waiting for Daniil's OK must stay outside `public/`). In preview it also fails on the Metrika counter anywhere in `dist/` and on any HTML page without a robots meta |
 | `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
 | `npm run verify` | build, check-links, leakcheck |
 | `npm run content` | Re-run the content export (needs `SITE_CONTENT`) |
@@ -96,7 +108,7 @@ anchor('contact')         // '#contact'
 ```ts
 import {
   site, getPage, pageBlocks, getBlock, findBlock, gref, workloadLine, visible, isHidden,
-  services, getService, serviceByCodeword, serviceHref,
+  services, getService, serviceByCodeword, serviceHref, servicePriceLine, serviceDurationLine,
   cases, getCase, isPublished, publishedCases, caseHref, caseService, caseLabels, CASE_LABEL_FIELDS,
   products, getProduct, isProductVisible, visibleProducts, productHref, productTemplate,
   getTestimonial, testimonialSignature,
@@ -117,7 +129,9 @@ import {
   use it anyway for FAQ items, rows, notes, as the renderer does).
 - Services: `services` (all, by `order`), `getService('audit')`,
   `serviceByCodeword('Аудит')`, `serviceHref(slugOrEntry)` gives
-  `<base>/services/#<anchor>`.
+  `<base>/services/#<anchor>`. `servicePriceLine(s)` is the service's own
+  `price` or the global `work.price`, with a final period («Стоимость — после
+  первого созвона.»); `serviceDurationLine(s)` gives «Срок: около недели.».
 - Cases: `cases` (published, by `order`, the order of /cases/),
   `getCase(slug)`, `isPublished(slug)`, `publishedCases(slugs)` keeps only
   published ones, `caseHref(c)` gives `<base>/cases/#<anchor>`,
@@ -279,7 +293,9 @@ One button, the single-button hint («Нажмите, и начало сообщ
 скопируется… начните со слова «Курс».») and the email line. Props:
 `codeword`, `template`, `label`, `caption`, `variant` (default `primary`),
 `hint` (default true), `email` (line, global ref or `false`), `subject`,
-`class`. Use it for each service on /services/ and the /guide/ hero.
+`class`. The service cards on /services/ pass `hint={false} email={false}`
+(the hint and the email stand once under «Не нашли своё?»); the /guide/ hero
+passes the guide service's verb label («Заказать тренажёр») and no caption.
 
 ### ContactBlock
 
@@ -293,7 +309,9 @@ Takes the page block as is and renders it inside a `Section` with its
 - `buttons: [codewords]`: hint above, grid of Telegram buttons (2 columns on
   phones, 4 from 720px), email line (medium size), workload, lines;
 - `button: { codeword, hint }` (guide): one primary button, its hint, email
-  line, lines;
+  line, lines; a codeword that belongs to a service shows the service's verb
+  `button` label without a caption (decision 8 of 14.10), unless the block
+  gives its own `label`;
 - `button: { codeword, label, caption }` + `email: { text, subject }` (hire):
   primary Telegram button and the email as a second button
   (`TelegramEmailButtons`), `telegramText`, `resumes` (`Resumes`);
@@ -352,33 +370,83 @@ Props: `text`, `cite`, `size` (`large` default, `medium`, `base`), `marks`
 ### VideoTestimonial
 
 ```astro
-<VideoTestimonial testimonial="evgenia" size="medium" />
-<VideoTestimonial testimonial={it.testimonial} extra={[it.company, it.relation]} size="medium" />
+<VideoTestimonial testimonial={t} layout="card" size="medium" />               <!-- a Carousel slide -->
+<VideoTestimonial testimonial={it.t} extra={[it.company, it.relation]} layout="card" size="medium" />
+<VideoTestimonial testimonial="evgenia" size="medium" />                         <!-- a full-width row -->
 ```
 
 Poster in the native player (9:16) and the quote beside it with the
-signature. The one design for every video testimonial (home, /hire/, the
-cases on /cases/). Use it at the full container width: video 3 of 12
-columns, quote 6 of 12; on phones a 7.5rem video column and the quote at the
-base size beside it. Props: `testimonial` (slug or entry), `extra`, `quote`
-(default true), `size` (quote size from 720px: `large` default, kept for
-client quotes; `medium` for colleagues' quotes), `class`.
+signature. `layout="card"` (home, /hire/, /cases/, always inside a
+`Carousel`): a hairline on top, the video on 2 parts and the quote on 3 parts
+of the card at every width, the quote at the base size on phones and in the
+`size` from 720px. `layout="row"` (default, kept for client quotes): video 3
+of 12 columns, quote 6 of 12; on phones a 7.5rem video column. Props:
+`testimonial` (slug or entry), `extra`, `quote` (default true), `size`
+(`large` default, `medium` for colleagues), `layout`, `class`.
 
-### PipelineScheme
+### Carousel
 
 ```astro
-<PipelineScheme scheme={c.data.scheme} idPrefix={c.data.anchor} />          <!-- /cases/ -->
-<PipelineScheme scheme={c.data.scheme} compact level={5} idPrefix={id} />  <!-- /hire/ -->
+<Carousel items={colleagues} label={heading} id="home-colleagues" bleed>
+  {(t: (typeof colleagues)[number]) => <VideoTestimonial testimonial={t} layout="card" size="medium" />}
+</Carousel>
+<Carousel items={shots} kind="media" ratios={shots.map(ratio)} label={d.title} id={`${id}-gallery`} bleed>
+  {(g: Shot, i: number) => <figure>…</figure>}
+</Carousel>
 ```
 
-«Как устроен конвейер» (case field `scheme`, staff-c2), one component for
-both pages: the person line, numbered steps (number in mono, «**title.**
-text.», the repair line grey, the human check bold), the base line, the facts
-as one line in the medium size. Default: a 3-column table at the full width
-(2 on tablets, 1 on phones), heading in columns 1–3 with the person line
-beside it from 1080px. `compact`: one list for a narrow column, heading at
-the base size. Props: `scheme`, `compact`, `level` (default 3), `idPrefix`,
-`class`.
+A horizontal row of slides (decision 11 of 14.10): «Что говорят коллеги» on
+the home page, /hire/ and the cases, and the product galleries. Pass the
+items and a function child that renders one slide (`Astro.slots.render` with
+the item and its index). The row scrolls with scroll snap (swipe on phones)
+and always shows part of the next slide; under it «1 из 5» / «1–2 из 5» (the
+slides fully in view, a polite live region, so the new position is
+announced) and the buttons «Назад» and «Дальше», which move by one slide at
+once (no smooth scrolling, no autoplay, they pause the row's videos). The
+row is a focusable region named by `label` (`aria-roledescription`
+«карусель», the arrow keys move by one slide), each slide a group «2 из 5»;
+every slide stays in the DOM. The bar shows only after the script ran
+(`data-ready`): without JS the row still scrolls and no counter can be
+wrong; when every slide fits the script sets `data-static` and the bar goes;
+one slide renders no bar.
+Props: `items`, `label`, `id` (unique prefix), `kind` (`cards` default:
+85% of the row on phones, 60% on tablets, 5 of 12 columns from 1080px;
+`media`: one row height, 25rem phones, 26rem tablets, `height` or 30rem from
+1080px, each slide as wide as its ratio allows, at most 85% (75% from
+1080px)), `ratios` (width / height per item, `media` only), `height`,
+`bleed` (the row runs into the side gutters, to the screen edges on phones),
+`class`. Script: `src/scripts/carousel.ts`, bundled only on pages that use it.
+
+### AgentsScheme (`components/scheme/`)
+
+```astro
+<AgentsScheme idPrefix={`${c.data.anchor}-scheme`} level={3} facts={false} />       <!-- /cases/ -->
+<AgentsScheme level={5} titleSize="base" idPrefix={`${anchor}-scheme`} />         <!-- /hire/ -->
+<AgentsScheme heading={false} facts={false} idPrefix={`${d.anchor}-scheme`} />    <!-- /services/ «Подробнее» -->
+```
+
+The multi-agent scheme from the old site (decision 12 of 14.10), redrawn as
+an inline SVG in ink, paper and muted: input and the methodologist, the
+distributor, the three groups of agents, the two human checks, the output
+and the shared base. Its labels, heading («Как устроены AI-агенты»), facts
+and hint live in the component (content field `scheme: "ai-agents"` only
+switches it on); the texts renderer keeps a copy in `SCHEMES`, so change
+both together. Every SVG label is at least 11 viewBox units and the drawing
+is never scaled down (min-width 1180px, the viewBox width), so no label
+renders under 11px. By the component's own width (container queries): from
+1180px the drawing at the full width; 720–1179px the drawing at 1:1 scrolls
+sideways with «Схему можно прокрутить вбок» above it; below 720px (phones,
+tablets in portrait) the same labels as a vertical list (stages Вход,
+Распределение, AI-агенты with the three groups and the two human checks,
+Выход, the shared base; 1px frames, rules with small arrowheads). The facts
+under it: a wrapping line with hairlines, a two-column list below 720px;
+/cases/ passes `facts={false}` (the case infographic carries the numbers).
+Give it the full container width (1184px at a 1280px window): on /cases/
+under the case, on /hire/ as its own full-width row under the staff case, on
+/services/ inside the AI-agents «Подробнее».
+Props: `heading` (text or `false`), `level` (default 3), `titleSize`
+(`medium` default, `base`), `facts` (list or `false`), `hint`, `idPrefix`
+(unique per page), `class`.
 
 ### Media
 
@@ -398,7 +466,7 @@ screenshots are phone screens (554×1220 and 536×1170), use their own ratio.
 ### CaseLabels, CaseCard
 
 ```astro
-<CaseLabels case={c} />                                  <!-- «В штате, EdTech, …, 2025–2026, Мост, **в работе**» -->
+<CaseLabels case={c} />                                  <!-- «В штате, EdTech, …, 2025–2026, Обучение, **в работе**» -->
 <CaseCard case={it.case} line={it.line} linkLabel={b.cardLink} title="title" />
 <CaseCard case="staff-c2" linkLabel="Читать кейс" service labels={false} />
 ```
@@ -416,27 +484,117 @@ direction, as on the home page), `service` (show the service short name),
 
 ```astro
 <ul class="list-rules" role="list">
-  {b.main.map((it) => <ServiceRow service={it.service} line={it.line} linkLabel={b.linkLabel} duration={b.showDuration} />)}
+  {b.main.map((it) => <ServiceRow service={it.service} line={it.line} linkLabel={b.linkLabel} duration={b.showDuration} price action />)}
 </ul>
 <ul class="list-rules" role="list">
-  {b.more.map((it) => <ServiceRow service={it.service} line={it.line} linkLabel={b.linkLabel} href={it.href} duration={b.showDuration} size="small" />)}
+  {b.more.map((it) => <ServiceRow service={it.service} line={it.line} linkLabel={b.linkLabel} href={it.href} duration={b.showDuration} price action size="small" />)}
 </ul>
 ```
 
-An `<li>`: title (full `title`, bold), «Срок: …» (when `duration`), line,
-link (`href` override from the content, default `/services/#anchor`). From
-720px title on 5 columns and the rest on 7. Props: `service`, `line`,
-`linkLabel`, `href`, `duration`, `size` (`large`, `small`), `title`
-(`title` or `short`), `level`.
+An `<li>` with the compact logic of the service cards: title (full `title`,
+bold), the line, «Срок: …» and the price line one under the other in the
+same treatment as on the /services/ cards (base sans, the price line bold;
+`duration`, `price`), then the verb link (`action`: the service's `button`, a Telegram
+link that copies the start of the message, in bold) and «Подробнее»
+(`linkLabel`; `href` override from the content, default `/services/#anchor`).
+From 720px title on 5 columns and the rest on 7. Props: `service`, `line`,
+`linkLabel`, `href`, `duration`, `price`, `action`, `size` (`large`,
+`small`), `title` (`title` or `short`), `level`.
 
 ### Services on /services/ (`components/services/`)
 
-`ServiceFull` renders every service on /services/ from the service fields
-(section 5.3): the full template, and with `short` the short variant of the
-group «Мост» (title, summary, «Для кого», «Что получите на руки», `more`
-link, price, `TelegramAction`). Number, title and the italic summary sit in a
-sticky left column of 4, the parts in the right 8 (`ServicePart` rows).
-There is no separate card component for the short variant.
+`ServiceCard` renders every service as a compact card (decisions 8 and 10 of
+14.10, `render_card()` and `render_service()` in the texts renderer): number,
+title and the italic one-line `summary` (the full 6 columns) in columns 1–6;
+the three `highlights` (dash list), «Срок: …» and the price line
+(`servicePriceLine`, bold), the verb button (`TelegramAction` with
+`label={button}`, no caption, no hint, no email line, so the Telegram
+template mechanism stays) in columns 7–12. The copy hint and the email line
+stand once in `ServicesIntro`, under «Не нашли своё?» (`intro.other.hint`,
+`intro.other.email`). Under the card «Подробнее» (`details.disclose`)
+opens the full template on the spot: body, `AgentsScheme` without heading and
+facts for `scheme: "ai-agents"` (full width), «Для кого», «Что получите на
+руки», «Сколько длится», «Как идёт работа», «Что нужно от вас», «Что не
+входит», «Нейросеть и расходы», proof, «Мои продукты», «Что говорят
+коллеги» (text quotes). The parts are `ServicePart` rows: label in columns
+1–3, text in 4–12 (4–10 from 1080px). `short` (group variant `short`, the
+guide): the same card with the `more` link («Подробнее о тренажёре», /guide/)
+beside the verb button; its «Подробнее» opens only «Для кого» and «Что
+получите на руки» (as the renderer). Phones: one column.
+`ServiceGroup` renders a group (heading, lead, note with links, its cards),
+`ServicesIntro` the h1, lead and table of contents, `Formats` #formats (see
+5.1: the steps, the two payment formats, «Почему со мной предсказуемо» with
+the work screenshots, the terms). Screenshots (`proofImages`): from 720px on
+the 3-column grid of the «Почему со мной предсказуемо» items, each figure
+starting on its column line; one height for all (the widest-ratio image
+fills its column, the others are as wide as that height allows); on phones
+one under the other, at most 24rem high; the caption under each in small
+mono, a click opens the full image in a new tab (a plain link, no lightbox).
+
+### Disclosure (`.disclose`, global.css)
+
+```astro
+<details class="disclose"><summary>{labels.more}</summary>…</details>
+```
+
+A native `<details>` whose `<summary>` looks like a small framed button and
+ends with «+» / «−» (hover inverts, no animation, no script). Used by
+`ServiceCard` («Подробнее») and `CaseArticle` («Читать кейс полностью»).
+
+### Cases on /cases/ (`components/cases/`)
+
+`CaseArticle`: an ink line, `CaseLabels`, the title (h2); then
+`CaseInfographic` (`infographic`), the optional one-line `summary`, «Что из
+этого сделаю для вас» (name in columns 1–3, the text in the medium size
+beside it, the service title linked to /services/); a vertical reel beside
+them (columns 11–12 from 1080px, 10–12 on tablets, a 7.5rem column beside
+the service line on phones), spanning exactly the rows that render
+(`--reel-rows`), so no empty row adds a gap. The full text (Контекст, Что сделал, Результат)
+in «Читать кейс полностью» (`details.disclose`, rows: name 1–3, text 4–10).
+After it, in the renderer's order: `AgentsScheme` (staff-c2), the links
+(framed small buttons), the case testimonials as a `Carousel` of cards. The
+anchor is on the article, so /cases/#case-… lands on the title.
+`CaseInfographic`: the facts as large mono values with their labels under an
+ink line (only the number is large: a qualifier before it, «около», «почти»,
+«в», and a unit after it, «дня», «млн ₽», are set small beside it; a value
+without a digit is bold sans at the medium size; every value box has the
+height of one large mono line, so the labels of a row line up), two per row and all in one row from 560px of
+available width; `flow` as numbered steps joined by 1px rules (a row from
+560px, a column with a vertical rule below); `beforeAfter` as «Было» (grey)
+and «Стало» (bold, ink line) side by side. Container queries, so it works
+beside a reel and at the full width. «Шаги», «Было», «Стало» are the
+renderer's labels. `CasesToc`: the groups (`TocGroups`: the service's short
+name in small mono capitals, then the rows of `row.fields`, today the short
+titles only, and the group's products with their labels in small mono on the
+title's line). From 720px the table is open, the groups flow in 2 columns
+(3 from 1080px); on phones it is folded in a native `<details>` whose summary
+is the heading (h2) with «+» / «−». The two renderings carry the same links,
+only one is displayed. The legend line under each.
+
+### Products on /products/ (`components/products/`)
+
+`ProductItem`: kind, the name in huge type. A `gallery` of two or more
+(decision 14 of 14.10) is a `Carousel` of `kind="media"` right under the name
+(screenshots with a hairline frame and native videos with posters, the
+caption under each), then the text in columns 1–7 and `ProductFacts` in
+9–12. One picture (the gallery's only item, or `media` when there is no
+gallery): the screenshot with its caption in the side column, the facts under
+the body. The first gallery item is also `media` in the content; it is shown
+once. Every screenshot is a plain link to the full file (new tab, no
+lightbox). Only the first picture of the first product loads eagerly
+(`first`), the rest lazily. Status labels, the action button, secondary links
+and the quiet Telegram link are as before.
+
+### Home «Обо мне» and /hire/ «Опыт»
+
+`home/About`: `photo { src, alt }` (decision 9 of 14.10) replaces the drawn
+`portrait` in the same column when it is visible (a 4:5 frame, half the width
+on phones); hidden now, so the drawn portrait shows. Tested locally with a
+placeholder photo. `hire/Experience`: the staff cases (`show: full`) are rows
+of the place's grid in columns 4–12; a case with `scheme: true` gets the
+`AgentsScheme` (heading at the base size, h5) under it across all 12 columns.
+`hire/StaffCase` no longer draws a scheme. `hire/HireTestimonials` and
+`home/Testimonials` render the colleagues as a `Carousel` of cards.
 
 ### FAQ
 
@@ -461,18 +619,18 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 **home**
 - `hero` (hero): `name`, `role`, `headline` (the h1), `lead`, `button { label, href }` (plain chat link), `email`, `availability`, `numbers[{ value, label, source }]`, `numbersNote`
 - `clients` (names): `lines[{ label, names[], note? }]`, `link { label, case }` (to `caseHref`)
-- `services` (services): `heading`, `lead`, `showDuration`, `main[{ service, line }]`, `moreHeading`, `more[{ service, line, href? }]`, `linkLabel`
+- `services` (services): `heading`, `lead`, `showDuration`, `main[{ service, line }]`, `moreHeading`, `more[{ service, line, href? }]`, `linkLabel` (each row also shows the price line and the service's verb `button`)
 - `reels` (reels): `heading`, `hint`, `linkLabel`, `items[{ case, video, loop, poster, hook }]` (use `video` + `poster`; `.scroll-row`)
 - `featured-cases` (cases): `heading`, `cardLink`, `items[{ case, line }]`, `fallback[]`, `returnLine { text, cases[] }` (show only when all its cases are published), `allLink { label, href }`
 - `how-we-start` (steps): `source`, `showConsultationNote`, `showPrepare`, `showWorkload` (component `Steps`)
-- `testimonials` (testimonials): `heading`, `headingColleaguesOnly`, `clients.items[]` (empty now, so the heading is `headingColleaguesOnly`), `colleagues { caption, hint, items[] }`
-- `about` (about): `heading`, `portrait`, `portraitAlt`, `text[]`, `experience[{ years, place, role, note }]`, `experienceLink { label, href }` (`/hire/#experience`), `productsLine { text, linkLabel, href }`
+- `testimonials` (testimonials): `heading`, `headingColleaguesOnly`, `clients.items[]` (empty now, so the heading is `headingColleaguesOnly`), `colleagues { caption, hint, items[] }` (a `Carousel`)
+- `about` (about): `heading`, `portrait`, `portraitAlt`, `photo? { src, alt }` (hidden until Daniil sends the photo; when visible it replaces `portrait` here), `text[]`, `experience[{ years, place, role, note }]`, `experienceLink { label, href }` (`/hire/#experience`), `productsLine { text, linkLabel, href }`
 - `contact` (contact): `anchor`, `heading`, `hint`, `buttons[]`, `email`, `lines[]`, `workload`
 
 **services**: `serviceTemplate { labels { forWhom, youGet, duration, steps, fromYou, notIncluded, ai, proof, proofLinks, proofCasesBuilt, proofProducts, testimonials, readCase, more }, button { source, hint, email } }`
 - `intro` (intro): `heading` (h1), `lead[]`, `toc.items[]` (service slugs, show `short`), `other { text, button }` (codeword «Другое»)
-- `group-learning`, `group-development`, `group-bridge` (service-group): `heading`, `lead?`, `note? { text, links[{ label, service | case }] }`, `services[]`, `variant?` (`short` → `ServiceFull short`)
-- `formats` (formats, anchor `formats`): `heading`, `howWeStart { showConsultationNote, showPrepare, showWorkload }`, `pricing { heading, items[{ title, points[] }] }`, `predictable { heading, items[{ title, text }] }`, `terms { heading, items[{ id, text } | { id, source }] }` (`gref(source)`)
+- `group-learning`, `group-development`, `group-personal` (service-group): `heading`, `lead?`, `note? { text, links[{ label, service | case }] }`, `services[]`, `variant?` (`short` → `ServiceCard short`)
+- `formats` (formats, anchor `formats`): `heading`, `howWeStart { showConsultationNote, showPrepare, showWorkload }`, `pricing { heading, items[{ title, points[] }] }`, `predictable { heading, items[{ title, text }] }`, `proofImages[{ src, alt, caption, status? }]` (the work screenshots under «Почему со мной предсказуемо»; hidden ones are dropped by the export), `terms { heading, items[{ id, text } | { id, source }] }` (`gref(source)`)
 - `faq` (faq): `anchor`, `heading`, `items[{ q, a }]`
 - `contact`
 
@@ -497,8 +655,8 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 - `hero` (hire-hero): `name` (h1), `role`, `lead[]`, `portrait`, `portraitAlt`, `button { codeword, label, caption }`, `email { text, subject }`, `resumes[{ label, meta, href }]`
 - `facts`: `anchor`, `heading`, `rows[{ label, value, extra?[], links?[{ label, url }] }]`
 - `numbers`: `anchor`, `heading`, `items[]`, `note`
-- `experience`: `anchor`, `heading`, `lead`, `caseDisplay { sections[], showReel, … }`, `items[{ id, dates, duration?, role, place, placeFull?, placeNote?, about, results?[], stack?, cases?[{ case, show: 'line' | 'full', links?, scheme? }] }]` (`line` shows `case.hire.line`; `full` shows the case sections without labels and without the service line)
-- `testimonials`: `anchor`, `heading`, `hint`, `items[{ testimonial, company, relation }]`
+- `experience`: `anchor`, `heading`, `lead`, `caseDisplay { sections[], showReel, … }`, `items[{ id, dates, duration?, role, place, placeFull?, placeNote?, about, results?[], stack?, cases?[{ case, show: 'line' | 'full', links?, scheme? }] }]` (`line` shows `case.hire.line`; `full` shows the case sections without labels and without the service line; `scheme: true` adds the case's AgentsScheme under it at the full width)
+- `testimonials`: `anchor`, `heading`, `hint`, `items[{ testimonial, company, relation }]` (a `Carousel`)
 - `team` (columns): `anchor`, `heading`, `columns[{ title, text, link? { label, url } }]`, `process { heading, items[] }`
 - `contact`: `button { codeword, label, caption }`, `email { text, subject }`, `telegramText`, `resumes[]`
 
@@ -514,46 +672,57 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 
 ### 5.3 services (7, `services`)
 
-`title`, `short`, `codeword`, `anchor`, `line` (Обучение, Разработка, Мост),
-`order`, `summary`, `forWhom[]`, `youGet[]`, `duration`, `durationNote?`,
+`title`, `short`, `codeword`, `anchor`, `line` (Обучение, Разработка),
+`order`, `summary` (the italic one-liner of the card), `button` (verb label
+of the visitor's action: «Записаться на консультацию», «Обсудить
+AI-агентов», «Заказать аудит курса», «Обсудить курс», «Обсудить приложение»,
+«Обсудить игру», «Заказать тренажёр»), `highlights[3]` (the card's three
+points), `forWhom[]`, `youGet[]`, `duration`, `durationNote?`,
 `steps[]`, `fromYou?`, `ai?`, `notIncluded[]`, `proofCases[]`,
 `proofNotes? { caseSlug: note }`, `proofLinks?[{ label, url, note?, case?, product? }]`,
 `proofProducts?[]`, `testimonials?[]`, `more? { label, url }`,
-`related? { text, service?, case? }`, `price`; body: one paragraph
-(`bodyHtml`). Full template order (render_service): body, «Для кого»,
+`related? { text, service?, case? }`, `price?` (absent for now: the card
+shows `site.work.price`), `scheme?` (`"ai-agents"` on ai-agents); body: one
+paragraph (`bodyHtml`). Slugs and anchors: consulting, ai-agents, audit,
+course, app, game, guide. Card (render_card): highlights, «Срок: …» and the
+price line, the verb button. Full template order (render_service, inside
+«Подробнее»): body, the scheme, «Для кого»,
 «Что получите на руки», «Сколько длится» (`duration + '. ' + durationNote`),
 «Как идёт работа» (numbered), «Что нужно от вас», «Что не входит»,
 «Нейросеть и расходы» (`ai`), proof: for `app` first «Что можно открыть»
 (`proofLinks`) then «Что я написал сам» (`proofCases`); for others «Чем
 подтверждено» (published `proofCases` with notes, then `proofLinks`), then
 «Мои продукты» (visible `proofProducts`: title and `oneLiner`); «Что говорят
-коллеги» (`testimonials`); `price + '.'`; `TelegramAction`.
+коллеги» (`testimonials`).
 
 ### 5.4 cases (18 published, `cases`)
 
 `title`, `shortTitle`, `origin`, `industry`, `year`, `duration?`, `direction`,
 `service` (codeword), `anchor`, `status?` («в работе»), `featured`, `order`,
 `published`, `hire? { place, line? }`, `links?[{ label, url, note? }]`,
-`reel? { video, loop, poster }`, `scheme? { heading, person, steps[{ n, title, text, repair?, check? }], base, facts[] }`
-(staff-c2 only, «Как устроен конвейер»: the `person` line above the
-numbered steps, each step «**title.** text.» plus `repair` and `check`, the
-`base` line under them, `facts` as a comma list; no arrows), `testimonials?[]`. Body sections: «Контекст», «Что
-сделал», «Результат», «Что из этого сделаю для вас» (`bodySections`).
+`reel? { video, loop, poster }`, `scheme?` (`"ai-agents"`, staff-c2 only:
+`AgentsScheme`), `infographic? { facts[2–4]{ value, label }, flow?[2–5], beforeAfter? { before, after } }`
+(every case has one; facts only from the case text), `summary?` (optional
+one-liner under the infographic; no case has it yet), `testimonials?[]`.
+Body sections: «Контекст», «Что сделал», «Результат», «Что из этого сделаю
+для вас» (`bodySections`).
 
 ### 5.5 products (5, `products`)
 
 `title`, `anchor`, `codeword`, `kind`, `status`, `platform`, `oneLiner`,
 `inside`, `statusNote?`, `visible`, `action? { label, url }` (no action means
 no button: the two party games), `secondaryLinks?[{ label, url, note? }]`,
-`media { type, src, alt, status }` (src `''` while pending; Top Pick and ДОБЕЙ
-have screenshots under `/products/`), `messageLink { label, template }`
+`media { type, src, alt, status }` (the first gallery shot, or the one
+screenshot), `gallery[{ type: image | video, src, poster?, alt, caption? }]`
+(wishlist 5, Barba 4, Скрижаль 3, Top Pick and ДОБЕЙ 1; videos from Daniil
+go first with a poster), `messageLink { label, template }`
 (`productTemplate(p)`), `metrics[]`, `order`; body paragraphs (`bodyHtml`).
 Product names use the huge size.
 
 ### 5.6 testimonials (5)
 
 `name`, `role`, `company` (may be ''), `kind` (`video`), `video`, `loop`,
-`poster`, `quote`, `pages[]`. Use `VideoTestimonial`.
+`poster`, `quote`, `pages[]`. Use `VideoTestimonial` (`layout="card"` in a `Carousel`).
 
 ## 6. CSS (`src/styles`)
 
@@ -615,13 +784,17 @@ instead of shrinking), an even row of `--row-items` (default 6) from 1080px
 
 ## 7. Behaviour and analytics
 
-`src/scripts/telegram.ts` is the only client script (bundled into every
-page by `BaseLayout`). It copies `data-tg-template` on click and swaps the
+Two client scripts. `src/scripts/carousel.ts` (bundled by `Carousel` only
+on pages with a carousel: home, /cases/, /products/, /hire/) wires «Назад»
+and «Дальше», the arrow keys and the counter (section 4, Carousel).
+`src/scripts/telegram.ts` is bundled into every page by `BaseLayout`. It copies `data-tg-template` on click and swaps the
 label for `data-tg-copied` during `data-tg-ms`, and, when `<html
 data-metrika>` is set (production), sends `reachGoal` for elements with
 `data-goal`: `telegram` (Telegram buttons and links), `email` (mailto links),
 `hire` (footer link to /hire/), `product` (product buttons; pass
-`goal="product"`). No other scripts: no `/#hire` redirect, no autoplay.
+`goal="product"`). No other scripts: no `/#hire` redirect, no autoplay, no
+lightbox (the work screenshots open as plain links), the disclosures are
+native `<details>`.
 
 ## 8. Routes
 

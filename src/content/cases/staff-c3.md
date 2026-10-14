@@ -1,6 +1,6 @@
 ---
-title: 'Курс по нейросетям за 2 недели: ROI 2982% в первый месяц продаж'
-shortTitle: Курс с ROI 2982%
+title: 'Курс по нейросетям для Eduson Academy за 2 недели: ROI 2982% в первый месяц продаж'
+shortTitle: Курс по нейросетям для Eduson Academy
 origin: В штате
 industry: онлайн-образование, курсы для людей и компаний
 year: 2023–2024
@@ -11,6 +11,14 @@ anchor: case-roi-2982
 featured: false
 order: 100
 published: true
+infographic:
+  facts:
+  - value: 2982%
+    label: ROI в первый месяц продаж
+  - value: почти 30 ₽
+    label: прибыли на каждый вложенный рубль
+  - value: 2 недели
+    label: от программы до запуска
 hire:
   place: eduson-senior
 reel:

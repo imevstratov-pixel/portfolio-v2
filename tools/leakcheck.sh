@@ -7,12 +7,14 @@
 # In a preview build (PREVIEW not 0) it also fails on the Metrika counter
 # (mc.yandex.ru) anywhere in dist/ and on any HTML page without a robots meta.
 #
+# Fails on files under dist/media/ that no generated page references.
+#
 # Greps dist/ for: _note _todo _draft hidden «МЕСТО ДЛЯ» seller-ai-course
 # studio-expert university-curator.
 # - Everything the build generates (Astro pages, _astro/ assets, work.html,
 #   404.html) must contain none of them.
 # - Files copied verbatim from the old site (assets/, resume/, demo/, en/,
-#   styles.css, script.js, game.js, products/) must contain none of the content
+#   styles.css, script.js, game.js, products/*.jpg) must contain none of the content
 #   markers; in them "hidden" and "_note" also occur as ordinary CSS/HTML
 #   (overflow:hidden, aria-hidden, .lightbox__note), so those two are listed
 #   for review but do not fail the check. Pass --strict to fail on them too.
@@ -34,7 +36,9 @@ CONTENT='_todo|_draft|МЕСТО ДЛЯ|seller-ai-course|studio-expert|universit
 SOFT='_note|hidden'
 # print each hit as file:line: …context… (minified files have very long lines)
 hits() { local pat="$1"; shift; grep -I -n -o -E ".{0,40}($pat).{0,40}" -- "$@"; }
-LEGACY=(assets resume demo en styles.css script.js game.js products)
+# products/ holds the generated /products/ page too: only its two copied
+# screenshots are legacy files.
+LEGACY=(assets resume demo en styles.css script.js game.js products/top-pick.jpg products/dobei.jpg)
 
 cd "$DIST"
 prune=()
@@ -53,6 +57,23 @@ fi
 if [ "${#legacy[@]}" -gt 0 ] && hits "$CONTENT" "${legacy[@]}"; then
   echo "leakcheck: content markers found in copied legacy files (above)" >&2
   fail=1
+fi
+# Every file under media/ (screenshots and videos prepared for this site) must
+# be referenced by a generated page. A file nothing links to is most likely one
+# that waits for Daniil's OK (status: "hidden" in the content) and must not be
+# served: keep such files outside public/ until he approves them.
+if [ -d media ]; then
+  mapfile -t pages < <(find . "${prune[@]}" -type f -name '*.html' -print | sort)
+  unref=()
+  while IFS= read -r f; do
+    rel="${f#./}"
+    grep -q -F -- "$rel" "${pages[@]}" || unref+=("$rel")
+  done < <(find ./media -type f | sort)
+  if [ "${#unref[@]}" -gt 0 ]; then
+    echo "leakcheck: files under media/ that no generated page references (move them out of public/):" >&2
+    printf '  %s\n' "${unref[@]}" >&2
+    fail=1
+  fi
 fi
 soft=$( [ "${#legacy[@]}" -gt 0 ] && grep -I -l -E "$SOFT" -- "${legacy[@]}" || true )
 if [ -n "$soft" ]; then

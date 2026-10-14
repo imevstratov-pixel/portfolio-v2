@@ -1,10 +1,11 @@
 ---
 // A service group on /services/ (block type "service-group"): the group name
 // large across the full width, the optional lead and note line (its link
-// labels become links inside the sentence), then each service. variant
-// "short" renders the short service template (group «Мост»).
+// labels become links inside the sentence), then each service as a compact
+// card (ServiceCard). variant "short" renders the short template (the guide:
+// the card, «Для кого», «Что получите на руки» and the link to /guide/).
 import Section from '../Section.astro';
-import ServiceFull from './ServiceFull.astro';
+import ServiceCard from './ServiceCard.astro';
 import { caseHref, getService, isPublished, type Block } from '../../lib/content';
 import { url } from '../../lib/url';
 
@@ -14,11 +15,9 @@ interface Props {
   labels: Record<string, string>;
   /** Service slug -> position on the page (1–7). */
   numbers: Map<string, number>;
-  /** serviceTemplate.button.email. */
-  email?: string;
 }
 
-const { block, labels, numbers, email } = Astro.props;
+const { block, labels, numbers } = Astro.props;
 const short = block.variant === 'short';
 
 type Segment = { text: string; href?: string };
@@ -68,7 +67,7 @@ const note = block.note?.text ? segments(block.note.text, block.note.links ?? []
   <div class="group__list">
     {
       (block.services as string[]).map((slug) => (
-        <ServiceFull service={slug} labels={labels} number={numbers.get(slug) ?? 0} short={short} email={email} />
+        <ServiceCard service={slug} labels={labels} number={numbers.get(slug) ?? 0} short={short} />
       ))
     }
   </div>
@@ -83,6 +82,6 @@ const note = block.note?.text ? segments(block.note.text, block.note.links ?? []
 
   .group__list {
     display: grid;
-    gap: var(--s5);
+    gap: var(--s4);
   }
 </style>

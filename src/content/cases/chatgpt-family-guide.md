@@ -1,15 +1,24 @@
 ---
-title: 'Тренажёр по ChatGPT на делах близкого человека: 6 занятий, и теперь она сама генерирует картинки и видео'
+title: 'Тренажёр по ChatGPT на делах близкого человека: теперь она сама пишет запросы к нейросетям'
 shortTitle: Тренажёр по ChatGPT для близкого
 origin: Для близкого человека
 industry: обучение взрослых работе с нейросетями
 year: '2026'
-direction: Мост
+direction: Обучение и разработка
 service: Гайд
 anchor: case-chatgpt-family-guide
 featured: false
 order: 130
 published: true
+infographic:
+  facts:
+  - value: '6'
+    label: занятий по 30–40 минут, она прошла все
+  - value: '37'
+    label: заданий по её работе, подработке и дому
+  beforeAfter:
+    before: Начинала с нуля
+    after: Сама пишет запросы и генерирует картинки и видео
 links:
 - label: Открыть демо тренажёра
   url: /demo/chatgpt-praktikum/

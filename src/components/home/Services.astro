@@ -1,9 +1,10 @@
 ---
 // «Чем могу помочь» (block "services"): the lead under the heading, the main
-// line as large rows between thin rules (title on 5 columns, «Срок», line and
-// «Подробнее» on 7), then, after an ink rule, «Ещё делаю на заказ» as a
-// smaller list of the same rows. Links go to /services/#anchor, or to the
-// item's own href (the guide goes to /guide/).
+// line as large rows between thin rules (title on 5 columns; line, «Срок» and
+// the price line, the verb link to Telegram and «Подробнее» on 7), then,
+// after an ink rule, «Ещё делаю на заказ» as a smaller list of the same rows.
+// «Подробнее» goes to /services/#anchor, or to the item's own href (the
+// guide goes to /guide/).
 import Section from '../Section.astro';
 import ServiceRow from '../ServiceRow.astro';
 import { visible, type Block } from '../../lib/content';
@@ -23,7 +24,15 @@ const more = visible(b.more);
     main.length > 0 && (
       <ul class="list-rules" role="list">
         {main.map((it: any) => (
-          <ServiceRow service={it.service} line={it.line} linkLabel={b.linkLabel} href={it.href} duration={b.showDuration} />
+          <ServiceRow
+            service={it.service}
+            line={it.line}
+            linkLabel={b.linkLabel}
+            href={it.href}
+            duration={b.showDuration}
+            price
+            action
+          />
         ))}
       </ul>
     )
@@ -40,6 +49,8 @@ const more = visible(b.more);
               linkLabel={b.linkLabel}
               href={it.href}
               duration={b.showDuration}
+              price
+              action
               size="small"
               level={b.moreHeading ? 4 : 3}
             />

@@ -1,11 +1,11 @@
 ---
 // «Что говорят коллеги» on /hire/ (block "testimonials", anchor
-// #testimonials): the hint under the heading, then one video testimonial per
-// row between thin rules, as on the home page (poster 3 of 12 columns, the
-// quote beside it on 6 in the medium size; on phones a narrow video
-// column). The signature adds the company and the relation from the block
-// when they are new and not empty («Женя, CPO, Школа маркетплейсов Лео Шевченко, мой руководитель»).
+// #testimonials): the hint under the heading, then the video testimonials as
+// a Carousel row of cards, as on the home page (decision 11 of 14.10). The
+// signature adds the company and the relation from the block when they are
+// new and not empty («Женя, CPO, Школа маркетплейсов Лео Шевченко, мой руководитель»).
 import Section from '../Section.astro';
+import Carousel from '../Carousel.astro';
 import VideoTestimonial from '../VideoTestimonial.astro';
 import { getTestimonial, visible, type Block } from '../../lib/content';
 
@@ -25,13 +25,11 @@ const items = visible<Item>(b.items)
   items.length > 0 && (
     <Section id={b.anchor} heading={b.heading}>
       {b.hint && <p slot="head" class="ht__hint label">{b.hint}</p>}
-      <ul class="ht" role="list">
-        {items.map((it) => (
-          <li>
-            <VideoTestimonial testimonial={it.t} extra={it.extra} size="medium" />
-          </li>
-        ))}
-      </ul>
+      <Carousel items={items} label={b.heading} id="hire-colleagues" bleed>
+        {(it: (typeof items)[number]) => (
+          <VideoTestimonial testimonial={it.t} extra={it.extra} layout="card" size="medium" />
+        )}
+      </Carousel>
     </Section>
   )
 }
@@ -39,18 +37,5 @@ const items = visible<Item>(b.items)
 <style>
   .ht__hint {
     margin-top: var(--s2);
-  }
-
-  .ht > li {
-    padding-block: var(--s3);
-    border-top: var(--hair);
-  }
-
-  .ht > li:first-child {
-    padding-top: var(--s2);
-  }
-
-  .ht > li:last-child {
-    padding-bottom: 0;
   }
 </style>
