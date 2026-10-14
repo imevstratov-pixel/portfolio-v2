@@ -2,6 +2,7 @@
 // Link checker over the built site.
 //
 //   npm run build && npm run check-links
+//   DIST=/tmp/x BASE=/portfolio/ npm run check-links   (a build made with --outDir)
 //
 // For every HTML file in dist/ (Astro pages and the copied legacy pages):
 // - every internal href / src / poster / srcset resolves to a file in dist/
@@ -17,7 +18,7 @@
 // built Astro pages must not contain it either.
 //
 // Expected pages: the routes of the site (/, /services/, /cases/, /products/,
-// /hire/, /guide/, 404) and one page /cases/<slug>/ for every published case
+// /free/, /hire/, /guide/, 404) and one page /cases/<slug>/ for every published case
 // in src/content/cases (slug = file name, decision 17 of 14.10) must exist;
 // /cases/ must link to every case page and keep every case anchor (the old
 // links /cases/#case-… land on the case's card); no other page may sit under
@@ -26,7 +27,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const DIST = join(ROOT, 'dist');
+const DIST = process.env.DIST ? resolve(process.env.DIST) : join(ROOT, 'dist'); // DIST=path to check another build
 const BASE = ('/' + (process.env.BASE || '/portfolio-v2/').replace(/^\/+|\/+$/g, '') + '/').replace(/\/+/g, '/');
 const SITE = (process.env.SITE || 'https://imevstratov-pixel.github.io').replace(/\/+$/, '');
 const DEFAULT_BASE = '/portfolio-v2/';
@@ -204,7 +205,7 @@ const publishedCases = readdirSync(CASES_DIR)
   .filter((f) => f.endsWith('.md'))
   .map((f) => ({ slug: f.replace(/\.md$/, ''), ...frontmatter(join(CASES_DIR, f)) }))
   .filter((c) => c.published !== 'false');
-const expected = ['', 'services/', 'cases/', 'products/', 'hire/', 'guide/', '404.html', ...publishedCases.map((c) => `cases/${c.slug}/`)];
+const expected = ['', 'services/', 'cases/', 'products/', 'free/', 'hire/', 'guide/', '404.html', ...publishedCases.map((c) => `cases/${c.slug}/`)];
 for (const route of expected) {
   if (!fileFor(BASE + route)) errors.push(`expected page ${BASE}${route} was not built`);
 }

@@ -25,6 +25,7 @@ import Button from '../Button.astro';
 import Media from '../Media.astro';
 import Carousel from '../Carousel.astro';
 import TelegramAction from '../TelegramAction.astro';
+import LinkedText from '../LinkedText.astro';
 import ServiceTerms from '../ServiceTerms.astro';
 import AgentsScheme from '../scheme/AgentsScheme.astro';
 import VideoTestimonial from '../VideoTestimonial.astro';
@@ -82,6 +83,9 @@ const homeReels = findBlock(getPage('home'), 'reels');
 const hook: string | undefined = homeReels?.items?.find((it: { case: string }) => it.case === c.id)?.hook;
 
 const links = d.links ?? [];
+// the line about the free guide under the text (healthtech-course-consulting,
+// decision 18): its link words lead to /free/
+const freeLine = d.leadMagnet?.text ? d.leadMagnet : null;
 const voices = (d.testimonials ?? []).map((slug) => getTestimonial(slug));
 const { prev, next } = caseNeighbours(c);
 ---
@@ -117,6 +121,13 @@ const { prev, next } = caseNeighbours(c);
                 </div>
               </section>
             ))}
+            {freeLine && (
+              <div class="cp__row cp__row--free">
+                <p class="cp__text">
+                  <LinkedText text={freeLine.text} links={freeLine.link ? [freeLine.link] : []} where={`cases/${c.id} leadMagnet`} />
+                </p>
+              </div>
+            )}
           </div>
           {reel && (
             <div class="cp__reel">

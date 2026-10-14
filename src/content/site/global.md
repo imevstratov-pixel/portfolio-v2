@@ -20,6 +20,8 @@ header:
     href: /cases/
   - label: Мои продукты
     href: /products/
+  - label: Бесплатно
+    href: /free/
   cta:
     label: Написать
     href: '#contact'
@@ -38,6 +40,8 @@ footer:
     href: /cases/
   - label: Мои продукты
     href: /products/
+  - label: Бесплатно
+    href: /free/
   - label: Тренажёр для близкого
     href: /guide/
   - label: Работодателям

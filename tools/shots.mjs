@@ -18,7 +18,7 @@ const ROOT = resolve(import.meta.dirname, '..');
 const DIST = join(ROOT, 'dist');
 const BASE = ('/' + (process.env.BASE || '/portfolio-v2/').replace(/^\/+|\/+$/g, '') + '/').replace(/\/+/g, '/');
 const EXECUTABLE = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
-const ALL_ROUTES = ['/', '/services/', '/cases/', '/products/', '/hire/', '/guide/', '/404.html'];
+const ALL_ROUTES = ['/', '/services/', '/cases/', '/products/', '/free/', '/hire/', '/guide/', '/404.html'];
 
 const args = process.argv.slice(2);
 let out = join(ROOT, 'shots');

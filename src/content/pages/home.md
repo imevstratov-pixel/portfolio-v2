@@ -207,6 +207,16 @@ blocks:
     text: 'Ещё делаю свои продукты: игры, приложение для Mac и вишлист.'
     linkLabel: Мои продукты
     href: /products/
+- id: free-guide
+  type: lead-magnet
+  heading: Пока не готовы обсуждать задачу?
+  text: 'Начните с бесплатного руководства «Как разработать онлайн-курс»: 21 шаг от разбора конкурентов до первых метрик после запуска. PDF скачивается сразу.'
+  link:
+    label: Бесплатное руководство
+    href: /free/
+  image:
+    src: free/kak-razrabotat-onlajn-kurs-cover.jpg
+    alt: Обложка руководства «Как разработать онлайн-курс»
 - id: contact
   type: contact
   anchor: contact

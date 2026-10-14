@@ -33,10 +33,12 @@ the second «Свернуть» of the long disclosures on /services/.
   «и», a comma or a step number.
 - **The output must pass `npm run leakcheck`.** It greps the built site for
   `hidden`, `_note`, `_todo`, `_draft` and a few slugs. So never use these
-  substrings in class names, ids or attributes: no `aria-hidden`, no `hidden`
-  attribute, no `overflow: hidden` (use `overflow: clip`), no BEM elements
-  like `__note` or `__notes` (use `__foot`, `__lines`). `.sr-only` exists for
-  screen-reader text.
+  substrings in class names, ids or attributes: no `hidden` attribute, no
+  `overflow: hidden` (use `overflow: clip`), no BEM elements like `__note` or
+  `__notes` (use `__foot`, `__lines`). The one allowed form is the ARIA
+  attribute `aria-hidden="true"`, for a mouse-only duplicate link (the guide
+  cover in `LeadMagnet` and `FreeItem`, together with `tabindex="-1"`).
+  `.sr-only` exists for screen-reader text.
 - **One `<h1>` per page.** Section headings are `h2`, items inside `h3`.
 - **Anchors.** Every block with `anchor` in the content must render that id
   (`contact`, `formats`, `faq`, `numbers`, `experience`, …). Services use their
@@ -85,20 +87,64 @@ the second «Свернуть» of the long disclosures on /services/.
 | `npm run build` | Static build into `dist/` |
 | `npm run preview` | Serves `dist/` (Astro 7 may start it in the background; stop with `npx astro preview stop`) |
 | `npm run check` | `astro check`: TypeScript and template types (0 errors expected) |
-| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external. Expected pages: every route and one /cases/<slug>/ per published case in `src/content/cases` must be built, /cases/ must link to each and keep each case anchor, and no other page may sit under /cases/ |
-| `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. Fails on any file under `dist/media/` that no generated page references (a screenshot waiting for Daniil's OK must stay outside `public/`). In preview it also fails on the Metrika counter anywhere in `dist/` and on any HTML page without a robots meta |
+| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external. Expected pages: every route (/free/ included) and one /cases/<slug>/ per published case in `src/content/cases` must be built, /cases/ must link to each and keep each case anchor, and no other page may sit under /cases/. `DIST=<dir>` checks a build made with `--outDir` |
+| `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. Fails on any file under `dist/media/` that no generated page references (a screenshot waiting for Daniil's OK must stay outside `public/`). Then runs `tools/prodcheck.mjs` (below) |
+| `node tools/prodcheck.mjs [dist]` | Deploy-mode check, run by `leakcheck` with the same `PREVIEW`, `BASE`, `SITE`. Preview: no `mc.yandex.ru` or `data-metrika` anywhere, a robots `noindex` meta on every HTML page (search-engine verification files `google*.html`, `yandex_*.html` from `public/` excepted), robots.txt `Disallow: /` without a sitemap, no sitemap.xml. Production: the Metrika counter and `data-metrika` on every generated page (the work.html redirect excepted), no robots meta except on 404, legacy files byte-identical to `public/`, robots.txt `Allow: /` with `Sitemap: <site><base>sitemap.xml`, sitemap.xml with every indexable generated page and en/ under `<site><base>`, nothing 404, noindex or redirect. Both: every `public/` file is built (old URLs), canonical and og:url are `<site><base><path>`, og:image is absolute and exists, the old home anchors lead to built pages and existing sections |
 | `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Without routes: every page, the built case pages too. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
 | `npm run verify` | build, check-links, leakcheck |
 | `npm run content` | Re-run the content export (needs `SITE_CONTENT`) |
+| `node tools/build-guide-pdf.mjs <guide draft .md>` | Run by hand, not part of the build. Builds the free guide «Как разработать онлайн-курс» for /free/: `public/free/kak-razrabotat-onlajn-kurs.pdf` (A4, black and white, Inter Tight and IBM Plex Mono embedded, colours and font stacks from `tokens.css`; cover, contents with page numbers from a second pass, page numbers in the footer, bookmarks, clickable full-URL links, tables kept on one page, a line ending in «:» or «.» kept with the list or table it introduces, bold labels such as «**Логика программы:**» included, and no list leaving its last item alone at the top of a page; the step counts on the cover are counted from the draft: the numbered h3 steps of «Предпродакшн», the first numbered list of «Продакшн» and of «Постпродакшн», and the build stops unless they add up to `TOTAL_STEPS` (21, the «21 шаг» of pages home, services and free)) and `public/free/kak-razrabotat-onlajn-kurs-cover.jpg` (page 1). Reads only the text before «# Для Даниила» of the draft (kept outside the repository), fails on notes or placeholders left, puts the live address for «[адрес сайта]» and UTM tags (`utm_source=guide-pdf`) on links to the site. Prints pages, size, linked addresses and fonts. Needs `/opt/pw-browsers/chromium` (`CHROMIUM_PATH`) and poppler-utils (`pdfinfo`, `pdffonts`, `pdftoppm`). Commit both files; then check «PDF, N страниц» in `pages/free.md` (the build fails when it differs from the file) |
 
 Environment: `BASE` (default `/portfolio-v2/`), `SITE` (default
 `https://imevstratov-pixel.github.io`), `PREVIEW` (on unless `0`). In preview
 every page has `noindex,nofollow` and no analytics, the legacy pages too
 (`tools/legacy-preview.mjs`, an Astro integration, strips the Metrika snippet
 from `dist/en/index.html` and adds the robots meta to legacy pages after the
-build; `public/` stays verbatim); with `PREVIEW=0` the Yandex Metrika counter
-111316684 is added and `<html data-metrika>` enables goals.
+build; `public/` stays verbatim), and `robots.txt` disallows everything; with
+`PREVIEW=0` the Yandex Metrika counter 111316684 is added, `<html
+data-metrika>` enables goals, `robots.txt` allows everything and names the
+sitemap, and `tools/sitemap.mjs` (an Astro integration) writes
+`dist/sitemap.xml` from the built files: every HTML page except 404, noindex
+pages (the demo apps), redirect stubs (work.html) and legacy HTML no Astro
+page links to (resume/*.html, the PDF sources); en/ is in. A new route lands
+in the sitemap by itself.
 Test another base with `BASE=/x/ npm run build && BASE=/x/ npm run check-links`.
+
+Deploy (`.github/workflows/deploy.yml`): one code base, two repositories. The
+workflow sets `BASE=/<repository name>/` and `PREVIEW=0` only in
+`imevstratov-pixel/portfolio` (the live site
+https://imevstratov-pixel.github.io/portfolio/), `PREVIEW=1` everywhere else
+(the sandbox `imevstratov-pixel/portfolio-v2`). Both run build, check-links and
+leakcheck (with prodcheck) before the upload. Check both locally without
+touching `dist/`:
+
+```sh
+BASE=/portfolio/ PREVIEW=0 npx astro build --outDir /tmp/prod
+DIST=/tmp/prod BASE=/portfolio/ PREVIEW=0 npm run check-links
+BASE=/portfolio/ PREVIEW=0 npm run leakcheck -- /tmp/prod
+```
+
+robots.txt is served at `<site><base>robots.txt`, but crawlers read only the
+host root (`https://imevstratov-pixel.github.io/robots.txt`, another
+repository). What keeps the sandbox out of search is the robots meta of every
+page; the sitemap of the live site is submitted by hand in Yandex Webmaster
+and Google Search Console, after each has verified ownership. The route
+(README, «Moving the live site to this code», step 7): Google, a URL-prefix
+property for `<site>/portfolio/` verified by `google<token>.html` dropped
+into `public/` as is; Yandex, which adds sites by host, by `yandex_<token>.html`
+in the host-root repository `imevstratov-pixel.github.io`. Verification files
+(`google*.html`, `yandex_*.html`) are not pages: `legacy-preview` leaves them
+untouched in preview, `prodcheck` does not ask them for a robots meta, and
+the sitemap leaves them out (no page links to them). There is no
+verification meta tag in `BaseLayout`.
+
+Old home anchors (`src/layouts/LegacyAnchors.astro`, an inline script at the
+top of the home page `<head>`): `#hire` goes to /hire/, `#cases` to /cases/,
+`#c1`…`#c7` to /cases/staff-c1/…/cases/staff-c7/ (`location.replace`, the
+query string kept), `#cta` to `#contact`, `#testimonials` and `#timeline` to
+the sections «Что говорят коллеги» and «Обо мне» (by the block's anchor if the
+content gives one, else by its heading), `#numbers` to the top. The map is
+built from the content; prodcheck checks every target.
 
 ## 3. Helpers (`src/lib`)
 
@@ -127,13 +173,13 @@ import {
   products, getProduct, isProductVisible, visibleProducts, productHref, productTemplate,
   getTestimonial, testimonialSignature,
   telegramButton, telegramUrl, singleHint, mailtoHref,
-  bodyHtml, bodySections,
+  bodyHtml, bodySections, linkSegments, type TextLink,
 } from '../lib/content';
 ```
 
 - `site`: data of `site/global.md` (section 5.2).
 - `getPage(id)`: data of `pages/<id>.md`; ids `home`, `services`, `cases`,
-  `products`, `hire`, `guide`, `404`. `pageBlocks(page)` returns the visible
+  `products`, `free`, `hire`, `guide`, `404`. `pageBlocks(page)` returns the visible
   blocks in order; `getBlock(page, 'hero')` one block by id (throws if
   missing), `findBlock` the same but returns `undefined`.
 - `gref('global.email.line')` resolves a global reference (used in contact
@@ -199,12 +245,21 @@ import {
 The module validates cross-references when it loads: unknown case, service,
 product or testimonial slugs, unknown Telegram codewords and duplicate anchors
 fail the build with a list of problems.
+- `linkSegments(text, links, { servicesPage?, where? })`: a line whose link
+  labels become links inside the sentence (`links[{ label, service | case |
+  href }]`, in order; a service goes to its card on /services/, or `#anchor`
+  with `servicesPage`; a case to its page while published, else plain words;
+  `href` through `contentHref`). Throws when a label is not in the text.
+  Render it with `LinkedText`.
 
 ### `media.ts`
 
 `imageSize('assets/portrait.jpg')` returns `{ width, height }` read from the
 file in `public/` (JPEG, PNG, GIF, WebP); `publicFileExists(path)`. `Media`
-uses them for `width`/`height` and the default ratio.
+uses them for `width`/`height` and the default ratio. For files to download
+(/free/): `fileSize(path)` in bytes, `formatSize(bytes)` («244 КБ», «1,2
+МБ», a non-breaking space before the unit), `pdfPageCount(path)` (from the
+PDF's page tree, `null` when it sits in a compressed object stream).
 
 ### `types.ts`
 
@@ -232,7 +287,8 @@ optional `header` override), `title`, `description`, `ogImage`, `noindex`
 `aria-current` in header and footer), `ctaHref` (target of «Написать»;
 default `page.header.ctaTarget` or `#contact`). Renders `<html lang="ru">`,
 head (title, description, canonical, OG with absolute image URL and size,
-robots in preview and for `seo.noindex`, fonts, Metrika in production),
+robots in preview and for `seo.noindex`, fonts, Metrika in production; on
+the home page first of all the old-anchor script `LegacyAnchors`),
 `Header`, `<main id="main">`, `Footer`, the client script.
 /hire/ passes its page and gets its own header automatically (`pages/hire.md
 header`). The 404 page passes `ctaHref="/#contact"`. If `seo.ogImage` does not
@@ -573,7 +629,8 @@ facts for `scheme: "ai-agents"` (full width), «Для кого», «Что по
 guide): the same card with the `more` link («Подробнее о тренажёре», /guide/)
 beside the verb button; its «Подробнее» opens only «Для кого» and «Что
 получите на руки» (as the renderer). Phones: one column.
-`ServiceGroup` renders a group (heading, lead, note with links, its cards),
+`ServiceGroup` renders a group (heading, lead, note with links through
+`LinkedText servicesPage`, its cards),
 `ServicesIntro` the h1, lead and table of contents, `Formats` #formats (see
 5.1: the steps, the two payment formats, «Почему со мной предсказуемо» with
 the work screenshots, the terms). Screenshots (`proofImages`): from 720px on
@@ -582,6 +639,44 @@ starting on its column line; one height for all (the widest-ratio image
 fills its column, the others are as wide as that height allows); on phones
 one under the other, at most 24rem high; the caption under each in small
 mono, a click opens the full image in a new tab (a plain link, no lightbox).
+
+### LinkedText, LeadMagnet
+
+```astro
+<p><LinkedText text={d.text} links={d.links} where="pages/free" /></p>
+<LinkedText text={note.text} links={note.links} servicesPage />   <!-- /services/ group note -->
+<LeadMagnet block={b} />                                         <!-- type "lead-magnet": home, /services/ -->
+```
+
+`LinkedText` renders `linkSegments` inline (props `text`, `links`,
+`servicesPage`, `where`, `goal`): the services group note, the line about the
+consultation and the audit on /free/, the free-guide line on a case page.
+`LeadMagnet` is the free-guide block (`free-guide`, decision 18) on the home
+page (before #contact) and on /services/ (between the groups «Обучение и
+AI-производство» and «Разработка на заказ»): a section with an ink line, a
+small cover (`image`, a hairline frame, a link to the same place for the
+mouse only, `tabindex="-1" aria-hidden="true"`) in column 1 of 4 on phones
+and 1–2 of 12 from 720px, beside it the heading (h2, medium), the line and the
+framed small link (`link { label, href }`, to /free/). Without `image` the
+text takes the row.
+
+### Free materials on /free/ (`components/free/`, decision 18)
+
+`FreeItem` is one item of the `free-items` block: an ink line, the cover
+(phones: half the width, above the text; from 720px columns 1–4, text 6–12;
+from 1080px 1–3 and 5–11), the kind as a mono label, the title (h2, large),
+`text` (medium size, who it is for), `insideLabel` (small mono, h3) and
+`inside` as `.list-dash`, the `format` line in small mono, then the primary
+button `downloadLabel` with the file size as its second line (`.btn__caption`,
+`formatSize(fileSize(file))`): a plain link to the file with `download`,
+`type="application/pdf"` and goal `download`; the cover is the same link for
+the mouse only (`tabindex="-1" aria-hidden="true"`). Then `discuss`
+(`LinkedText`: «консультация» and
+«аудит курса» lead to their cards on /services/). The build fails when the
+file is missing or when «PDF, N страниц» in `format` differs from the PDF's
+page count. The items are a list (`ul.free-list`, `--s5` apart): a new
+material is one more item in the content. The page ends with `ContactShort`
+(block `contact`, type `contact-short`).
 
 ### PriceBlock, ServiceTerms
 
@@ -675,9 +770,13 @@ previous and next case by order (`caseNeighbours`: a mono label and the short
 title; two halves from 720px, next at the right edge) and «Все кейсы» on its
 own row under them (`caseCardHref`, back to this case's card).
 The route adds `ContactShort` and takes the title and description from
-`caseSeo`.
-`ContactShort`: the short contact block of a case page (anchor `contact`):
-the heading of the /cases/ contact block at the medium size, the plain
+`caseSeo`. A case with `leadMagnet { text, link { label, href } }`
+(healthtech-course-consulting, decision 18) gets one more text row without
+a label after «Результат»: the line with its link words (`LinkedText`, to
+/free/).
+`ContactShort`: the short contact block of a case page and of /free/ (anchor
+`contact`): the heading of the given contact block (/cases/, or `contact` of
+pages/free.md) at the medium size, the plain
 «Написать в Telegram» button (opens the chat), the email line, the workload
 and the global price line in grey. Props: `block`, `lines` (default
 `['global.work.price']`), `class`.
@@ -754,12 +853,14 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 - `featured-cases` (cases): `heading`, `cardLink`, `items[{ case, line }]`, `fallback[]`, `returnLine { text, cases[] }` (show only when all its cases are published), `allLink { label, href }`
 - `how-we-start` (steps): `source`, `showConsultationNote`, `showPrepare`, `showWorkload` (component `Steps`)
 - `testimonials` (testimonials): `heading`, `headingColleaguesOnly`, `clients.items[]` (empty now, so the heading is `headingColleaguesOnly`), `colleagues { caption, hint, items[] }` (a `Carousel`)
+- `free-guide` (lead-magnet, component `LeadMagnet`): `heading`, `text`, `link { label, href }` (/free/), `image? { src, alt }` (the guide cover)
 - `about` (about): `heading`, `portrait`, `portraitAlt`, `photo? { src, alt }` (hidden until Daniil sends the photo; when visible it replaces `portrait` here), `text[]`, `experience[{ years, place, role, note }]`, `experienceLink { label, href }` (`/hire/#experience`), `productsLine { text, linkLabel, href }`
 - `contact` (contact): `anchor`, `heading`, `hint`, `buttons[]`, `email`, `lines[]`, `workload`
 
 **services**: `serviceTemplate { labels { forWhom, youGet, duration, steps, fromYou, notIncluded, ai, proof, proofLinks, proofCasesBuilt, proofProducts, testimonials, readCase, more, less? }, button { source, hint, email } }` (`less`, «Свернуть», is not in the content yet: `ServiceCard` falls back to «Свернуть»)
 - `intro` (intro): `heading` (h1), `lead[]`, `toc.items[]` (service slugs, show `short`), `other { text, button }` (codeword «Другое»)
 - `group-learning`, `group-development`, `group-personal` (service-group): `heading`, `lead?`, `note? { text, links[{ label, service | case }] }`, `services[]`, `variant?` (`short` → `ServiceCard short`)
+- `free-guide` (lead-magnet, between `group-learning` and `group-development`): as on the home page
 - `formats` (formats, anchor `formats`): `heading`, `howWeStart { showConsultationNote, showPrepare, showWorkload }`, `pricing { heading, items[{ title, points[] }] }`, `predictable { heading, items[{ title, text }] }`, `proofImages[{ src, alt, caption, status? }]` (the work screenshots under «Почему со мной предсказуемо»; hidden ones are dropped by the export), `terms { heading, items[{ id, text } | { id, source }] }` (`gref(source)`)
 - `faq` (faq): `anchor`, `heading`, `items[{ q, a }]`
 - `contact`
@@ -791,12 +892,17 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 - `team` (columns): `anchor`, `heading`, `columns[{ title, text, link? { label, url } }]`, `process { heading, items[] }`
 - `contact`: `button { codeword, label, caption }`, `email { text, subject }`, `telegramText`, `resumes[]`
 
+**free** (/free/, decision 18)
+- `intro`: `heading` (h1, «Бесплатно»), `lead` (one line)
+- `items` (free-items): `items[{ id, anchor, kind, title, text, insideLabel, inside[], format, file, cover { src, alt }, downloadLabel, discuss { text, links[{ label, service }] } }]` (`FreeItem`; `format` «PDF, 15 страниц» is checked against the file; the field is `downloadLabel`, not `button`, because `button` strings are Telegram codewords in the validation)
+- `contact` (contact-short, anchor `contact`): `heading`, `email`, `workload` (`ContactShort`, with the global price line)
+
 **404**: `not-found`: `code`, `heading` (h1), `text`, `button { label, href }`, `links[{ label, href }]`
 
 ### 5.2 site (`site`)
 
 `site { name, lang, ogImage }`, `contacts { telegram { handle, url, text }, email }`,
-`header { name, links[], cta }`, `footer { contacts { telegramLabel, telegramText, emailLabel, emailText }, links[], madeWith, copyright }`,
+`header { name, links[], cta }` (links: Услуги, Кейсы, Мои продукты, Бесплатно), `footer { contacts { telegramLabel, telegramText, emailLabel, emailText }, links[], madeWith, copyright }`,
 `telegram { plainButton, copiedLabel, copiedMs, singleHint, gridHint, buttons[{ codeword, caption, template, service? }], productTemplate }`,
 `email { line, short, mailto { subject, body }, defaultSubject }`,
 `work { howWeStart { heading, steps[{ title, text }], consultationNote, prepare, workload { text } }, price, payment, languages }`.
@@ -842,7 +948,9 @@ the verb button. Home rows (price_line): the figure only. Full template order (r
 line of the /cases/ card: what was done and for whom; every published case
 has it since the review of 14.10; without it the card shows the home line or
 the first sentence of «Контекст»), `seo? { title?, description? }` (the case page's
-search title and description; absent, `caseSeo` builds them), `testimonials?[]`.
+search title and description; absent, `caseSeo` builds them), `testimonials?[]`,
+`leadMagnet? { text, link? { label, href } }` (the line about the free guide
+under the text; the label's words are in the text).
 Every published case has the page /cases/<slug>/ (slug = file name).
 Body sections: «Контекст», «Что сделал», «Результат», «Что из этого сделаю
 для вас» (`bodySections`).
@@ -938,14 +1046,25 @@ label for `data-tg-copied` during `data-tg-ms`, and, when `<html
 data-metrika>` is set (production), sends `reachGoal` for elements with
 `data-goal`: `telegram` (Telegram buttons and links), `email` (mailto links),
 `hire` (footer link to /hire/), `product` (product buttons; pass
-`goal="product"`). No other scripts: no `/#hire` redirect, no autoplay, no
+`goal="product"`), `download` (the PDF on /free/: the button and the cover;
+Metrika's `trackLinks` also counts the file download by itself). A click on
+any link to a demo app (`<base>demo/<name>/…`, from /products/, /services/,
+/guide/, /hire/ and the case pages) also sends the goal `demo` with the
+parameter `{ demo: "<name>" }`, next to the link's own goal if it has one (the
+wishlist button on /products/ sends `product` and `demo`). The demo pages themselves are
+legacy files and have no counter (production keeps them byte-identical to
+`public/`), and `trackLinks` counts only links to other sites, so this goal is
+the only record of demo visits from the site; a demo opened straight from a
+link elsewhere is not counted. The goals exist in Metrika only after they are
+added there as JavaScript events with these identifiers (README, the move
+checklist). No other scripts: no `/#hire` redirect, no autoplay, no
 lightbox (the work screenshots open as plain links), the disclosures are
 native `<details>` that work without the script.
 
 ## 8. Routes
 
-`src/pages/index.astro` (/), `services/`, `cases/`, `products/`, `hire/`,
-`guide/` (`index.astro` each), `cases/[slug].astro` (one page per published
+`src/pages/index.astro` (/), `services/`, `cases/`, `products/`, `free/`,
+`hire/`, `guide/` (`index.astro` each), `cases/[slug].astro` (one page per published
 case, /cases/<slug>/, slug = file name: `CaseFull` and `ContactShort`),
 `404.astro`, and `work.html.ts` (redirect to `/services/#formats` with meta
 refresh, canonical and a link). Every page
@@ -965,3 +1084,9 @@ images, portrait, og.jpg, both PDF résumés), `resume/`, `demo/`
 `/products/dobei.jpg`. Reel 01 (`assets/reels/reel-c1.mp4`,
 `assets/reels/loops/c1.mp4`, `assets/posters/c1.jpg`) is not copied: it is
 hidden until re-recorded and nothing links to it.
+
+Made for this site: `free/` holds the free materials of /free/,
+`kak-razrabotat-onlajn-kurs.pdf` and its cover
+`kak-razrabotat-onlajn-kurs-cover.jpg`, both written by
+`tools/build-guide-pdf.mjs` (section 2) and committed; the PDF is not built
+with the site.

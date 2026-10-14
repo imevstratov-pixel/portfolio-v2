@@ -15,6 +15,9 @@
   measured from the original PDF fit Archivo metrics to within 0.01 pt.
   Layout: three fixed A4 pages so page breaks fall exactly where the original's did.
   All sizes are CSS px (1px = 0.75pt).
+  The current employer (since September 2026) is shown only as "University": never name it.
+  The total in "EXPERIENCE" counts months inclusively, as hh.ru does, up to the build month
+  (October 2026); update it when rebuilding later.
 -->
 <style>
   @font-face { font-family: 'Archivo'; font-style: normal; font-weight: 400; src: url(fonts/archivo-400.woff) format('woff'); }
@@ -90,12 +93,13 @@
   }
   .links {
     display: flex;
-    gap: 18px;
+    flex-wrap: wrap;
+    gap: 6px 18px;
     margin-top: 16.9px;
     font-size: 12.5px;
     line-height: 20px;
   }
-  .links a { border-bottom: 1px solid var(--red); }
+  .links a { border-bottom: 1px solid var(--red); white-space: nowrap; }
   .photo { display: block; width: 118px; height: 118px; object-fit: cover; }
 
   .summary {
@@ -122,6 +126,7 @@
   .job { padding: 20.71px 0 17.61px; border-top: 1px solid var(--hair); }
   .job.first { padding-top: 21.98px; border-top: 0; }
   .job.cont { padding-top: 0; border-top: 0; }
+  .job.top { padding-top: 0; border-top: 0; }   /* a whole job that starts a page */
   .job.last { padding-bottom: 0; }
   .job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
   .job-head h3 { font-size: 16px; font-weight: 800; line-height: 20px; }
@@ -181,17 +186,23 @@
         <a href="mailto:imevstratov@gmail.com">imevstratov@gmail.com</a>
         <a href="https://t.me/evstratovdanil">t.me/evstratovdanil</a>
         <a href="https://imevstratov-pixel.github.io/portfolio/en/">Portfolio: cases, numbers &amp; videos</a>
+        <a href="https://imevstratov-pixel.github.io/portfolio/hire/">For employers (in Russian)</a>
       </div>
     </div>
     <img class="photo" src="cv-en-photo.jpg" alt="Daniil Evstratov">
   </header>
 
-  <p class="summary">Senior learning methodologist and team lead (middle) in EdTech (B2C and B2B), with a background as a university teacher. I have built 6 educational products on my own and 15 with a team — short, mid and long programmes in every format: video lectures, longreads, audio and interactive courses. I audit and refactor existing products and bring them back to market with ROMI of 1000%+. Total revenue of the courses I worked on is over 1 billion&nbsp;<span class="rub">₽</span>. I focus on methodology, audience needs and business goals, lead teams of instructional designers and work with top experts on the market.</p>
+  <p class="summary">Senior learning methodologist and team lead (middle) in EdTech (B2C and B2B), with a background as a university teacher. I have built 6 educational products on my own and 15 with a team — short, mid and long programmes in every format: video lectures, longreads, audio and interactive courses. I audit and refactor existing products and bring them back to market with ROMI of 1000%+. Total revenue of the courses I worked on is over 2 billion&nbsp;<span class="rub">₽</span>, according to Eduson Academy and the AI EdTech startup. I focus on methodology, audience needs and business goals, lead teams of instructional designers and work with top experts on the&nbsp;market.</p>
 
   <div class="experience">
-    <h2 class="label">EXPERIENCE · 7 YEARS 8 MONTHS</h2>
+    <h2 class="label">EXPERIENCE · 7 YEARS 10 MONTHS</h2>
 
     <article class="job first">
+      <div class="job-head"><h3>AI Adoption in Learning · University</h3><span class="dates">Sep 2026 — present</span></div>
+      <p>I bring AI into learning for the university's internal and external clients: an AI competency model for staff and an AI agent for the methodologist of an online course.</p>
+    </article>
+
+    <article class="job">
       <div class="job-head"><h3>Senior LXD · International AI EdTech startup</h3><span class="dates">Apr 2025 — Jul 2026 · 1 yr 4 mo</span></div>
       <div class="meta">Duolingo-style AI learning app, English content for US / EU and global markets · 500K+ MAU</div>
       <p>The only methodologist on the team — I owned all learning content in the product. Together with the CPO and two product managers, we built the product from zero and grew it to 500K monthly users in a year.</p>
@@ -209,11 +220,6 @@
       <p>Managed a team of instructional designers and the courses we produced: budget, deadlines and resources. Reviewed the team's work at every stage — from the language of longreads to the methodological accuracy of course programmes. Shaped the product vision together with the product manager and shared equal responsibility for results.</p>
       <ul>
         <li>Launched 4 new products in 3 months with total net revenue over 30M&nbsp;<span class="rub">₽</span>.</li>
-        <li>Brought the cluster's net revenue to 20M+&nbsp;<span class="rub">₽</span> per month together with the team.</li>
-        <li>Refactored 3 existing products.</li>
-        <li>Kept quality high: average CSAT above 91%, average CSI above 94%.</li>
-        <li>Led two teams in parallel; ran an internship programme and hired 4 interns into the team.</li>
-        <li>The team over-delivered on its production plan by 30–40% for half a year.</li>
       </ul>
     </article>
   </div>
@@ -225,6 +231,11 @@
 <section class="page">
   <article class="job cont">
     <ul>
+      <li>Brought the cluster's net revenue to 20M+&nbsp;<span class="rub">₽</span> per month together with the team.</li>
+      <li>Refactored 3 existing products.</li>
+      <li>Kept quality high: average CSAT above 91%, average CSI above 94%.</li>
+      <li>Led two teams in parallel; ran an internship programme and hired 4 interns into the team.</li>
+      <li>The team over-delivered on its production plan by 30–40% for half a year.</li>
       <li>Grew 2 juniors to junior+, one middle to middle+, and one middle+ to team lead.</li>
     </ul>
   </article>
@@ -268,22 +279,17 @@
     <div class="stack">Stack: Figma, Articulate Rise</div>
   </article>
 
-  <article class="job">
-    <div class="job-head"><h3>Methodologist · Business Car Academy (Toyota)</h3><span class="dates">Nov 2021 — Aug 2022 · 10 mo</span></div>
-    <div class="meta">Corporate training · Moscow, <a href="https://toyotabc.ru">toyotabc.ru</a></div>
-    <p>Created employee training — synchronous, asynchronous and blended. Built online courses in iSpring, designed training programmes and ran sessions for international clients.</p>
-    <ul>
-      <li>Grew from zero to middle level in course development in half a year, in an unfamiliar industry.</li>
-    </ul>
-  </article>
-
   <footer class="foot"><span>DANIIL EVSTRATOV</span><span>SENIOR LEARNING EXPERIENCE DESIGNER</span></footer>
 </section>
 
 <!-- ======================= PAGE 3 ======================= -->
 <section class="page">
-  <article class="job cont">
+  <article class="job top">
+    <div class="job-head"><h3>Methodologist · Business Car Academy (Toyota)</h3><span class="dates">Nov 2021 — Aug 2022 · 10 mo</span></div>
+    <div class="meta">Corporate training · Moscow, <a href="https://toyotabc.ru">toyotabc.ru</a></div>
+    <p>Created employee training — synchronous, asynchronous and blended. Built online courses in iSpring, designed training programmes and ran sessions for international clients.</p>
     <ul>
+      <li>Grew from zero to middle level in course development in half a year, in an unfamiliar industry.</li>
       <li>Created 12 courses; delivered a large 10-module course in 2 weeks without losing quality.</li>
       <li>Changed the company's approach to the identity and instructional design of its learning content.</li>
     </ul>

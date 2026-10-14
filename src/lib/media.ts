@@ -1,7 +1,7 @@
 // Build-time helpers for files in public/: existence and intrinsic image size.
 // Sizes go into width/height attributes so the browser reserves space before
 // the image loads (no layout shift), next to the CSS aspect-ratio box.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const PUBLIC_DIR = resolve(process.cwd(), 'public');
@@ -71,4 +71,33 @@ function parse(b: Buffer): Size | null {
     }
   }
   return null;
+}
+
+/* ------------------------------------------------------- downloadable files */
+
+/** Size in bytes of a file in public/ (throws when it is missing). */
+export function fileSize(sitePath: string): number {
+  return statSync(publicPath(sitePath)).size;
+}
+
+/** «244 КБ», «1,2 МБ» (1 КБ = 1024 bytes; a non-breaking space before the unit). */
+export function formatSize(bytes: number): string {
+  const kb = bytes / 1024;
+  if (kb < 1000) return `${Math.max(1, Math.round(kb))}\u00a0КБ`;
+  return `${(kb / 1024).toFixed(1).replace('.', ',')}\u00a0МБ`;
+}
+
+/**
+ * Number of pages of a PDF in public/, read from its page tree
+ * (`/Type /Pages … /Count N`), or null when the file keeps it in a compressed
+ * object stream. Used on /free/ to check the «PDF, N страниц» line.
+ */
+export function pdfPageCount(sitePath: string): number | null {
+  const text = readFileSync(publicPath(sitePath)).toString('latin1');
+  let max = 0;
+  for (const m of text.matchAll(/<<((?:(?!<<|>>)[\s\S])*?\/Type\s*\/Pages\b(?:(?!<<|>>)[\s\S])*?)>>/g)) {
+    const n = Number(m[1].match(/\/Count\s+(\d+)/)?.[1] ?? 0);
+    if (n > max) max = n;
+  }
+  return max || null;
 }

@@ -151,6 +151,9 @@ const cases = defineCollection({
     // the page builds them from the title and the text, see caseSeo())
     seo: z.looseObject({ title: optStr, description: optStr }).optional(),
     testimonials: z.array(str).optional(),
+    // a line under the case text about a free material (decision 18): the
+    // words of `link.label` inside `text` become the link (LinkedText)
+    leadMagnet: z.looseObject({ text: str, link: z.looseObject({ label: str, href: str }).optional() }).optional(),
   }),
 });
 

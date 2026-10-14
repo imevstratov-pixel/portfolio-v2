@@ -37,8 +37,10 @@ blocks:
     subject: Вакансия
   resumes:
   - label: Резюме, PDF
+    meta: обновлено в октябре 2026
     href: assets/daniil-evstratov-resume-ru.pdf
   - label: CV in English, PDF
+    meta: обновлено в октябре 2026
     href: assets/daniil-evstratov-cv.pdf
 - id: facts
   type: facts
@@ -293,8 +295,10 @@ blocks:
   telegramText: 'Telegram: @evstratovdanil'
   resumes:
   - label: Резюме, PDF
+    meta: обновлено в октябре 2026
     href: assets/daniil-evstratov-resume-ru.pdf
   - label: CV in English, PDF
+    meta: обновлено в октябре 2026
     href: assets/daniil-evstratov-cv.pdf
 ---
 

@@ -5,9 +5,12 @@
 //    link open the chat as usual. Without JS the link simply opens the chat.
 // 2. Analytics goals: in production BaseLayout sets <html data-metrika="ID">;
 //    a click on an element with data-goal="…" then reports that goal.
+//    A click on any link to a demo app (<base>demo/<name>/…) reports the goal
+//    "demo" with the parameter { demo: "<name>" }: the demo pages are legacy
+//    files without the counter, and trackLinks counts only external links.
 //    In preview there is no counter and nothing is sent.
 
-type Ym = (id: number, action: string, goal: string) => void;
+type Ym = (id: number, action: string, goal: string, params?: Record<string, string>) => void;
 
 const live = document.createElement('span');
 live.className = 'sr-only';
@@ -68,12 +71,13 @@ function showCopied(el: HTMLElement): void {
   );
 }
 
-function reachGoal(goal: string): void {
+function reachGoal(goal: string, params?: Record<string, string>): void {
   const id = Number(document.documentElement.dataset.metrika);
   const ym = (window as unknown as { ym?: Ym }).ym;
   if (id && typeof ym === 'function') {
     try {
-      ym(id, 'reachGoal', goal);
+      if (params) ym(id, 'reachGoal', goal, params);
+      else ym(id, 'reachGoal', goal);
     } catch {
       /* analytics must never break a click */
     }
@@ -86,6 +90,12 @@ document.addEventListener('click', (event) => {
 
   const goalEl = target.closest<HTMLElement>('[data-goal]');
   if (goalEl?.dataset.goal) reachGoal(goalEl.dataset.goal);
+
+  const link = target.closest<HTMLAnchorElement>('a[href]');
+  if (link && link.origin === location.origin) {
+    const demo = /\/demo\/([^/]+)/.exec(link.pathname);
+    if (demo) reachGoal('demo', { demo: demo[1] });
+  }
 
   const tg = target.closest<HTMLElement>('[data-tg-template]');
   if (tg?.dataset.tgTemplate) {

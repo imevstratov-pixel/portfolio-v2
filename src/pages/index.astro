@@ -13,6 +13,7 @@ import FeaturedCases from '../components/home/FeaturedCases.astro';
 import HowWeStart from '../components/home/HowWeStart.astro';
 import Testimonials from '../components/home/Testimonials.astro';
 import About from '../components/home/About.astro';
+import LeadMagnet from '../components/LeadMagnet.astro';
 import { getPage, pageBlocks } from '../lib/content';
 
 const page = getPage('home');
@@ -27,6 +28,7 @@ const views = {
   steps: HowWeStart,
   testimonials: Testimonials,
   about: About,
+  'lead-magnet': LeadMagnet,
   contact: ContactBlock,
 } as const;
 

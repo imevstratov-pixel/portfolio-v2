@@ -17,6 +17,9 @@
   (kicker, section labels, footer) use "Inter Tracked" copies made by
   resume/fonts/make-tracked-inter.py, so ATS text extraction reads whole words.
   The 2025–2026 employer is anonymised on purpose (founder's request): do not restore its name.
+  The current employer (since September 2026) is shown only as «Вуз»: never name the university.
+  The total in «ОПЫТ РАБОТЫ» counts months inclusively, as hh.ru does, up to the build month
+  (October 2026); update it when rebuilding later.
 -->
 <style>
   @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; src: url(fonts/inter-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
@@ -125,7 +128,8 @@
   .contacts {
     margin-top: 18px;
     display: flex;
-    gap: 0 20.4px;
+    flex-wrap: wrap;
+    gap: 4px 20.4px;
     font-size: 12.3px;
     line-height: 16px;
     color: var(--link);
@@ -250,6 +254,7 @@
         <a href="mailto:imevstratov@gmail.com">imevstratov@gmail.com</a>
         <a href="https://t.me/evstratovdanil">t.me/evstratovdanil</a>
         <a class="cy" href="https://imevstratov-pixel.github.io/portfolio/">Портфолио: кейсы, цифры и видео</a>
+        <a class="cy" href="https://imevstratov-pixel.github.io/portfolio/hire/">Портфолио для работодателей</a>
       </p>
       <img class="photo" src="resume-ru-photo.png" alt="Даниил Евстратов">
     </header>
@@ -259,12 +264,22 @@
 Самостоятельно создал 6 образовательных продуктов и 15 — с командой: короткие, средние и<br>
 длинные программы во всех форматах — видеолекции, лонгриды, аудио и интерактивные курсы.<br>
 Провожу аудит и рефакторинг существующих продуктов и возвращаю их на рынок с ROMI 1000%+.<br>
-Суммарная выручка курсов, над которыми я работал, — более 1 млрд ₽. Опираюсь на<br>
-методологию, потребности аудитории и цели бизнеса, руковожу командами методистов и работаю<br>
-с топовыми экспертами рынка.</p>
+Суммарная выручка курсов, над которыми я работал, — более 2&nbsp;млрд&nbsp;₽ по данным<br>
+Eduson Academy и AI-EdTech стартапа. Опираюсь на методологию, потребности аудитории и цели<br>
+бизнеса, руковожу командами методистов и работаю с топовыми экспертами рынка.</p>
 
-    <h2 class="label">ОПЫТ РАБОТЫ · 7 ЛЕТ 8 МЕСЯЦЕВ</h2>
+    <h2 class="label">ОПЫТ РАБОТЫ · 7 ЛЕТ 10 МЕСЯЦЕВ</h2>
     <div class="rule"></div>
+
+    <article class="job">
+      <div class="job-head">
+        <h3 class="job-title">Внедрение AI в обучение · Вуз</h3>
+        <span class="dates">Сентябрь 2026 — сейчас</span>
+      </div>
+      <p class="desc">Внедряю AI в обучение внутренних и внешних клиентов вуза: модель AI-компетенций для<br>
+сотрудников, AI-агент для методиста онлайн-курса.</p>
+    </article>
+    <div class="rule-thin"></div>
 
     <article class="job">
       <div class="job-head">
@@ -279,7 +294,7 @@
         <li>Вместе с продакт-менеджером поднял CSI курсов до 80%+.</li>
         <li>Утроил удержание пользователей на 7-й день.</li>
         <li>Создал 1 100+ уроков и 85+ курсов.</li>
-        <li>Автоматизировал производство контента и локализацию с английского на 4 языка с помощью ИИ<br>
+        <li>Автоматизировал производство контента и локализацию с английского на 4 языка с помощью AI<br>
 — ускорил разработку курсов в 26 раз.</li>
       </ul>
     </article>
@@ -297,10 +312,6 @@
 за результат.</p>
       <ul class="bullets">
         <li>Запустил 4 новых продукта за 3 месяца с суммарной чистой выручкой более 30 млн ₽.</li>
-        <li>Вместе с командой довёл чистую выручку кластера до 20+ млн ₽ в месяц.</li>
-        <li>Провёл рефакторинг 3 существующих продуктов.</li>
-        <li>Держал высокое качество: средний CSAT выше 91%, средний CSI выше 94%.</li>
-        <li>Вёл две команды параллельно; запустил стажировку и нанял в команду 4 стажёров.</li>
       </ul>
     </article>
   </div>
@@ -312,6 +323,10 @@
   <div class="content nowrap">
     <div class="job cont">
       <ul class="bullets">
+        <li>Вместе с командой довёл чистую выручку кластера до 20+ млн ₽ в месяц.</li>
+        <li>Провёл рефакторинг 3 существующих продуктов.</li>
+        <li>Держал высокое качество: средний CSAT выше 91%, средний CSI выше 94%.</li>
+        <li>Вёл две команды параллельно; запустил стажировку и нанял в команду 4 стажёров.</li>
         <li>Команда перевыполняла план производства на 30–40% в течение полугода.</li>
         <li>Вырастил 2 джунов до junior+, одного middle до middle+ и одного middle+ до тимлида.</li>
       </ul>
@@ -370,12 +385,8 @@
 Северсталь, X5.</li>
         <li>Вёл коммуникацию с подрядчиками: рерайтерами, транскрибаторами,<br>
 разработчиками, экспертами.</li>
-        <li>Адаптировал материалы экспертов под задачи клиента; собирал черновики и финальные курсы в<br>
-Articulate Rise; помогал с дизайном курсов.</li>
       </ul>
-      <p class="stack">Стек: Figma, Articulate Rise</p>
     </article>
-    <div class="rule-thin"></div>
   </div>
   <footer class="footer"><span>ЕВСТРАТОВ ДАНИИЛ</span><span>SENIOR LEARNING EXPERIENCE DESIGNER</span></footer>
 </section>
@@ -383,7 +394,16 @@ Articulate Rise; помогал с дизайном курсов.</li>
 <!-- ======================================================= PAGE 3 -->
 <section class="page">
   <div class="content nowrap">
-    <article class="job page-top">
+    <div class="job cont">
+      <ul class="bullets">
+        <li>Адаптировал материалы экспертов под задачи клиента; собирал черновики и финальные курсы в<br>
+Articulate Rise; помогал с дизайном курсов.</li>
+      </ul>
+      <p class="stack">Стек: Figma, Articulate Rise</p>
+    </div>
+    <div class="rule-thin"></div>
+
+    <article class="job">
       <div class="job-head">
         <h3 class="job-title">Методист · Академия Бизнес Кар (Toyota)</h3>
         <span class="dates">Ноябрь 2021 — Август 2022 · 10 мес</span>
@@ -425,7 +445,7 @@ Articulate Rise; помогал с дизайном курсов.</li>
       <li class="chip cy">Управление командой</li>
       <li class="chip cy">Продакт-менеджмент</li>
       <li class="chip cy">Проджект-менеджмент</li>
-      <li class="chip cy">ИИ-инструменты и автоматизация</li>
+      <li class="chip cy">AI-инструменты и автоматизация</li>
       <li class="chip cy">Юнит-экономика</li>
       <li class="chip">CustDev и JTBD</li>
       <li class="chip cy">Продуктовая аналитика</li>

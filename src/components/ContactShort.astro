@@ -1,11 +1,12 @@
 ---
 // A short contact block (anchor "contact", the target of «Написать») for the
-// case pages: the heading of the /cases/ contact block, the plain Telegram
+// case pages and /free/: the heading of the /cases/ contact block, the plain Telegram
 // button (`site.telegram.plainButton`, opens the chat, like the home hero),
 // the email line, then the workload and the given lines (default: the
 // global price line). The full grid of service buttons stays on /cases/.
 //
 //   <ContactShort block={getBlock(getPage('cases'), 'contact')} />
+//   <ContactShort block={b} />   <!-- /free/: the contact-short block of pages/free.md -->
 import Section from './Section.astro';
 import Button from './Button.astro';
 import EmailLine from './EmailLine.astro';

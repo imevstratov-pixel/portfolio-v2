@@ -17,7 +17,7 @@ export type SiteData = CollectionEntry<'site'>['data'];
 /** A page block. Its fields depend on `type`; see docs/components.md. */
 export type Block = { id: string; type: string; anchor?: string; [key: string]: any };
 export type PageData = PageEntry['data'] & { blocks: Block[]; [key: string]: any };
-export type PageId = 'home' | 'services' | 'cases' | 'products' | 'hire' | 'guide' | '404';
+export type PageId = 'home' | 'services' | 'cases' | 'products' | 'free' | 'hire' | 'guide' | '404';
 
 const [pageList, siteList, caseList, serviceList, productList, testimonialList] = await Promise.all([
   getCollection('pages'),
@@ -463,6 +463,50 @@ export function contentHref(href: string): string {
   return c && c.data.published !== false ? caseHref(c) : url(href);
 }
 
+/* ------------------------------------------------------- links in a line */
+
+/** A link inside a line of text: its words (`label`) and where they lead. */
+export type TextLink = { label: string; service?: string; case?: string; href?: string };
+export type TextSegment = { text: string; href?: string };
+
+/**
+ * Split a line at the labels of its links, in order, so the labels become
+ * links inside the sentence («…, есть консультация и аудит курса.» with links
+ * on «консультация» and «аудит курса»). A `service` link goes to the
+ * service's card on /services/ (`#anchor` when `servicesPage`, the page
+ * itself), a `case` link to the case page while the case is published
+ * (otherwise the words stay plain text), an `href` through contentHref().
+ * Throws when a label is not in the text. Render with `LinkedText`.
+ */
+export function linkSegments(
+  text: string,
+  links: TextLink[] | null | undefined,
+  opts: { servicesPage?: boolean; where?: string } = {},
+): TextSegment[] {
+  const out: TextSegment[] = [];
+  let at = 0;
+  for (const l of links ?? []) {
+    const i = text.indexOf(l.label, at);
+    if (i < 0) throw new Error(`content: link "${l.label}" is not in the text${opts.where ? ` of ${opts.where}` : ''}: «${text}»`);
+    if (i > at) out.push({ text: text.slice(at, i) });
+    const href = l.service
+      ? opts.servicesPage
+        ? `#${getService(l.service).data.anchor}`
+        : serviceHref(l.service)
+      : l.case
+        ? isPublished(l.case)
+          ? caseHref(l.case)
+          : undefined
+        : l.href
+          ? contentHref(l.href)
+          : undefined;
+    out.push({ text: l.label, href });
+    at = i + l.label.length;
+  }
+  if (at < text.length) out.push({ text: text.slice(at) });
+  return out;
+}
+
 /* ------------------------------------------------------------- validation */
 
 function validate(): string[] {
@@ -472,7 +516,7 @@ function validate(): string[] {
   };
   const codewords = new Set(site.telegram.buttons.map((b) => b.codeword));
 
-  for (const id of ['home', 'services', 'cases', 'products', 'hire', 'guide', '404']) {
+  for (const id of ['home', 'services', 'cases', 'products', 'free', 'hire', 'guide', '404']) {
     need(PAGES.has(id), `page "${id}" is missing`);
   }
   for (const b of site.telegram.buttons) {

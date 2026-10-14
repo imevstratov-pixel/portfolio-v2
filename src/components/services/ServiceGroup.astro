@@ -5,9 +5,9 @@
 // card (ServiceCard). variant "short" renders the short template (the guide:
 // the card, «Для кого», «Что получите на руки» and the link to /guide/).
 import Section from '../Section.astro';
+import LinkedText from '../LinkedText.astro';
 import ServiceCard from './ServiceCard.astro';
-import { caseHref, contentHref, getService, isPublished, type Block } from '../../lib/content';
-import { url } from '../../lib/url';
+import { type Block, type TextLink } from '../../lib/content';
 
 interface Props {
   block: Block;
@@ -20,45 +20,20 @@ interface Props {
 const { block, labels, numbers } = Astro.props;
 const short = block.variant === 'short';
 
-type Segment = { text: string; href?: string };
-type NoteLink = { label: string; service?: string; case?: string; href?: string };
-
-// Split the note text at its link labels, in order. A case link only works
-// while the case is published; otherwise the words stay plain text.
-function segments(text: string, links: NoteLink[]): Segment[] {
-  const out: Segment[] = [];
-  let at = 0;
-  for (const l of links) {
-    const i = text.indexOf(l.label, at);
-    if (i < 0) throw new Error(`services: note link "${l.label}" is not in the text of group "${block.id}"`);
-    if (i > at) out.push({ text: text.slice(at, i) });
-    const href = l.service
-      ? `#${getService(l.service).data.anchor}`
-      : l.case
-        ? isPublished(l.case)
-          ? caseHref(l.case)
-          : undefined
-        : l.href
-          ? contentHref(l.href)
-          : undefined;
-    out.push({ text: l.label, href });
-    at = i + l.label.length;
-  }
-  if (at < text.length) out.push({ text: text.slice(at) });
-  return out;
-}
-
-const note = block.note?.text ? segments(block.note.text, block.note.links ?? []) : [];
+// The note's link labels become links inside the sentence (LinkedText). A
+// case link only works while the case is published; otherwise the words stay
+// plain text.
+const note: { text: string; links?: TextLink[] } | null = block.note?.text ? block.note : null;
 ---
 
 <Section id={block.id} heading={block.heading} class="group">
   {
-    (block.lead || note.length > 0) && (
+    (block.lead || note) && (
       <div slot="head" class="group__head">
         {block.lead && <p class="lead">{block.lead}</p>}
-        {note.length > 0 && (
+        {note && (
           <p class="group__line measure">
-            {note.map((sg) => (sg.href ? <a href={sg.href}>{sg.text}</a> : sg.text))}
+            <LinkedText text={note.text} links={note.links} servicesPage where={`pages/services#${block.id}`} />
           </p>
         )}
       </div>

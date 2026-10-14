@@ -52,7 +52,7 @@ function setInfo(pdf, meta) {
     const m = new RegExp(`(?:^|[\\r\\n])${oldInfo}\\s+0\\s+obj\\s*<<([\\s\\S]*?)>>\\s*endobj`).exec(pdf.toString('latin1'));
     if (m) {
       for (const key of ['Creator', 'Producer', 'CreationDate']) {
-        const km = new RegExp(`/${key}\\s*(\\([^)]*\\)|<[^>]*>)`).exec(m[1]);
+        const km = new RegExp(`/${key}\\s*(\\((?:\\\\.|[^\\\\)])*\\)|<[^>]*>)`).exec(m[1]); // literal strings may hold \( \)
         if (km) keep += `/${key} ${km[1]} `;
       }
     }
@@ -69,7 +69,9 @@ function setInfo(pdf, meta) {
 }
 
 (async () => {
-  const browser = await chromium.launch();
+  // CHROMIUM=/path/to/chrome uses an installed browser instead of Playwright's download
+  // (e.g. CHROMIUM=/opt/pw-browsers/chromium when the bundled revision is missing).
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   try {
     const page = await browser.newPage();
     await page.goto(pathToFileURL(SRC).href, { waitUntil: 'load' });

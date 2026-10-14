@@ -4,15 +4,19 @@
 #   npm run build && npm run leakcheck            # checks dist/
 #   bash tools/leakcheck.sh path/to/dist
 #
-# In a preview build (PREVIEW not 0) it also fails on the Metrika counter
-# (mc.yandex.ru) anywhere in dist/ and on any HTML page without a robots meta.
+# Then it runs tools/prodcheck.mjs on the same dist/: the deploy-mode check
+# (preview: no Metrika, noindex everywhere, robots.txt disallows, no sitemap;
+# production: Metrika on every page, no noindex, robots.txt allows, sitemap
+# lists every page; both: old URLs and old home anchors keep working).
 #
 # Fails on files under dist/media/ that no generated page references.
 #
 # Greps dist/ for: _note _todo _draft hidden «МЕСТО ДЛЯ» seller-ai-course
 # studio-expert university-curator.
 # - Everything the build generates (Astro pages, _astro/ assets, work.html,
-#   404.html) must contain none of them.
+#   404.html) must contain none of them. The one exception is the ARIA
+#   attribute aria-hidden (a mouse-only duplicate link, e.g. the cover of the
+#   free guide): "hidden" right after "aria-" is not a content marker.
 # - Files copied verbatim from the old site (assets/, resume/, demo/, en/,
 #   styles.css, script.js, game.js, products/*.jpg) must contain none of the content
 #   markers; in them "hidden" and "_note" also occur as ordinary CSS/HTML
@@ -28,14 +32,17 @@ for arg in "$@"; do
     *) DIST="$arg" ;;
   esac
 done
-DIST="${DIST:-$(cd "$(dirname "$0")/.." && pwd)/dist}"
+TOOLS="$(cd "$(dirname "$0")" && pwd)"
+DIST="${DIST:-$TOOLS/../dist}"
 [ -f "$DIST/index.html" ] || { echo "leakcheck: $DIST has no index.html, run npm run build first" >&2; exit 1; }
+DIST="$(cd "$DIST" && pwd)"
 
-ALL='_note|_todo|_draft|hidden|МЕСТО ДЛЯ|seller-ai-course|studio-expert|university-curator'
+ALL='_note|_todo|_draft|(?<!aria-)hidden|МЕСТО ДЛЯ|seller-ai-course|studio-expert|university-curator'
 CONTENT='_todo|_draft|МЕСТО ДЛЯ|seller-ai-course|studio-expert|university-curator'
 SOFT='_note|hidden'
 # print each hit as file:line: …context… (minified files have very long lines)
-hits() { local pat="$1"; shift; grep -I -n -o -E ".{0,40}($pat).{0,40}" -- "$@"; }
+# (Perl regex for the lookbehind in ALL; bytes, so any encoding is fine)
+hits() { local pat="$1"; shift; LC_ALL=C grep -I -n -o -P ".{0,40}($pat).{0,40}" -- "$@"; }
 # products/ holds the generated /products/ page too: only its two copied
 # screenshots are legacy files.
 LEGACY=(assets resume demo en styles.css script.js game.js products/top-pick.jpg products/dobei.jpg)
@@ -88,22 +95,9 @@ if [ -n "$soft" ]; then
   fi
 fi
 
-# Preview builds (PREVIEW not 0): no analytics anywhere and noindex on every
-# HTML page, legacy pages included (tools/legacy-preview.mjs adds it there).
-if [ "$(echo "${PREVIEW:-1}" | tr -d '[:space:]')" != "0" ]; then
-  if grep -rIl 'mc.yandex.ru' . >/dev/null 2>&1; then
-    echo "leakcheck: preview build contains the Yandex Metrika counter:" >&2
-    grep -rIl 'mc.yandex.ru' . | sed 's/^/  /' >&2
-    fail=1
-  fi
-  mapfile -t noindex_missing < <(find . -name '*.html' -type f -print0 | xargs -0 grep -L 'name="robots"' | sort)
-  if [ "${#noindex_missing[@]}" -gt 0 ]; then
-    echo "leakcheck: preview build has HTML pages without a robots meta:" >&2
-    printf '  %s\n' "${noindex_missing[@]}" >&2
-    fail=1
-  fi
-fi
-
 echo "leakcheck: ${#generated[@]} generated files, ${#legacy[@]} legacy files checked"
 if [ "$fail" = 1 ]; then exit 1; fi
 echo "OK: no internal notes in dist/"
+
+# deploy mode (PREVIEW, BASE, SITE from the environment, as for the build)
+exec node "$TOOLS/prodcheck.mjs" "$DIST"

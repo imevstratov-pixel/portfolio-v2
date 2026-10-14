@@ -53,6 +53,16 @@ blocks:
   - ai-agents
   - audit
   - course
+- id: free-guide
+  type: lead-magnet
+  heading: 'Бесплатно: как устроена разработка курса'
+  text: 'Руководство «Как разработать онлайн-курс» в PDF: 21 шаг от разбора конкурентов до первых метрик после запуска, с примером программы.'
+  link:
+    label: Бесплатное руководство
+    href: /free/
+  image:
+    src: free/kak-razrabotat-onlajn-kurs-cover.jpg
+    alt: Обложка руководства «Как разработать онлайн-курс»
 - id: group-development
   type: service-group
   heading: Разработка на заказ
