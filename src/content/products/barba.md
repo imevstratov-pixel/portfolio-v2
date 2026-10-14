@@ -21,6 +21,11 @@ media:
   alt: 'Раскрытый пульт Barba, вкладка «Задачи»: поле новой задачи и список из четырёх задач, у одной записано 1 ч 20 мин'
   status: ready
 gallery:
+- type: video
+  src: /media/products/barba-demo.mp4
+  poster: /media/products/barba-demo-poster.jpg
+  alt: 'Демо-ролик Barba: пульт в чёлке экрана MacBook — музыка, созвон с таймером, задачи; усы-маскот показывает главное'
+  caption: Демо-ролик, 31 секунда
 - type: image
   src: /media/products/barba-tasks.jpg
   alt: 'Раскрытый пульт Barba, вкладка «Задачи»: поле новой задачи и список из четырёх задач, у одной записано 1 ч 20 мин'
