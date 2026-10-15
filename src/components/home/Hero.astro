@@ -5,7 +5,14 @@
 // (2 by 2 on phones) with their source note.
 // The hero button only opens the chat (no message template), so it is a plain
 // Button to the chat link, as docs/components.md says.
+// The headline is parsed as in school (decision 1 of 15.10) when the content
+// gives `headlineParse` («[Образование|подлежащее], [которое|подлежащее]
+// [приносит|сказуемое] [деньги|дополнение] и [не скамит|сказуемое]
+// [студентов|дополнение].»): each member underlined in its style (Parsed,
+// accents.css), while screen readers read the headline as plain text. The
+// parse must read exactly as `headline`, or the build fails.
 import Button from '../Button.astro';
+import Parsed from '../Parsed.astro';
 import EmailLine from '../EmailLine.astro';
 import Numbers from '../Numbers.astro';
 import { visible, type Block } from '../../lib/content';
@@ -40,7 +47,15 @@ const roleParts: string[] = b.role ? String(b.role).split(/(?<=\.)\s+/) : [];
         )
       }
     </p>
-    <h1 id="hero-heading" class="hero__title">{b.headline}</h1>
+    <h1 id="hero-heading" class:list={['hero__title', b.headlineParse && 'hero__title--parsed']}>
+      {
+        b.headlineParse ? (
+          <Parsed text={b.headlineParse} plain={b.headline} where="pages/home.md hero.headlineParse" />
+        ) : (
+          b.headline
+        )
+      }
+    </h1>
     <div class="grid hero__body">
       {b.lead && <p class="lead hero__lead col-8 lg-col-7">{b.lead}</p>}
       <div class="hero__actions col-8 lg-col-7">
@@ -99,6 +114,25 @@ const roleParts: string[] = b.role ? String(b.role).split(/(?<=\.)\s+/) : [];
   .hero__title {
     margin-top: var(--s3);
     max-width: 10.5em;
+  }
+
+  /* The parsed headline: lines tuned for the display face (accents.css
+     tokens). The lines sit just below the descenders (р, у, д reach 0.21em),
+     so they run unbroken under each word, as drawn in a notebook. A little
+     more line height than the plain h1 (0.96), so the lines under one row
+     clear the next row, and room under the last row for its lines. */
+  .hero__title--parsed {
+    margin-top: calc(var(--s3) - 0.1em);
+    line-height: 1.02;
+    padding-bottom: 0.1em;
+    --u-t: max(1.5px, 0.042em);
+    --u-t2: max(1px, 0.028em);
+    --u-o: 0.225em;
+    --u-o2: 0.22em;
+  }
+
+  .hero__title--parsed :global(:is(.u-subj, .u-pred, .u-obj)) {
+    text-decoration-skip-ink: none;
   }
 
   .hero__body {
