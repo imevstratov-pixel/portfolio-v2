@@ -1,6 +1,7 @@
-// Shared pieces of the /lab/ canvas islands (AsciiPortrait, AsciiHeadline,
-// DitherPortrait): reduced motion, colours from the tokens, lazy start,
-// visibility, resize, the cursor/finger lens and image luminance.
+// Shared pieces of the canvas islands (AsciiHeadline and DitherPortrait on
+// the home page, AsciiPortrait on /lab/): reduced motion, colours from the
+// tokens, lazy start, visibility, resize, yielding, the cursor/finger lens
+// and image luminance.
 //
 // No word "hid" + "den" anywhere in this code: leakcheck greps the built
 // bundles for it (so page visibility is read as visibilityState !== 'visible').
@@ -57,6 +58,9 @@ export function rgb(colour: string): [number, number, number] {
   const d = x.getImageData(0, 0, 1, 1).data;
   return [d[0], d[1], d[2]];
 }
+
+/** Resolves in a new task: long work yields to the page in between (no long task). */
+export const yieldTask = (): Promise<void> => new Promise((res) => setTimeout(res, 0));
 
 /** Runs `cb` once, when the element comes within 400px of the viewport. */
 export function whenNear(el: Element, cb: () => void): void {

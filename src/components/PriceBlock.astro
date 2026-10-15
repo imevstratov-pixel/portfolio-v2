@@ -47,7 +47,7 @@ const line = !price && !split ? (text ?? (fallback ? globalPriceLine() : '')) : 
 const full = show === 'full';
 const withNote = show !== 'main';
 // Typography only, the words stay as approved: a dash stays on the line of
-// the word before it («Три сессии — 40 000 ₽»), and «от», «до», «около» stay
+// the word before it («Простая игра в браузере — от 30 000 ₽»), and «от», «до», «около» stay
 // with the figure after them («от 140 000 ₽»).
 const bind = (t: string) => t.replace(/ ([—–]) /g, '\u00a0$1 ').replace(/(^|\s)(от|до|около) (?=\d)/giu, '$1$2\u00a0');
 ---

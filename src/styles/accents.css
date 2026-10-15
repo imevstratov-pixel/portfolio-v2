@@ -6,7 +6,7 @@
      подлежащее      .u-subj   one solid line   the main word of a heading,
                                                 the current page in a menu
      сказуемое       .u-pred   two lines        action buttons and action
-                                                links, the verbs of the hero
+                                                links
      дополнение      .u-obj    dashed           ordinary links (every <a>)
      определение     .u-attr   wavy             a link under the pointer or
                                                 the keyboard focus
@@ -14,7 +14,7 @@
 
    Loaded in BaseLayout right after global.css (it overrides the plain link
    underline there). Lines are sized in em, so they follow the text: 1px in
-   body text, about 1.3px at 26px, 4–5px in the first-screen headline. Lines
+   body text, about 1.3px at 26px, 4–5px at the huge size. Lines
    never move layout (text-decoration and a background only).
 
    Support: solid, double, dashed and wavy are native text-decoration styles,

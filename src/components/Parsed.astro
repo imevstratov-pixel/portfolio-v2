@@ -3,8 +3,9 @@
 // tokens «[слова|роль]» become words underlined in the member's style
 // (src/lib/parse.ts, src/styles/accents.css).
 //
-//   <Parsed text={b.headlineParse} plain={b.headline} where="pages/home hero" />   (the hero h1)
 //   <Parsed text={f.legend} inline where="site footer.legend" />                    (the footer legend)
+//   <Parsed text={b.headlineParse} plain={b.headline} where="pages/home hero" />   (a parsed line with its plain text;
+//                                                                                   the home h1 until it went to glyphs, decision 6 of 15.10)
 //
 // Default (not inline): screen readers get the plain text in one piece (a
 // visually hidden copy that cannot be selected), and the underlined copy is

@@ -3,8 +3,10 @@
 //
 // - Glyphs come from atlases drawn once per size (IBM Plex Mono, ink or
 //   paper), so a frame is a few hundred drawImage calls, never fillText.
-// - The still picture lives on an offscreen base canvas. A lens frame copies
-//   back only the rectangle the lens left and redraws the cells under it.
+// - The still picture lives on an offscreen base canvas, drawn in slices of
+//   rows with a yield between them (no long task on a slow phone; the canvas
+//   keeps the previous picture until the new one is complete). A lens frame
+//   copies back only the rectangle the lens left and redraws the cells under it.
 // - Lens: a soft fisheye. The glyphs near the cursor move apart and grow (up
 //   to 1 + magnify at the centre), the ring around shrinks a little, the
 //   glyphs switch to a denser ramp with letters, and a faint radial shade
@@ -20,7 +22,7 @@
 //   per idle moment after the picture is set, so the first touch does not
 //   stall on them.
 
-import { colours, isForced, isReduced, Lens, pageVisible, rgb, watchInView, watchReduced } from './core';
+import { colours, isForced, isReduced, Lens, pageVisible, rgb, watchInView, watchReduced, yieldTask } from './core';
 
 export interface Grid {
   cols: number;
@@ -72,6 +74,12 @@ const SCALES = Array.from({ length: 14 }, (_, i) => 0.625 + i * 0.125);
 const ONE = 3;
 const FONT = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
 const FAINT = 0.38;
+// the still picture is drawn in slices of about SLICE glyphs; after BUDGET ms
+// of drawing the build yields to the page
+const SLICE = 400;
+const BUDGET = 12;
+
+type Item = [number, number, number, number, number, number];
 
 const hash = (i: number): number => {
   let h = Math.imul(i ^ 0x9e3779b9, 0x85ebca6b);
@@ -140,7 +148,8 @@ export class AsciiField {
   // scratch canvases for clipped glyphs, one per use and layer ("lens1",
   // "cell2", …), each as large as its largest box so far. A canvas that was
   // just drawn from and is then changed gets copied by the browser, so they
-  // are never shared between uses and never as large as the whole picture.
+  // are never shared between uses; only the build's "band" ones are as wide
+  // as the whole picture, and they go once it is drawn.
   private scratch = new Map<string, CanvasRenderingContext2D>();
   // paper plus the flat letter fill (Grid.tint): what an empty cell looks like
   private back: HTMLCanvasElement | null = null;
@@ -164,6 +173,9 @@ export class AsciiField {
   private nextTick = 0;
   private timer = 0;
   private warm = 0;
+  // generation of the latest set() and of the build still drawing (0: none)
+  private gen = 0;
+  private building = 0;
   readonly lens: Lens;
 
   constructor(
@@ -197,17 +209,24 @@ export class AsciiField {
     return Math.min(max, Math.max(1, devicePixelRatio || 1));
   }
 
-  /** Sets a new grid (after a resize, a mode change or new data) and draws it. */
-  set(grid: Grid): void {
+  /**
+   * Sets a new grid (after a resize, a mode change or new data) and draws it.
+   * The still picture is drawn in slices with a yield between them; until it
+   * is complete the canvas keeps the previous picture and the lens and the
+   * shimmer wait. Resolves true once the new picture is on the canvas (in the
+   * next animation frame, before it is painted), false when a later set()
+   * replaced this one.
+   */
+  async set(grid: Grid): Promise<boolean> {
+    const gen = ++this.gen;
+    this.building = gen;
     this.grid = grid;
     const n = grid.cols * grid.rows;
     this.dpr = AsciiField.ratio(this.opts.maxDpr);
     const W = Math.max(1, Math.round(this.canvas.clientWidth * this.dpr));
     const H = Math.max(1, Math.round(this.canvas.clientHeight * this.dpr));
-    for (const c of [this.canvas, this.base]) {
-      c.width = W;
-      c.height = H;
-    }
+    this.base.width = W;
+    this.base.height = H;
     const { fg, bg } = colours(this.root, this.opts.inverse);
     this.bg = bg;
     this.fgRgb = rgb(fg);
@@ -241,12 +260,19 @@ export class AsciiField {
       y.globalAlpha = grid.tint;
       y.drawImage(t, 0, 0);
     }
-    this.drawBase();
+    await yieldTask();
+    if (gen !== this.gen || !(await this.drawBase(gen))) return false;
+    // the new picture is complete: the screen canvas takes its size (which
+    // clears it) and gets it in the next frame, before the page is painted
+    this.canvas.width = W;
+    this.canvas.height = H;
+    this.building = 0;
     this.full = true;
     this.prevBox = null;
     this.lens.request();
     this.schedule();
     this.prewarm();
+    return true;
   }
 
   /** Draws the lens atlases ahead, one per idle moment (no lens: none needed). */
@@ -346,7 +372,7 @@ export class AsciiField {
   private paint(
     ctx: CanvasRenderingContext2D,
     box: Box,
-    items: [number, number, number, number, number, number][],
+    items: Item[],
     use: string,
   ): void {
     const g = this.grid!;
@@ -362,7 +388,7 @@ export class AsciiField {
         let t = this.scratch.get(key);
         if (!t) {
           t = document.createElement('canvas').getContext('2d')!;
-          if (use !== 'base') this.scratch.set(key, t);
+          this.scratch.set(key, t);
         }
         const c = t.canvas;
         if (c.width < bw || c.height < bh) {
@@ -394,26 +420,50 @@ export class AsciiField {
     }
   }
 
-  private baseItem(i: number): [number, number, number, number, number, number] | null {
+  private baseItem(i: number): Item | null {
     const id = this.glyph(i, this.lv[i], false, this.alt[i]);
     if (id < 0) return null;
     const [x, y] = this.center(i);
     return [i, id, ONE, x, y, this.grid!.faint?.[i] ? 1 : 0];
   }
 
-  private drawBase(): void {
+  /** Draws the still picture in slices of rows; false when a later set() took over. */
+  private async drawBase(gen: number): Promise<boolean> {
     const g = this.grid!;
     const b = this.bctx;
-    this.blank(b, [0, 0, this.base.width, this.base.height]);
-    const items: [number, number, number, number, number, number][] = [];
-    for (let i = 0; i < g.cols * g.rows; i++) {
-      const it = this.baseItem(i);
-      if (it) items.push(it);
+    const W = this.base.width;
+    this.blank(b, [0, 0, W, this.base.height]);
+    // a glyph reaches this far beyond its row (the atlas cell is taller)
+    const pad = Math.ceil(this.atlas(ONE).sh / 2) + 1;
+    let items: Item[] = [];
+    let top = 0;
+    let t0 = performance.now();
+    for (let r = 0; r < g.rows; r++) {
+      for (let i = r * g.cols, end = i + g.cols; i < end; i++) {
+        const it = this.baseItem(i);
+        if (it) items.push(it);
+      }
+      const last = r === g.rows - 1;
+      if (items.length < SLICE && !last) continue;
+      const y0 = this.cellRect(top * g.cols)[1];
+      const [, y1, , h1] = this.cellRect(r * g.cols);
+      this.paint(b, this.clamp([0, y0 - pad, W, y1 + h1 - y0 + 2 * pad]), items, 'band');
+      items = [];
+      top = r + 1;
+      if (!last && performance.now() - t0 > BUDGET) {
+        await yieldTask();
+        if (gen !== this.gen) return false;
+        t0 = performance.now();
+      }
     }
-    this.paint(b, [0, 0, this.base.width, this.base.height], items, 'base');
+    // the band canvases are as wide as the picture: not kept
+    this.scratch.delete('band1');
+    this.scratch.delete('band2');
+    return true;
   }
 
   private redrawBaseCell(i: number): void {
+    if (this.building) return;
     const box = this.clamp(this.cellRect(i));
     this.blank(this.bctx, box);
     const it = this.baseItem(i);
@@ -480,12 +530,12 @@ export class AsciiField {
 
   // ----------------------------------------------------------------- frame
 
-  /** A box in whole device pixels, within the canvas (width or height may be 0). */
+  /** A box in whole device pixels, within the picture (width or height may be 0). */
   private clamp(box: Box): Box {
     const x = Math.max(0, Math.floor(box[0]));
     const y = Math.max(0, Math.floor(box[1]));
-    const w = Math.max(0, Math.min(this.canvas.width, Math.ceil(box[0] + box[2])) - x);
-    const h = Math.max(0, Math.min(this.canvas.height, Math.ceil(box[1] + box[3])) - y);
+    const w = Math.max(0, Math.min(this.base.width, Math.ceil(box[0] + box[2])) - x);
+    const h = Math.max(0, Math.min(this.base.height, Math.ceil(box[1] + box[3])) - y);
     return [x, y, w, h];
   }
 
@@ -497,7 +547,8 @@ export class AsciiField {
 
   private frame(now: number): void {
     const g = this.grid;
-    if (!g) return;
+    // a new picture is being drawn: the canvas keeps the previous one
+    if (!g || this.building) return;
     const ctx = this.ctx;
     if (this.shimmerOn()) {
       for (const i of this.shimmer(now)) {
@@ -567,7 +618,7 @@ export class AsciiField {
 
     // far cells first, so the big glyphs at the centre sit on top
     under.sort((a, b) => b.d2 - a.d2);
-    const items: [number, number, number, number, number, number][] = [];
+    const items: Item[] = [];
     for (const u of under) {
       const w = Math.exp(-u.d2 / sig2); // 1 at the centre
       const mag = 1 + m * w; // spacing (radial position factor)

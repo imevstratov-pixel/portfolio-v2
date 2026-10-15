@@ -1,18 +1,21 @@
 ---
 // A phrase drawn as a field of glyphs that fill the letter shapes, with the
-// same lens as AsciiPortrait (decision 3 of 15.10, prototype B on /lab/).
+// same lens as AsciiPortrait (decision 3 of 15.10, prototype B on /lab/;
+// the home h1 since decision 6 of 15.10, components/home/Hero.astro).
 // Nothing moves until the pointer or a finger is on it (the shimmer is
 // opt-in); static with reduced motion; under forced colours (Windows
 // contrast themes) the real text in the system colours, no canvas.
 //
-//   <AsciiHeadline text={hero.headline} as="h1" />
+//   <AsciiHeadline text={headline} as="h1" id="hero-heading" size="var(--fs-huge)" width="10.5em" shimmer={false} />   (the home hero)
 //   <AsciiHeadline text={hero.headline} mode="inverse" size="clamp(3rem, 1rem + 8vw, 9rem)" width="60rem" />
 //
 // The text is real text in the DOM, in Inter Tight bold at `size`: search
 // engines and screen readers read it, it can be selected, and it sets the
 // height (no layout shift). When the canvas (aria-hidden) is drawn over it,
 // the text turns transparent. Without JS it is a plain headline.
-// Script: src/scripts/lab/ascii-headline.ts (bundled only where used).
+// The canvas is drawn in a few short tasks after the fonts are in (the text
+// shows meanwhile), and the swap happens in one frame.
+// Script: src/scripts/glyphs/ascii-headline.ts (bundled only where used).
 
 interface Props {
   text: string;
@@ -28,7 +31,7 @@ interface Props {
   letters?: 'clip' | 'grid';
   /** Font size in glyph rows: more is finer (default 11). */
   density?: number;
-  /** Faint dots around the letters: "auto" (default) only where the glyph rows are at least 6.5 CSS px (not on phones). */
+  /** Faint dots around the letters: "auto" (default) only where the glyph rows are at least 6.5 CSS px (not on phones) and on screens of at least 1.5 device px per CSS px (not on 1× and 1.25× monitors). */
   halo?: boolean | 'auto';
   /** The slow shimmer at rest: content that changes by itself, 7 times a second (default false; never with reduced motion). */
   shimmer?: boolean;
@@ -116,5 +119,5 @@ const style = [w && `--ascii-w: ${w}`, size && `--ascii-size: ${size}`].filter(B
 </style>
 
 <script>
-  import '../../scripts/lab/ascii-headline.ts';
+  import '../../scripts/glyphs/ascii-headline.ts';
 </script>

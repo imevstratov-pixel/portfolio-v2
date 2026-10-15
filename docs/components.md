@@ -12,7 +12,9 @@ Cyrillic subsets). Static HTML first, no UI framework; motion (decision 2 of
 own modal `<dialog>` for the image lightbox. Client scripts: Telegram copy
 and analytics goals on every page, the carousel on pages with a Carousel,
 the accordions (FAQ, the long disclosures on /services/), the lightbox on
-/services/ and /products/ (its code loads at the first use; section 7).
+/services/ and /products/ (its code loads at the first use), the glyph
+headline and the one-bit portrait on the home page (Canvas 2D, no library;
+section 7, docs/lab.md).
 
 ## 1. Rules that every page follows
 
@@ -44,10 +46,12 @@ the accordions (FAQ, the long disclosures on /services/), the lightbox on
   their motion belong to the accents (`accents.css`: the wave comes in with
   `u-wave-in` and goes back over `--dur-hover`); `motion.css` never sets
   `text-decoration`, and a component that moves a line of its own (FAQ,
-  CaseFull) uses the accents tokens and `u-wave-in`. The canvas islands of
-  the preview-only /lab/ (decision 3 of 15.10) follow the pointer and stand
-  still otherwise; their shimmer at rest is an opt-in for comparison there
-  only (docs/lab.md).
+  CaseFull) uses the accents tokens and `u-wave-in`. The canvas islands
+  (the glyph h1 of the home hero and the one-bit photo of «Обо мне»,
+  decision 6 of 15.10; the prototypes of the preview-only /lab/) follow the
+  pointer or a finger and stand still otherwise, still with reduced motion;
+  their shimmer at rest stays off (an opt-in for comparison on /lab/ only,
+  docs/lab.md).
 - **No arrows and no middle dots** anywhere (buttons, labels, lists): use a dash,
   «и», a comma or a step number.
 - **The output must pass `npm run leakcheck`.** It greps the built site for
@@ -108,7 +112,7 @@ the accordions (FAQ, the long disclosures on /services/), the lightbox on
 | `npm run check` | `astro check`: TypeScript and template types (0 errors expected) |
 | `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external. Expected pages: every route (/free/ included) and one /cases/<slug>/ per published case in `src/content/cases` must be built, /cases/ must link to each and keep each case anchor, and no other page may sit under /cases/. `DIST=<dir>` checks a build made with `--outDir` |
 | `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. The client bundles `_astro/*.js` are compiled library code (Motion and Embla use `hidden` as code: `document.hidden`, `overflow: hidden`): in them `hidden` fails only as a content status (`status: "hidden"`), every other marker as anywhere. Fails on any file under `dist/media/` that no generated page references (a screenshot waiting for Daniil's OK must stay outside `public/`). Then runs `tools/prodcheck.mjs` (below) |
-| `node tools/prodcheck.mjs [dist]` | Deploy-mode check, run by `leakcheck` with the same `PREVIEW`, `BASE`, `SITE`. Preview: no `mc.yandex.ru` or `data-metrika` anywhere, a robots `noindex` meta on every HTML page (search-engine verification files `google*.html`, `yandex_*.html` from `public/` excepted), robots.txt `Disallow: /` without a sitemap, no sitemap.xml. Production: the Metrika counter and `data-metrika` on every generated page (the work.html redirect excepted), no robots meta except on 404, legacy files byte-identical to `public/`, robots.txt `Allow: /` with `Sitemap: <site><base>sitemap.xml`, sitemap.xml with every indexable generated page and en/ under `<site><base>`, nothing 404, noindex or redirect, no file carrying the staging comment mode (its marker `comment-mode:v1`, `data-comment-mode`, its chunks, `/issues/new`), and no preview-only /lab/ (no `lab/` page, no `_astro` chunk named after `src/components/lab/` or `src/scripts/lab/`). Preview also, while `astro.config.mjs` registers `commentMode()`: every generated page (redirects excepted) loads the comment mode, and the chunks it loads later exist. Both: every `public/` file is built (old URLs), canonical and og:url are `<site><base><path>`, og:image is absolute and exists, the old home anchors lead to built pages and existing sections |
+| `node tools/prodcheck.mjs [dist]` | Deploy-mode check, run by `leakcheck` with the same `PREVIEW`, `BASE`, `SITE`. Preview: no `mc.yandex.ru` or `data-metrika` anywhere, a robots `noindex` meta on every HTML page (search-engine verification files `google*.html`, `yandex_*.html` from `public/` excepted), robots.txt `Disallow: /` without a sitemap, no sitemap.xml. Production: the Metrika counter and `data-metrika` on every generated page (the work.html redirect excepted), no robots meta except on 404, legacy files byte-identical to `public/`, robots.txt `Allow: /` with `Sitemap: <site><base>sitemap.xml`, sitemap.xml with every indexable generated page and en/ under `<site><base>`, nothing 404, noindex or redirect, no file carrying the staging comment mode (its marker `comment-mode:v1`, `data-comment-mode`, its chunks, `/issues/new`), and no preview-only /lab/ (no `lab/` page, no `_astro` chunk named after a file of `src/components/lab/` or `src/scripts/lab/`, which hold only what /lab/ alone uses; the home page's canvas islands live in `glyphs/`). Preview also, while `astro.config.mjs` registers `commentMode()`: every generated page (redirects excepted) loads the comment mode, and the chunks it loads later exist. Both: every `public/` file is built (old URLs), canonical and og:url are `<site><base><path>`, og:image is absolute and exists, the old home anchors lead to built pages and existing sections |
 | `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Without routes: every page, the built case pages too. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
 | `npm run verify` | build, check-links, leakcheck |
 | `npm run content` | Re-run the content export (needs `SITE_CONTENT`) |
@@ -309,6 +313,12 @@ head (title, description, canonical, OG with absolute image URL and size,
 robots in preview and for `seo.noindex`, fonts, Metrika in production; on
 the home page first of all the old-anchor script `LegacyAnchors`),
 `Header`, `<main id="main">`, `Footer`, the client script.
+Font preloads: Inter Tight 400 and 700, Cyrillic and Latin, on every page
+(the Latin subset holds the space, digits and punctuation, so Russian text
+needs it too; without it the hero lead re-wrapped when it came, a layout
+shift of 0.008 at 390 px), plus IBM Plex Mono 400 Latin on the home page
+(the glyphs of the h1 and the big numbers). Layout shift of the home page
+on load: 0 at 360 to 1440.
 /hire/ passes its page and gets its own header automatically (`pages/hire.md
 header`). The 404 page passes `ctaHref="/#contact"`. If `seo.ogImage` does not
 exist in `public/` (guide's `assets/og-guide.jpg` today), the site image is
@@ -702,8 +712,8 @@ text takes the row.
 ### Parsed (`components/Parsed.astro`, `lib/parse.ts`, decision 1 of 15.10)
 
 ```astro
-<Parsed text={b.headlineParse} plain={b.headline} where="pages/home.md hero.headlineParse" />   <!-- the hero h1 -->
 <Parsed text={f.legend} inline where="site/global.md footer.legend" />                          <!-- the footer legend -->
+<Parsed text={b.headlineParse} plain={b.headline} where="pages/home.md hero.headlineParse" />   <!-- a parsed line with its plain text -->
 ```
 
 A content line with inline tokens `[слова|член предложения]` (подлежащее,
@@ -718,10 +728,27 @@ fails (`parseSentence`). Default: a visually hidden plain copy for screen
 readers (not selectable) and the underlined copy `aria-hidden`, so the line
 is read in one piece; `inline`: the spans stay in the text (the legend,
 whose underlined words are its own words). An unknown member or a broken
-token fails the build. Home hero: `headlineParse` (section 5.1) turns the h1
-into the parsed one (line height 1.02, lines tuned for the display face,
-unbroken under each word). Footer: `site.footer.legend`, one small grey line
-under a hairline, the samples in ink.
+token fails the build. The home h1 was parsed this way until it went to
+glyphs (decision 6 of 15.10): it is not underlined now, and `headlineParse`
+is not drawn. Footer: `site.footer.legend`, one small grey line under a
+hairline, the samples in ink.
+
+### AsciiHeadline, DitherPortrait (`components/glyphs/`, decision 6 of 15.10)
+
+```astro
+<AsciiHeadline text={headline} as="h1" id="hero-heading" size="var(--fs-huge)" width="10.5em" shimmer={false} />   <!-- home hero -->
+<DitherPortrait src={photo.src} alt={photo.alt} />                                                                  <!-- home «Обо мне» -->
+```
+
+Prototypes B and C of /lab/, now on the home page with the lab's default
+settings: the phrase drawn in glyphs over its real text (the h1 stays the
+text for search engines and screen readers and sets the box), and the photo
+in one bit in a box of the photo's ratio (the `<img>` stays the fallback and
+the box carries the alt). A lens under the pointer or a finger, nothing
+moves by itself, static with reduced motion, the plain text or photo under
+forced colours and without JS, no layout shift, no frames off screen or in
+a background tab, the canvas built in short tasks. Props, behaviour, costs
+and the switch to the drawn portrait: docs/lab.md.
 
 ### Free materials on /free/ (`components/free/`, decision 18)
 
@@ -935,10 +962,13 @@ and the quiet Telegram link are as before.
 
 ### Home «Обо мне» and /hire/ «Опыт»
 
-`home/About`: `photo { src, alt }` (decision 9 of 14.10) replaces the drawn
-`portrait` in the same column when it is visible (a 4:5 frame, half the width
-on phones); hidden now, so the drawn portrait shows. Tested locally with a
-placeholder photo. `hire/Experience`: the staff cases (`show: full`) are rows
+`home/About`: the picture is a `DitherPortrait` (decision 6 of 15.10):
+`photo { src, alt }` (decision 9 of 14.10, Daniil's selfie) in one bit in
+its 4:5 box, 4 of 12 columns (half the width on phones); while the photo is
+hidden in the content, the drawn `portrait` (1:1). `ONE_BIT = 'portrait'` in
+the component switches to the drawn portrait cropped to the face, as /lab/
+shows it (the selfie reads poorly in one bit: the face is behind the phone
+and its flash). `hire/Experience`: the staff cases (`show: full`) are rows
 of the place's grid in columns 4–12; a case with `scheme: true` gets the
 `AgentsScheme` (heading at the base size, h5) under it across all 12 columns.
 `hire/StaffCase` no longer draws a scheme. `hire/HireTestimonials` and
@@ -971,7 +1001,7 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 (`{ id, type, anchor?, … }`), optional `header`. Blocks per page:
 
 **home**
-- `hero` (hero): `name`, `role`, `headline` (the h1), `headlineParse?` (the same words with `[слова|член]` tokens: the h1 underlined as a school parse; must read as `headline`), `lead`, `button { label, href }` (plain chat link), `email`, `availability`, `numbers[{ value, label, source }]`, `numbersNote`
+- `hero` (hero): `name`, `role`, `headline` (the h1, drawn in glyphs: `AsciiHeadline`), `headlineParse?` (not drawn since decision 6 of 15.10; the export drops it), `lead`, `button { label, href }` (plain chat link), `email`, `availability`, `numbers[{ value, label, source }]`, `numbersNote`
 - `clients` (names): `lines[{ label, names[], note? }]`, `link { label, case }` (to `caseHref`)
 - `services` (services): `heading`, `lead`, `showDuration`, `main[{ service, line }]`, `moreHeading`, `more[{ service, line, href? }]`, `linkLabel` (each row also shows the price line and the service's verb `button`)
 - `reels` (reels): `heading`, `hint`, `linkLabel`, `items[{ case, video, loop, poster, hook }]` (use `video` + `poster`; `.scroll-row`)
@@ -1123,13 +1153,13 @@ text), `--rule #c4c4c4` (hairlines). Fonts `--font-sans` (Inter Tight),
 **Accents (`accents.css`, decision 1 of 15.10).** Loaded by `BaseLayout`
 right after `global.css` (it replaces the link underline there). No colour
 accents: one underline style per member of the sentence, in currentColor,
-sized in em (1px in body text, 4–5px in the hero headline), never moving
+sized in em (1px in body text, 4–5px at the huge size), never moving
 layout.
 
 | Member | Line | Class | Where |
 | --- | --- | --- | --- |
-| подлежащее | one solid line | `.u-subj` | the main word of a heading (hero), the current page: `a[aria-current="page"]` and `.link-quiet[aria-current]` |
-| сказуемое | two lines (double) | `.u-pred` | every `.btn` label (a plain button carries it itself; with a caption only `.btn__label` or `.tg-btn__word`), the action links `.tg-link`, the verbs of the hero |
+| подлежащее | one solid line | `.u-subj` | the current page: `a[aria-current="page"]` and `.link-quiet[aria-current]` |
+| сказуемое | two lines (double) | `.u-pred` | every `.btn` label (a plain button carries it itself; with a caption only `.btn__label` or `.tg-btn__word`), the action links `.tg-link` |
 | дополнение | dashed | `.u-obj` | every `a` (the default link line) |
 | определение | wavy | `.u-attr` | a link under the pointer (`hover: hover` only) or the keyboard focus; the FAQ question under the pointer; the title of a case step link (CaseFull) |
 | обстоятельство | dash-dot | `.u-circ` | durations and prices: «Срок» (`ServiceTerms`), the price figure (`PriceBlock`), «Сколько длится», the case duration label (`CaseLabels`), the tenure on /hire/ |
@@ -1140,7 +1170,7 @@ Tokens: `--u-t` thickness `max(1px, 0.05em)`, `--u-t2` each double line
 `--u-gap` 0.17em, `--u-descent` (0.24em Inter Tight, 0.28em on `.mono`,
 `.label`, `.t-small`; set it on other mono text that carries `.u-circ`),
 `--u-dur` 200ms and `--u-ease` (the wave's entrance). Override them on a
-parent to tune a context (the hero does). `.u-circ` is a background (a
+parent to tune a context. `.u-circ` is a background (a
 repeating gradient in currentColor, not a native style): put it on an
 inline span around the words, never on a block (and without side padding:
 each line is its own box, `box-decoration-break: clone`); the period
@@ -1240,9 +1270,11 @@ legacy files and have no counter (production keeps them byte-identical to
 the only record of demo visits from the site; a demo opened straight from a
 link elsewhere is not counted. The goals exist in Metrika only after they are
 added there as JavaScript events with these identifiers (README, the move
-checklist). Preview builds only: the canvas islands of /lab/
-(`src/scripts/lab/`, docs/lab.md) and the comment mode (below, injected by
-`tools/comment-mode.mjs`). No other scripts: no `/#hire` redirect, no autoplay; the
+checklist). The home page: `src/scripts/glyphs/ascii-headline.ts` and
+`dither-portrait.ts` (with `ascii-field.ts` and `core.ts`), bundled by
+`AsciiHeadline` and `DitherPortrait` (section 4, docs/lab.md). Preview
+builds only: the prototype A of /lab/ (`src/scripts/lab/`) and the comment
+mode (below, injected by `tools/comment-mode.mjs`). No other scripts: no `/#hire` redirect, no autoplay; the
 disclosures are native `<details>` that work without the scripts, the
 screenshots are plain links without JS.
 
@@ -1264,11 +1296,13 @@ Raw/gzip KB at 375 px, external and inline scripts, Metrika's own tag.js
 not counted; «scroll» is what loads while scrolling to the end, «lightbox»
 what the first open of a screenshot adds. Staging adds the comment mode's
 button, 3.0–4.7/1.5–2.3 KB per page; /lab/ (staging only) loads
-29.5/13.9.
+29.5/13.9. Home measured again 15.10 evening, with the glyph h1 and the
+one-bit portrait (21.5/9.8 of the 30.8/14.1; it loads with reduced motion
+too, the pictures are static then).
 
 | Page | Motion allowed: load + scroll | + lightbox | Reduced motion: load | + lightbox |
 | --- | --- | --- | --- | --- |
-| / | 9.3/4.3 + Embla 25.0/9.9 | | 9.3/4.3 | |
+| / | 30.8/14.1 + Embla 25.0/9.9 | | 30.8/14.1 | |
 | /services/ | 19.3/8.8 | 5.8/2.6 | 7.7/4.1 | 5.8/2.6 |
 | /products/ | 34.1/14.3 (Embla included: the galleries are in the first screen) | 17.5/7.3 | 9.1/4.4 | 5.8/2.6 |
 | /guide/ | 17.5/7.8 | | 5.8/3.1 | |
@@ -1341,7 +1375,7 @@ case, /cases/<slug>/, slug = file name: `CaseFull` and `ContactShort`),
 `404.astro`, `work.html.ts` (redirect to `/services/#formats` with meta
 refresh, canonical and a link), and `lab/[...lab].astro` (/lab/, preview
 builds only, linked from nowhere, noindex: the «cherry» prototypes of
-decision 3 of 15.10, see docs/lab.md; `getStaticPaths` returns nothing with
+decision 3 of 15.10, B and C of them on the home page since decision 6, see docs/lab.md; `getStaticPaths` returns nothing with
 `PREVIEW=0`, `tools/lab-prune.mjs` drops its unreferenced JS from the
 production `_astro/`, and prodcheck fails if either comes back). Every page
 renders its content blocks in the content order, as the texts renderer does.

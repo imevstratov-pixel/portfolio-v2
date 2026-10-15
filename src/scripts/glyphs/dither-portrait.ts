@@ -1,4 +1,4 @@
-// DitherPortrait (src/components/lab/DitherPortrait.astro): the photo in
+// DitherPortrait (src/components/glyphs/DitherPortrait.astro): the photo in
 // one bit, ink or paper per pixel (the glagstone look), with chunky pixels of
 // `data-pixel` CSS px snapped to whole device pixels. Under the cursor or
 // finger the pattern changes inside a soft lens whose edge is itself
@@ -15,7 +15,7 @@
 //   data-src    another picture (same origin): the <img> loads it and the box
 //               takes its ratio (the lab's «Фото» buttons)
 
-import { colours, falloff, isForced, isReduced, Lens, luminance, ready, rgb, toneMap, unlessForced, watchSize, whenNear } from './core';
+import { colours, falloff, isForced, isReduced, Lens, luminance, ready, rgb, toneMap, unlessForced, watchInView, watchSize, whenNear } from './core';
 
 type Algo = 'atkinson' | 'bayer';
 
@@ -225,12 +225,27 @@ function setup(root: HTMLElement): void {
     build().catch(() => {
       root.dataset.state = 'failed';
     });
+  // a resize or a new option off screen waits until the portrait is back in
+  // view (nothing is drawn for a page part nobody sees)
+  let inView = true;
+  let stale = false;
+  const later = () => {
+    if (inView) run();
+    else stale = true;
+  };
   // forced colours: the photo shows as it is (CSS), no canvas
   unlessForced(() =>
     whenNear(root, () => {
       run();
-      watchSize(root, run);
-      new MutationObserver(run).observe(root, {
+      watchInView(root, (v) => {
+        inView = v;
+        if (v && stale) {
+          stale = false;
+          run();
+        }
+      });
+      watchSize(root, later);
+      new MutationObserver(later).observe(root, {
         attributes: true,
         attributeFilter: ['data-mode', 'data-pixel', 'data-algo', 'data-lens', 'data-gamma', 'data-crop', 'data-src'],
       });

@@ -1,4 +1,4 @@
-// AsciiHeadline (src/components/lab/AsciiHeadline.astro): a phrase drawn as
+// AsciiHeadline (src/components/glyphs/AsciiHeadline.astro): a phrase drawn as
 // a field of glyphs that fill the letter shapes. The real text stays in the
 // DOM (read by search engines and screen readers, selectable); once the
 // canvas is drawn the text turns transparent and the canvas (aria-hidden)
@@ -13,10 +13,19 @@
 //   data-density  font size in glyph rows (default 11); a glyph row is never
 //                 shorter than MIN_ROW CSS px, so on a phone 11 and 15 draw
 //                 as about 8 (shorter rows turn the phrase into noise)
-//   data-tint     opacity of the flat letter fill under the glyphs (clip only, default 0.13)
+//   data-tint     opacity of the flat letter fill under the glyphs (clip only).
+//                 Default: by the letter size, 0.13 at FILL_BIG CSS px (9rem)
+//                 and up, 0.4 at FILL_SMALL and below (phones), linear
+//                 between (about 0.29 at 88 px, the hero at 1280): the
+//                 smaller the letters, the more the glyphs break their
+//                 strokes up, so the fill keeps the shapes readable. A
+//                 number fixes it
 //   data-halo     "auto" (default): the faint dots around the letters only
 //                 where the glyph rows are at least HALO_ROW CSS px (not on
-//                 phones, where they merge with the letters) | "on" | "off"
+//                 phones, where they merge with the letters) and on screens
+//                 of at least HALO_DPR device px per CSS px (on a 1× or
+//                 1.25× desktop monitor the dots are a pixel or two and smear
+//                 the lines into noise) | "on" | "off"
 //   data-shimmer  "on" turns the idle shimmer on (default off)
 //
 // Cost: the clipped letters make B the heaviest of the three prototypes per
@@ -24,12 +33,17 @@
 // device pixels per CSS pixel.
 
 import { AsciiField, edges } from './ascii-field';
-import { blur, unlessForced, watchSize, whenNear } from './core';
+import { blur, unlessForced, watchInView, watchSize, whenNear, yieldTask } from './core';
 
 const K = 3; // mask samples per cell side
 const MIN_ROW = 5.5; // CSS px, letters="clip"
 const HALO_ROW = 6.5; // CSS px
+const HALO_DPR = 1.5; // device px per CSS px
 const MAX_DPR = 1.5;
+const TINT = 0.13; // flat letter fill of big letters
+const TINT_SMALL = 0.4; // and of small ones (phones)
+const FILL_BIG = 144; // CSS px of font size (9rem): TINT from here up
+const FILL_SMALL = 48; // TINT_SMALL from here down, linear between
 
 function charBoxes(el: Element): { ch: string; r: DOMRect }[] {
   const out: { ch: string; r: DOMRect }[] = [];
@@ -54,8 +68,11 @@ function setup(root: HTMLElement): void {
   // no canvas support: the plain text stays
   if (!text || !canvas || !canvas.getContext?.('2d')) return;
   let field: AsciiField | null = null;
+  // the latest build: an older one stops at its next yield
+  let builds = 0;
 
   const build = async () => {
+    const my = ++builds;
     const ds = root.dataset;
     const cs = getComputedStyle(text);
     const font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
@@ -65,7 +82,7 @@ function setup(root: HTMLElement): void {
     ]).catch(() => undefined);
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
-    if (!w || !h) return;
+    if (!w || !h || my !== builds) return;
     const size = parseFloat(cs.fontSize);
     const density = Math.max(4, Number(ds.density) || 11);
     // cell height from the letter size, never below MIN_ROW (clip) or 5 CSS px
@@ -117,10 +134,13 @@ function setup(root: HTMLElement): void {
         cov[r * cols + c] = sum / (255 * K * K);
       }
     }
+    // the rest in later tasks (no long task on a slow phone)
+    await yieldTask();
+    if (my !== builds) return;
     const n = cols * rows;
     const v = new Float32Array(n);
     const faint = new Uint8Array(n);
-    const haloOn = ds.halo === 'on' || (ds.halo !== 'off' && ch >= HALO_ROW);
+    const haloOn = ds.halo === 'on' || (ds.halo !== 'off' && ch >= HALO_ROW && devicePixelRatio >= HALO_DPR);
     const halo = haloOn ? blur(cov, cols, rows, 2) : null;
     let e: Uint8Array;
     let layer: Uint8Array | undefined;
@@ -170,24 +190,43 @@ function setup(root: HTMLElement): void {
       bold: clipMode ? 0.07 : 0,
       maxDpr: MAX_DPR,
     };
+    await yieldTask();
+    if (my !== builds) return;
     if (!field) field = new AsciiField(root, canvas, opts);
     else field.setOptions(opts);
-    // a light flat fill keeps the letters readable at phone sizes
-    const tint = clipMode ? Number(ds.tint ?? 0.13) : 0;
-    field.set({ cols, rows, cw, ch, ox: 0, oy: 0, fs, v, e, faint, layer, clip, tint });
-    root.dataset.state = 'ready';
+    // a flat fill under the glyphs, stronger for smaller letters
+    const small = Math.min(1, Math.max(0, (FILL_BIG - size) / (FILL_BIG - FILL_SMALL)));
+    const tint = clipMode ? (ds.tint ? Number(ds.tint) : TINT + (TINT_SMALL - TINT) * small) : 0;
+    // the text turns transparent once the glyphs are on the canvas (the frame
+    // that draws them comes before the next paint)
+    if (await field.set({ cols, rows, cw, ch, ox: 0, oy: 0, fs, v, e, faint, layer, clip, tint })) root.dataset.state = 'ready';
   };
 
   const run = () =>
     build().catch(() => {
       root.dataset.state = 'failed';
     });
+  // a resize or a new option off screen waits until the headline is back in
+  // view (nothing is drawn for a page part nobody sees)
+  let inView = true;
+  let stale = false;
+  const later = () => {
+    if (inView) run();
+    else stale = true;
+  };
   // forced colours: the real text shows in the system colours (CSS), no canvas
   unlessForced(() =>
     whenNear(root, () => {
       run();
-      watchSize(root, run);
-      new MutationObserver(run).observe(root, {
+      watchInView(root, (v) => {
+        inView = v;
+        if (v && stale) {
+          stale = false;
+          run();
+        }
+      });
+      watchSize(root, later);
+      new MutationObserver(later).observe(root, {
         attributes: true,
         attributeFilter: ['data-mode', 'data-density', 'data-halo', 'data-shimmer', 'data-letters', 'data-tint'],
       });

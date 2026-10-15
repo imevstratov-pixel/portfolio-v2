@@ -1,8 +1,9 @@
 ---
 // /lab/: the sandbox page with the «cherry» prototypes (decision 3 of 15.10):
 // A, the photo in glyphs; B, the first-screen phrase in glyphs; C, the photo
-// in one bit. Daniil picks one for the first screen; each is a component
-// (src/components/lab/) the home hero can take as is.
+// in one bit. Daniil chose B for the home first screen and C for «Обо мне»
+// (decision 6 of 15.10): they live in src/components/glyphs/ and are used on
+// the home page as they are shown here; A stays in src/components/lab/.
 //
 // Staging only: getStaticPaths returns the page only when PREVIEW is on, so
 // the production build (PREVIEW=0) has no /lab/ and the sitemap (built from
@@ -13,8 +14,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/Section.astro';
 import AsciiPortrait from '../../components/lab/AsciiPortrait.astro';
-import AsciiHeadline from '../../components/lab/AsciiHeadline.astro';
-import DitherPortrait from '../../components/lab/DitherPortrait.astro';
+import AsciiHeadline from '../../components/glyphs/AsciiHeadline.astro';
+import DitherPortrait from '../../components/glyphs/DitherPortrait.astro';
 import LabControls, { type LabGroup } from '../../components/lab/LabControls.astro';
 import { getBlock, getPage } from '../../lib/content';
 import { PREVIEW } from '../../lib/env';
@@ -90,16 +91,16 @@ const controls: Record<string, LabGroup[]> = {
   <Section rule="none" pad="s4">
     <h1 class="lab-title">Лаборатория</h1>
     <p class="lead lab-lead">
-      Графика из символов для первого экрана: три прототипа, выбираем один. Страница есть только в песочнице: в
-      рабочую сборку и в sitemap она не попадает.
+      Графика из символов: три прототипа. На главной теперь B (заголовок первого экрана) и C (фото в «Обо мне»).
+      Страница есть только в песочнице: в рабочую сборку и в sitemap она не попадает.
     </p>
     <p class="label lab-hint">
       Наведите курсор на картинку или проведите по ней пальцем. Сами по себе картинки не двигаются (мерцание в покое
       можно включить для сравнения). Когда в системе включено уменьшение движения, они статичны.
     </p>
     <p class="label lab-hint">
-      Селфи в лифте здесь как заглушка: лицо закрыто телефоном и вспышкой. Пока нет фронтального фото, по умолчанию
-      стоит рисованный портрет с сайта: на нём видно, как работает техника.
+      Здесь по умолчанию рисованный портрет с сайта: на нём видно, как работает техника. В «Обо мне» на главной стоит
+      селфи в лифте (так решил Даниил), хотя лицо на нём закрыто телефоном и вспышкой.
     </p>
   </Section>
 
@@ -129,7 +130,9 @@ const controls: Record<string, LabGroup[]> = {
         </p>
         <p class="mt-2">
           На телефоне строка символов не ниже 5,5 px, иначе фраза превращается в шум: там 11 и 15 выглядят почти как 8.
-          Точки вокруг букв в режиме «Авто» видны только на широком экране: на телефоне они сливаются с буквами.
+          Точки вокруг букв в режиме «Авто» видны только на широком экране с плотными пикселями (ретина): на телефоне
+          они сливаются с буквами, а на обычном мониторе превращают строки в шум. Чем мельче буквы, тем плотнее серая
+          заливка под символами, чтобы фраза читалась и на телефоне.
         </p>
       </div>
       <div class="col-5 lg-col-5 lg-start-8">

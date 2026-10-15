@@ -1,7 +1,8 @@
 ---
 // The photo in one bit (ink or paper per pixel), dithered like the
 // glagstone reference, with a lens that changes the pattern under the cursor
-// or finger (decision 3 of 15.10, prototype C on /lab/). Static with reduced
+// or finger (decision 3 of 15.10, prototype C on /lab/; the home «Обо мне»
+// since decision 6 of 15.10, components/home/About.astro). Static with reduced
 // motion; under forced colours the (greyscale) photo.
 //
 //   <DitherPortrait src={photo.src} alt={photo.alt} width="30rem" />
@@ -9,7 +10,7 @@
 //
 // Fixed aspect ratio before any script runs (no layout shift); the <img> is
 // the pixel source and the fallback without JS, the box is role="img".
-// Script: src/scripts/lab/dither-portrait.ts (bundled only where used).
+// Script: src/scripts/glyphs/dither-portrait.ts (bundled only where used).
 import { url } from '../../lib/url';
 import { imageSize } from '../../lib/media';
 
@@ -125,5 +126,5 @@ const style = [`--dither-ratio: ${ratio}`, w && `--dither-w: ${w}`, crop && `--d
 </style>
 
 <script>
-  import '../../scripts/lab/dither-portrait.ts';
+  import '../../scripts/glyphs/dither-portrait.ts';
 </script>

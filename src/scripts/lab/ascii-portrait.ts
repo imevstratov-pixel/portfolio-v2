@@ -12,8 +12,8 @@
 //   data-src     another picture (same origin): the <img> loads it and the
 //                box takes its ratio (the lab's «Фото» buttons)
 
-import { AsciiField, edges } from './ascii-field';
-import { luminance, ready, toneMap, unlessForced, watchSize, whenNear } from './core';
+import { AsciiField, edges } from '../glyphs/ascii-field';
+import { luminance, ready, toneMap, unlessForced, watchSize, whenNear } from '../glyphs/core';
 
 const FONT_PROBE = '16px "IBM Plex Mono"';
 
@@ -68,8 +68,7 @@ function setup(root: HTMLElement): void {
     const opts = { inverse, shimmer: ds.shimmer === 'on', radius: 0, magnify: 0.9 };
     if (!field) field = new AsciiField(root, canvas, opts);
     else field.setOptions(opts);
-    field.set({ cols, rows, cw, ch, ox: 0, oy: (h - rows * ch) / 2, fs, v, e });
-    root.dataset.state = 'ready';
+    if (await field.set({ cols, rows, cw, ch, ox: 0, oy: (h - rows * ch) / 2, fs, v, e })) root.dataset.state = 'ready';
   };
 
   const run = () =>
