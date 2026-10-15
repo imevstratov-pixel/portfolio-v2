@@ -24,6 +24,9 @@
 
 import { colours, isForced, isReduced, Lens, pageVisible, rgb, watchInView, watchReduced, yieldTask } from './core';
 
+/** How long the idle shimmer runs each time the field comes into view (WCAG 2.2.2). */
+const SHIMMER_MS = 5000;
+
 export interface Grid {
   cols: number;
   rows: number;
@@ -170,6 +173,9 @@ export class AsciiField {
   private prevBox: Box | null = null;
   private full = true;
   private inView = true;
+  // the shimmer runs for SHIMMER_MS after the field comes into view or the tab
+  // comes back, then rests (WCAG 2.2.2: no motion longer than 5 s without a pause control)
+  private shimmerUntil = 0;
   private nextTick = 0;
   private timer = 0;
   private warm = 0;
@@ -192,11 +198,16 @@ export class AsciiField {
     this.baseLv = levels([...BASE], cov, this.ids);
     this.denseLv = levels([...DENSE], cov, this.ids);
     this.lens = new Lens(root, (now) => this.frame(now));
+    this.shimmerUntil = performance.now() + SHIMMER_MS;
     watchInView(root, (v) => {
+      if (v && !this.inView) this.shimmerUntil = performance.now() + SHIMMER_MS;
       this.inView = v;
       this.schedule();
     });
-    document.addEventListener('visibilitychange', () => this.schedule());
+    document.addEventListener('visibilitychange', () => {
+      if (pageVisible()) this.shimmerUntil = performance.now() + SHIMMER_MS;
+      this.schedule();
+    });
     watchReduced(() => {
       this.resetShimmer();
       this.schedule();
@@ -218,6 +229,7 @@ export class AsciiField {
    * replaced this one.
    */
   async set(grid: Grid): Promise<boolean> {
+    if (this.opts.shimmer) this.shimmerUntil = performance.now() + SHIMMER_MS;
     const gen = ++this.gen;
     this.building = gen;
     this.grid = grid;
@@ -479,7 +491,10 @@ export class AsciiField {
   // --------------------------------------------------------------- shimmer
 
   private shimmerOn(): boolean {
-    return this.opts.shimmer && !isReduced() && !isForced() && this.inView && pageVisible() && !!this.grid;
+    return (
+      this.opts.shimmer && !isReduced() && !isForced() && this.inView && pageVisible() && !!this.grid &&
+      performance.now() < this.shimmerUntil
+    );
   }
 
   private resetShimmer(): void {
@@ -495,7 +510,11 @@ export class AsciiField {
   /** Keeps a slow timer going while the shimmer should run. */
   private schedule(): void {
     clearTimeout(this.timer);
-    if (!this.shimmerOn()) return;
+    if (!this.shimmerOn()) {
+      // time is up or the field left the screen: one more frame puts every glyph back
+      if (this.live.length) this.lens.request();
+      return;
+    }
     this.timer = window.setTimeout(() => {
       this.lens.request();
       this.schedule();

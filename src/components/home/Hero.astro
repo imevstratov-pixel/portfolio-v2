@@ -5,10 +5,10 @@
 // (2 by 2 on phones) with their source note.
 // The hero button only opens the chat (no message template), so it is a plain
 // Button to the chat link, as docs/components.md says.
-// The headline is drawn in glyphs (decision 6 of 15.10: prototype B of
-// /lab/, its default «full build»: clip letters, density 11, the halo dots
-// where the rows allow and the screen is dense enough (from 1.5 device px per
-// CSS px: on 1× monitors they smeared lines 2 and 3), no shimmer). The h1 keeps the real text: search
+// The headline is drawn in glyphs (decisions 6 and 9 of 15.10: prototype B of
+// /lab/ with Daniil's settings: black on white, clip letters, density 15, no
+// halo dots, idle shimmer on; the shimmer runs 5 s each time the hero comes into
+// view, then rests, and never with reduced motion). The h1 keeps the real text: search
 // engines and screen readers read it, it sets the box, and it is what shows
 // before the canvas is ready, without JS and under forced colours
 // (components/glyphs/AsciiHeadline.astro). Not underlined: the school parse
@@ -55,7 +55,7 @@ const headline = String(b.headline ?? '').replace(/(?<![А-Яа-яЁёA-Za-z0-9]
     {
       headline && (
         <div class="hero__title">
-          <AsciiHeadline text={headline} as="h1" id="hero-heading" size="var(--fs-huge)" width="10.5em" shimmer={false} />
+          <AsciiHeadline text={headline} as="h1" id="hero-heading" size="var(--fs-huge)" width="10.5em" density={15} halo={false} shimmer={true} />
         </div>
       )
     }

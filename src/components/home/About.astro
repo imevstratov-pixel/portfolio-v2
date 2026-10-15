@@ -33,7 +33,7 @@ type Picture = { src: string; alt: string; crop?: [number, number, number, numbe
 const drawn: Picture | null = b.portrait ? { src: b.portrait as string, alt: b.portraitAlt as string } : null;
 const picture: Picture | null =
   ONE_BIT === 'photo' && photo
-    ? { src: photo.src, alt: photo.alt ?? b.portraitAlt ?? '' }
+    ? { src: photo.src, alt: photo.alt ?? b.portraitAlt ?? '', crop: [0.1, 0.12, 0.72, 0.62] }
     : drawn && ONE_BIT === 'portrait'
       ? { ...drawn, crop: [0.26, 0.1, 0.7, 0.64] }
       : drawn;
@@ -44,7 +44,7 @@ const picture: Picture | null =
     {
       picture && (
         <div class="about__portrait col-4 m-col-2">
-          <DitherPortrait src={picture.src} alt={picture.alt} crop={picture.crop} />
+          <DitherPortrait src={picture.src} alt={picture.alt} crop={picture.crop} algo="bayer" pixel={2} lens="fine" />
         </div>
       )
     }
