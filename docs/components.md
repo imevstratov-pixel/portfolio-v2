@@ -110,10 +110,10 @@ section 7, docs/lab.md).
 | `npm run build` | Static build into `dist/` |
 | `npm run preview` | Serves `dist/` (Astro 7 may start it in the background; stop with `npx astro preview stop`) |
 | `npm run check` | `astro check`: TypeScript and template types (0 errors expected) |
-| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external. Expected pages: every route (/free/ included) and one /cases/<slug>/ per published case in `src/content/cases` must be built, /cases/ must link to each and keep each case anchor, and no other page may sit under /cases/. `DIST=<dir>` checks a build made with `--outDir` |
+| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external. Expected pages: every route (/free/ included), one /cases/<slug>/ per published case in `src/content/cases` and one /services/<slug>/ per service but the guide must be built, /cases/ must link to each case page and keep each case anchor, /services/ must link to each service page, and no other page may sit under /cases/. `DIST=<dir>` checks a build made with `--outDir` |
 | `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. The client bundles `_astro/*.js` are compiled library code (Motion and Embla use `hidden` as code: `document.hidden`, `overflow: hidden`): in them `hidden` fails only as a content status (`status: "hidden"`), every other marker as anywhere. Fails on any file under `dist/media/` that no generated page references (a screenshot waiting for Daniil's OK must stay outside `public/`). Then runs `tools/prodcheck.mjs` (below) |
 | `node tools/prodcheck.mjs [dist]` | Deploy-mode check, run by `leakcheck` with the same `PREVIEW`, `BASE`, `SITE`. Preview: no `mc.yandex.ru` or `data-metrika` anywhere, a robots `noindex` meta on every HTML page (search-engine verification files `google*.html`, `yandex_*.html` from `public/` excepted), robots.txt `Disallow: /` without a sitemap, no sitemap.xml. Production: the Metrika counter and `data-metrika` on every generated page (the work.html redirect excepted), no robots meta except on 404, legacy files byte-identical to `public/`, robots.txt `Allow: /` with `Sitemap: <site><base>sitemap.xml`, sitemap.xml with every indexable generated page and en/ under `<site><base>`, nothing 404, noindex or redirect, no file carrying the staging comment mode (its marker `comment-mode:v1`, `data-comment-mode`, its chunks, `/issues/new`), and no preview-only /lab/ (no `lab/` page, no `_astro` chunk named after a file of `src/components/lab/` or `src/scripts/lab/`, which hold only what /lab/ alone uses; the home page's canvas islands live in `glyphs/`). Preview also, while `astro.config.mjs` registers `commentMode()`: every generated page (redirects excepted) loads the comment mode, and the chunks it loads later exist. Both: every `public/` file is built (old URLs), canonical and og:url are `<site><base><path>`, og:image is absolute and exists, the old home anchors lead to built pages and existing sections |
-| `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Without routes: every page, the built case pages too. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
+| `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Without routes: every page, the built case and service pages too. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
 | `npm run verify` | build, check-links, leakcheck |
 | `npm run content` | Re-run the content export (needs `SITE_CONTENT`) |
 | `node tools/build-guide-pdf.mjs [course\|ai] <guide draft .md>` | Run by hand, not part of the build. One engine (`tools/guide-pdf/engine.mjs`: Markdown to A4 PDF in the site's type system, fonts embedded, contents with page numbers from a second pass, page numbers in the footer, bookmarks, clickable full-URL links with UTM tags, tables kept on one page, cover JPEG of page 1, PDF Info) and one config per guide (`tools/guide-pdf/<guide>.mjs`: cover, checks, own blocks, CSS). Without a guide name it builds `course`, as before. **`ai`** — «AI строит быстро. Как сделать, чтобы он строил то, что нужно» (`public/free/ai-stroit-bystro.pdf` and `-cover.jpg`, UTM `utm_source=ai-guide-pdf`): the cover shows the numbers of techniques, errors and templates counted from the draft, and the build stops when «Что внутри» promises other numbers (techniques, errors, cases, templates, exercises); `**Label.**` paragraphs (Ситуация, Как делаю, Симптом, Задача…) become two-column rows with the label in mono; `#### N.` techniques and «Ошибка / Шаблон / Принцип / Упражнение N.» headings get the number or the tag in mono; ```` ```scheme ```` blocks (id, тип, заголовок, данные, подпись) become black-and-white HTML/CSS figures — плитки, столбики (value at the tip, the longest bar at 70% of the track, a range hatched), цикл (six steps as a loop), лестница, путь (a row up to four steps, a column for more), таблица — and a figure drops its title when it repeats the heading above; ```` ```text ```` blocks (templates) are framed mono boxes; arrows → ← ↑ ↓ ↔ are inline SVG (not in the site's font subsets). New page only before chapters 1, 4, 8 and «Что почитать». **`course`** — Run by hand, not part of the build. Builds the free guide «Как разработать онлайн-курс» for /free/: `public/free/kak-razrabotat-onlajn-kurs.pdf` (A4, black and white, Inter Tight and IBM Plex Mono embedded, colours and font stacks from `tokens.css`; cover, contents with page numbers from a second pass, page numbers in the footer, bookmarks, clickable full-URL links, tables kept on one page, a line ending in «:» or «.» kept with the list or table it introduces, bold labels such as «**Логика программы:**» included, and no list leaving its last item alone at the top of a page; the step counts on the cover are counted from the draft: the numbered h3 steps of «Предпродакшн», the first numbered list of «Продакшн» and of «Постпродакшн», and the build stops unless they add up to `TOTAL_STEPS` (21, the «21 шаг» of pages home, services and free)) and `public/free/kak-razrabotat-onlajn-kurs-cover.jpg` (page 1). Reads only the text before «# Для Даниила» of the draft (kept outside the repository), fails on notes or placeholders left, puts the live address for «[адрес сайта]» and UTM tags (`utm_source=guide-pdf`) on links to the site. Prints pages, size, linked addresses and fonts. Needs `/opt/pw-browsers/chromium` (`CHROMIUM_PATH`) and poppler-utils (`pdfinfo`, `pdffonts`, `pdftoppm`). Commit both files; then check «PDF, N страниц» in `pages/free.md` (the build fails when it differs from the file) |
@@ -213,7 +213,12 @@ import {
   use it anyway for FAQ items, rows, notes, as the renderer does).
 - Services: `services` (all, by `order`), `getService('audit')`,
   `serviceByCodeword('Аудит')`, `serviceHref(slugOrEntry)` gives
-  `<base>/services/#<anchor>`. `serviceDurationLine(s)` gives «Срок: около
+  `<base>/services/#<anchor>` (the card in the list), `servicePageHref(slugOrEntry)`
+  the service's own page `<base>/services/<slug>/` (`<base>/guide/` for the
+  guide), `pagedServices` the services that have one (all but the guide).
+  Links to a service from other pages (case pages' «Что из этого сделаю для
+  вас», home rows, `LinkedText` links with `service`) go to its page; on
+  /services/ itself `LinkedText servicesPage` keeps `#anchor`. `serviceDurationLine(s)` gives «Срок: около
   недели.».
 - Prices: `servicePrice(s)` is the service's own price `{ main, note?, more[] }`
   or `null` (then the global line shows); `servicePriceLine(s)` the same as one
@@ -308,7 +313,8 @@ All components are `.astro` files. Paths in examples are from a page in
 Props: `page` (from `getPage`; gives title, description, OG image and an
 optional `header` override), `title`, `description`, `ogImage`, `noindex`
 (overrides), `header` (full override), `current` (site path for
-`aria-current` in header and footer), `ctaHref` (target of «Написать»;
+`aria-current` in header and footer: `page` on that page itself, `true` on
+its subpages, as «Услуги» on /services/<slug>/ and «Кейсы» on a case page), `ctaHref` (target of «Написать»;
 default `page.header.ctaTarget` or `#contact`), `bare` (no header and footer:
 the og:image cards of /lab/og/). Renders `<html lang="ru">`,
 head (title, description, canonical, OG with absolute image URL and size,
@@ -654,7 +660,8 @@ figure only, at the body size (`show="main" size="base"`). The sub-prices
 stay on /services/, as the texts renderer asks (`price_line`). Then
 the verb link (`action`: the service's `button`, a Telegram link that copies
 the start of the message, in bold) and «Подробнее»
-(`linkLabel`; `href` override from the content, default `/services/#anchor`).
+(`linkLabel`; `href` override from the content, default the service's page,
+`servicePageHref`).
 From 720px title on 5 columns and the rest on 7. Props: `service`, `line`,
 `linkLabel`, `href`, `duration`, `price`, `action`, `size` (`large`,
 `small`), `title` (`title` or `short`), `level`.
@@ -677,11 +684,18 @@ spot: body, `AgentsScheme` without heading and
 facts for `scheme: "ai-agents"` (full width), «Для кого», «Что получите на
 руки», «Сколько длится», «Как идёт работа», «Что нужно от вас», «Что не
 входит», «Нейросеть и расходы», proof, «Мои продукты», «Что говорят
-коллеги» (text quotes). The parts are `ServicePart` rows: label in columns
+коллеги» (text quotes). The parts are `ServicePart` rows (the label an h4
+under the card's h3; `level` 2 on the service's page): label in columns
 1–3, text in 4–12 (4–10 from 1080px). `short` (group variant `short`, the
 guide): the same card with the `more` link («Подробнее о тренажёре», /guide/)
 beside the verb button; its «Подробнее» opens only «Для кого» and «Что
-получите на руки» (as the renderer). Phones: one column. `isNew: true` on
+получите на руки» (as the renderer). Phones: one column. The card title links
+to the service's own page (`servicePageHref`: /services/<slug>/, /guide/ for
+the guide). The full template is `ServiceFull` (also open on the service's
+page). `page` (`ServiceCard page`, on /services/<slug>/): no number and no
+sticker, the title as the h1 at `t-large` (`seo.h1` when set; a hyphenated
+word never breaks at its hyphen), the full template open below, no
+«Подробнее». `isNew: true` on
 a service puts the «new» sticker (`NewBadge`) on the card's top line beside
 the number.
 `ServiceGroup` renders a group (heading, lead, note with links through
@@ -1101,7 +1115,10 @@ points), `forWhom[]`, `youGet[]`, `duration`, `durationNote?`,
 `proofNotes? { caseSlug: note }`, `proofLinks?[{ label, url, note?, case?, product? }]`,
 `proofProducts?[]`, `testimonials?[]`, `more? { label, url }`,
 `related? { text, service?, case? }`, `isNew?` (the «new» sticker on the
-card), `price? { main, note?, more?[] }`
+card), `seo? { title?, description?, h1? }` (the service's own page
+/services/<slug>/: search title and description, an h1 when it differs from
+`title`, as «Аудит онлайн-курса и пути ученика» for audit; without them
+«<title> — <name>» and the summary), `price? { main, note?, more?[] }`
 (decision 16 of 14.10; all seven services have one now: `main` the figure or
 range, «15 000 ₽», «от 250 000 ₽», «70 000–100 000 ₽», `note` what it covers
 in one short line, `more` sub-prices or variants as «что — цена»; the spaces
@@ -1186,7 +1203,7 @@ layout.
 
 | Member | Line | Class | Where |
 | --- | --- | --- | --- |
-| подлежащее | one solid line | `.u-subj` | the current page: `a[aria-current="page"]` and `.link-quiet[aria-current]` |
+| подлежащее | one solid line | `.u-subj` | the current page or section: `a[aria-current]` (`page` or `true`) and `.link-quiet[aria-current]` |
 | сказуемое | two lines (double) | `.u-pred` | every `.btn` label (a plain button carries it itself; with a caption only `.btn__label` or `.tg-btn__word`), the action links `.tg-link` |
 | дополнение | dashed | `.u-obj` | every `a` (the default link line) |
 | определение | wavy | `.u-attr` | a link under the pointer (`hover: hover` only) or the keyboard focus; the FAQ question under the pointer; the title of a case step link (CaseFull) |
@@ -1220,7 +1237,7 @@ without `text-decoration-style` draws one solid line; without `:has()`
 `.sans`, `.muted`, `.bold`, `.regular`, `.lead` (medium text, 34em),
 `.measure`, `.nowrap`. Links are underlined dashed, wavy under the pointer
 and the focus, solid on the current page; `.link-quiet` has no line at rest
-(wavy on hover, solid with `aria-current="page"`).
+(wavy on hover, solid with `aria-current`).
 
 **Buttons.** `.btn` (frame), `.btn--primary` (ink fill), `.btn--small`,
 `.btn--block`, `.btn__caption` (mono second line), `.btn__label` (the label
@@ -1400,6 +1417,10 @@ layout or component includes it.
 `src/pages/index.astro` (/), `services/`, `cases/`, `products/`, `free/`,
 `hire/`, `guide/` (`index.astro` each), `cases/[slug].astro` (one page per published
 case, /cases/<slug>/, slug = file name: `CaseFull` and `ContactShort`),
+`services/[slug].astro` (one page per service but the guide, /services/<slug>/,
+slug = file name, SEO plan of 18.10: «Все услуги», `ServiceCard page`, the
+`free-guide` and `contact` blocks of pages/services.md, JSON-LD Service and
+BreadcrumbList; the list on /services/ stays and its card titles link here),
 `404.astro`, `work.html.ts` (redirect to `/services/#formats` with meta
 refresh, canonical and a link), `lab/og/[card].astro` (/lab/og/a|b|c/, preview
 builds only, noindex, in `BaseLayout bare`: the 1200×630 social preview

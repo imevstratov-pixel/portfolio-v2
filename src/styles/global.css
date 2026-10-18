@@ -210,7 +210,7 @@ a:hover {
 }
 
 .link-quiet:hover,
-.link-quiet[aria-current='page'] {
+.link-quiet[aria-current] {
   text-decoration-line: underline;
 }
 

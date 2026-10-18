@@ -12,7 +12,10 @@ interface Props {
 }
 
 const { header, current } = Astro.props;
-const isCurrent = (href: string) => (current && href === current ? 'page' : undefined);
+// 'page' on the page itself, 'true' on the section of a subpage (a case or a
+// service page under «Кейсы» and «Услуги»)
+const isCurrent = (href: string) =>
+  current && href === current ? (url(href) === Astro.url.pathname ? 'page' : 'true') : undefined;
 ---
 
 <header class="site-header">

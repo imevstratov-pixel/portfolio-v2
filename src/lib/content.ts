@@ -123,6 +123,19 @@ export function serviceHref(service: string | ServiceEntry): string {
   return url(`/services/#${s.data.anchor}`);
 }
 
+/**
+ * Services with a page of their own, /services/<slug>/ (SEO plan of 18.10:
+ * the list on /services/ stays, each service also gets its page): all but
+ * the guide, whose page is /guide/.
+ */
+export const pagedServices: ServiceEntry[] = services.filter((s) => s.id !== 'guide');
+
+/** The service's own page: /services/<slug>/, or /guide/ for the guide. */
+export function servicePageHref(service: string | ServiceEntry): string {
+  const s = typeof service === 'string' ? getService(service) : service;
+  return s.id === 'guide' ? url('/guide/') : url(`/services/${s.id}/`);
+}
+
 const endDot = (t: string) => (/[.!?…]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
 
 /** A service price (decision 16 of 14.10): the figure, what it covers, sub-prices. */
@@ -492,7 +505,7 @@ export function linkSegments(
     const href = l.service
       ? opts.servicesPage
         ? `#${getService(l.service).data.anchor}`
-        : serviceHref(l.service)
+        : servicePageHref(l.service)
       : l.case
         ? isPublished(l.case)
           ? caseHref(l.case)
