@@ -31,7 +31,7 @@ const ABSORB = new Set(['Результат']);
 const COUNTS = [
   { key: 'techniques', word: 'приём', forms: ['приём', 'приёма', 'приёмов'], text: 'по шести шагам работы: от постановки задачи до закрепления' },
   { key: 'errors', word: 'ошиб', forms: ['ошибка', 'ошибки', 'ошибок'], text: 'моих и модели, и правила, которые из них выросли' },
-  { key: 'templates', word: 'шаблон', forms: ['шаблон', 'шаблона', 'шаблонов'], text: 'брифа и проверки, плюс шпаргалка на один лист' },
+  { key: 'templates', word: 'шаблон', forms: ['шаблон', 'шаблона', 'шаблонов'], text: 'брифа и проверки, плюс чек-листы в шпаргалке' },
 ];
 
 // Arrows are not in the site's font subsets (Inter Tight and IBM Plex Mono from
@@ -316,7 +316,7 @@ export default {
     out = out.replace(/<h4>(\d+)\.\s+([\s\S]*?)<\/h4>/g, (_, n, inner) => `<h4 class="step" id="tech-${n}"><span class="step__n">${n}</span><span class="step__t">${inner}</span></h4>`);
     // a short list (up to five items) is not split over two pages
     out = out.replace(/<(ul|ol)>((?:(?!<\/?(?:ul|ol)>)[\s\S])*)<\/\1>/g, (all, tag, inner) =>
-      (inner.match(/<li>/g) ?? []).length <= 5 ? `<${tag} class="keep">${inner}</${tag}>` : all,
+      (inner.match(/<li>/g) ?? []).length <= 5 && inner.replace(/<[^>]+>/g, '').length <= 600 ? `<${tag} class="keep">${inner}</${tag}>` : all,
     );
     // the glossary: a hanging indent instead of dashes
     out = out.replace(/(<h2[^>]*>Словарь<\/h2>[\s\S]*?)<ul>/, '$1<ul class="gloss">');
@@ -331,11 +331,18 @@ export default {
       x = x.replace(/(\S+) &lt;([^&]{1,30})&gt;/g, '$1\u00a0<code class="slot">&lt;$2&gt;</code>');
       return a + x;
     });
+    // «Что почитать»: «…: <a>A</a>, по-английски — <a>B</a>.» becomes two
+    // labelled lines under the item (ru / en, from each address)
+    out = out.replace(/<a href="([^"]+)">([^<]+)<\/a>, <span class="nw">по-(?:русски|английски)<\/span> — <a href="([^"]+)">([^<]+)<\/a>\.?/g, (_, h1, t1, h2, t2) => {
+      const lang = (href) => (/\/en\//.test(href) ? 'en' : 'ru');
+      const line = (href, text) => `<span class="links__l">${lang(href)}</span><a href="${href}">${text}</a>`;
+      return `<span class="links">${line(h1, t1)}${line(h2, t2)}</span>`;
+    });
     // «Где в гайде»: the references are links inside the PDF
     const ANCHOR = { приём: 'tech', ошибка: 'err', шаблон: 'tpl', принцип: 'pr', упражнение: 'ex', глава: 'part' };
     // «Ошибка 1. …», «Шаблон 1. …», «Принцип 1. …», «Упражнение 1. …»: the tag above the title
     const ID = { Ошибка: 'err', Шаблон: 'tpl', Принцип: 'pr', Упражнение: 'ex' };
-    out = out.replace(/<(h[34])>(Ошибка|Шаблон|Принцип|Упражнение) (\d+)\.\s+([\s\S]*?)<\/\1>/g, (_, tag, kind, n, inner) => `<${tag} class="tagged" id="${ID[kind]}-${n}"><span class="tag">${kind} ${n}</span>${inner}</${tag}>`);
+    out = out.replace(/<(h[34])>(Ошибка|Шаблон|Принцип|Упражнение)[ \u00a0](\d+)\.\s+([\s\S]*?)<\/\1>/g, (_, tag, kind, n, inner) => `<${tag} class="tagged" id="${ID[kind]}-${n}"><span class="tag">${kind} ${n}</span>${inner}</${tag}>`);
     out = rows(out);
     out = out.replace(/(<p class="row__l">Где в гайде<\/p><div class="row__t">)([\s\S]*?)(<\/div><\/div>)/g, (_, a, body, z) =>
       a + body.replace(/(при[её]м|ошибка|шаблон|принцип|упражнение|глава)\u00a0(\d+)/g, (m, w, n) => `<a class="ref" href="#${ANCHOR[/^при[её]м$/.test(w) ? 'приём' : w]}-${n}">${m}</a>`) + z,
@@ -387,12 +394,12 @@ svg.arr { display: inline-block; width: 0.95em; height: 0.68em; vertical-align: 
 .toc li { break-inside: avoid; border-top: var(--hair); border-bottom: none; }
 .toc a { padding: 1.1mm 0; gap: 4mm; }
 .intro > p:first-child { font-size: 12.5pt; }
-/* figures: one right edge with the h2 rules, rows and template boxes (160 mm) */
-.fig { max-width: 160mm; }
+/* figures: one right edge with the h2 rules, rows and template boxes (160 mm, set in .fig below) */
 .guide .fig p, .guide .fig ul, .guide .fig ol, .guide .fig table { max-width: none; }
 .guide .fig .fig__cap { max-width: 150mm; text-wrap: pretty; }
-.fig--untitled { border-top: var(--line); padding-top: 2mm; }
+.fig--untitled .bar:first-child, .fig--untitled .ftable tr:first-child td { border-top: var(--line); }
 .row__t .fig { margin: 3mm 0 1mm; max-width: none; }
+.guide .row:has(> .row__t > .fig) { break-inside: auto; }
 /* blocks that must not break inside */
 .guide .tagged, .guide ul.keep, .guide ol.keep, .guide ul > li { break-inside: avoid; }
 .guide p:has(+ pre.tpl) { break-after: avoid; }
@@ -404,6 +411,8 @@ svg.arr { display: inline-block; width: 0.95em; height: 0.68em; vertical-align: 
 .guide ol > li::before, .intro ol > li::before { top: 0.42em; }
 /* inline slots and literal names */
 code.slot { white-space: nowrap; }
+.links { display: grid; grid-template-columns: 6mm minmax(0, 1fr); row-gap: 0.3mm; margin-top: 1mm; }
+.links__l { font-family: var(--font-mono); font-size: 7.5pt; line-height: 1.6; color: var(--muted); }
 a.ref { text-decoration: none; }
 /* arrows next to bold text: a heavier stroke, even spacing */
 svg.arr { margin: 0 0.05em; }
@@ -439,7 +448,7 @@ pre.tpl {
 pre.tpl code { font-size: inherit; }
 
 /* figures */
-.fig { margin: 6mm 0 2mm; max-width: 170mm; break-inside: avoid; }
+.fig { margin: 6mm 0 2mm; max-width: 160mm; break-inside: avoid; }
 .guide .fig + * { margin-top: 5mm; }
 .fig__title { font-weight: var(--bold); font-size: 10.5pt; line-height: 1.3; border-top: var(--line); padding-top: 2mm; margin-bottom: 3mm; }
 .fig__cap { margin-top: 3mm; font-size: 8.5pt; line-height: 1.4; color: var(--muted); max-width: 140mm; }
