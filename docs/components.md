@@ -681,7 +681,9 @@ facts for `scheme: "ai-agents"` (full width), «Для кого», «Что по
 1–3, text in 4–12 (4–10 from 1080px). `short` (group variant `short`, the
 guide): the same card with the `more` link («Подробнее о тренажёре», /guide/)
 beside the verb button; its «Подробнее» opens only «Для кого» and «Что
-получите на руки» (as the renderer). Phones: one column.
+получите на руки» (as the renderer). Phones: one column. `isNew: true` on
+a service puts the «new» sticker (`NewBadge`) on the card's top line beside
+the number.
 `ServiceGroup` renders a group (heading, lead, note with links through
 `LinkedText servicesPage`, its cards),
 `ServicesIntro` the h1, lead and table of contents, `Formats` #formats (see
@@ -770,8 +772,28 @@ the mouse only (`tabindex="-1" aria-hidden="true"`). Then `discuss`
 «аудит курса» lead to their cards on /services/). The build fails when the
 file is missing or when «PDF, N страниц» in `format` differs from the PDF's
 page count. The items are a list (`ul.free-list`, `--s5` apart): a new
-material is one more item in the content. The page ends with `ContactShort`
-(block `contact`, type `contact-short`).
+material is one more item in the content. `isNew: true` on an item puts the
+«new» sticker (`NewBadge`) on the top-left corner of the cover. The page ends
+with `ContactShort` (block `contact`, type `contact-short`).
+
+### NewBadge (`components/NewBadge.astro`)
+
+```astro
+{item.isNew && <NewBadge class="free__new" />}   <!-- the parent places it: position absolute, top, left -->
+```
+
+The «new» sticker for a new free material or a new service (Daniil's request
+of 18.10: the starburst of the sites of the 2000s, drawn neatly): a paper
+star with fourteen slightly uneven rays in an ink outline (inline SVG, the
+path generated once and fixed), «new» in bold sans at 0.28 of the size, the
+whole turned −14°. `--nb-size` sets the size (4.75rem; the free item uses
+4rem on phones, where the sticker keeps inside the 16px page margin).
+`role="img"` with `aria-label` «Новинка» (prop `label`), so a screen reader
+hears one Russian word before the title; the drawing and the English word
+are hidden from it. No pointer events, no motion; forced colours draw it in
+Canvas and CanvasText. The flag is `isNew: true` on a `pages/free.md` item
+(`FreeItem`) or a service (`ServiceCard`); remove the line when the thing is
+no longer new.
 
 ### PriceBlock, ServiceTerms
 
@@ -1054,7 +1076,7 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 
 **free** (/free/, decision 18)
 - `intro`: `heading` (h1, «Бесплатно»), `lead` (one line)
-- `items` (free-items): `items[{ id, anchor, kind, title, text, insideLabel, inside[], format, file, cover { src, alt }, downloadLabel, discuss { text, links[{ label, service }] } }]` (`FreeItem`; `format` «PDF, 15 страниц» is checked against the file; the field is `downloadLabel`, not `button`, because `button` strings are Telegram codewords in the validation)
+- `items` (free-items): `items[{ id, anchor, isNew?, kind, title, text, insideLabel, inside[], format, file, cover { src, alt }, downloadLabel, discuss { text, links[{ label, service }] } }]` (`FreeItem`; `format` «PDF, 15 страниц» is checked against the file; the field is `downloadLabel`, not `button`, because `button` strings are Telegram codewords in the validation)
 - `contact` (contact-short, anchor `contact`): `heading`, `email`, `workload` (`ContactShort`, with the global price line)
 
 **404**: `not-found`: `code`, `heading` (h1), `text`, `button { label, href }`, `links[{ label, href }]`
@@ -1078,7 +1100,8 @@ points), `forWhom[]`, `youGet[]`, `duration`, `durationNote?`,
 `steps[]`, `fromYou?`, `ai?`, `notIncluded[]`, `proofCases[]`,
 `proofNotes? { caseSlug: note }`, `proofLinks?[{ label, url, note?, case?, product? }]`,
 `proofProducts?[]`, `testimonials?[]`, `more? { label, url }`,
-`related? { text, service?, case? }`, `price? { main, note?, more?[] }`
+`related? { text, service?, case? }`, `isNew?` (the «new» sticker on the
+card), `price? { main, note?, more?[] }`
 (decision 16 of 14.10; all seven services have one now: `main` the figure or
 range, «15 000 ₽», «от 250 000 ₽», «70 000–100 000 ₽», `note` what it covers
 in one short line, `more` sub-prices or variants as «что — цена»; the spaces
