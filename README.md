@@ -7,7 +7,7 @@ goes to two repositories; the workflow reads the target from the repository:
 | Repository | URL | Mode |
 | --- | --- | --- |
 | `imevstratov-pixel/portfolio-v2` | https://imevstratov-pixel.github.io/portfolio-v2/ | sandbox: `PREVIEW=1`, noindex, no analytics, robots.txt disallows |
-| `imevstratov-pixel/portfolio` | https://imevstratov-pixel.github.io/portfolio/ | live: `PREVIEW=0`, Yandex Metrika, indexable, sitemap.xml |
+| `imevstratov-pixel/portfolio` | https://danilevstratov.ru/ (custom domain of its Pages; github.io/portfolio/ redirects there) | live: `PREVIEW=0`, Yandex Metrika, indexable, sitemap.xml |
 
 In both repositories Settings → Pages → Source must be «GitHub Actions»
 (the deploy step cannot publish otherwise). For `portfolio` this has to be set
@@ -17,7 +17,7 @@ before the first push of this code: see the move checklist below.
 npm ci
 npm run dev        # http://localhost:4321/portfolio-v2/
 npm run verify     # build + link check + internal-notes and deploy-mode check
-BASE=/portfolio/ PREVIEW=0 npm run verify   # the same for the live site
+SITE=https://danilevstratov.ru BASE=/ PREVIEW=0 npm run verify   # the same for the live site
 npm run shots -- --out shots/now   # screenshots at 375, 768, 1280
 node tools/build-guide-pdf.mjs [course|ai] <guide draft .md>   # by hand: a free guide PDF and its cover in public/free/
 node tools/og.mjs a --to public/assets/og-portrait.png   # by hand, after a preview build: the social preview image
@@ -25,6 +25,25 @@ node tools/og.mjs a --to public/assets/og-portrait.png   # by hand, after a prev
 
 Content in `src/content` is a sanitized export and is not edited by hand.
 Components, content fields, CSS classes and tools: [docs/components.md](docs/components.md).
+
+## The domain danilevstratov.ru
+
+Since 19.10.2026 the live site is the root of `danilevstratov.ru` (decision 22
+of 15.10). The workflow builds `imevstratov-pixel/portfolio` with
+`SITE=https://danilevstratov.ru BASE=/`, so that build only works while the
+domain is set in that repository's Settings → Pages → Custom domain; GitHub
+then redirects `imevstratov-pixel.github.io/portfolio/*` to the same path on
+the domain. DNS at the registrar: A records for `@` to 185.199.108.153,
+185.199.109.153, 185.199.110.153, 185.199.111.153; AAAA for `@` to
+2606:50c0:8000::153 … 2606:50c0:8003::153; CNAME `www` to
+`imevstratov-pixel.github.io.`; the TXT record of the domain verification in
+the account's Settings → Pages. «Enforce HTTPS» is on once GitHub has issued
+the certificate. The staging site stays on github.io/portfolio-v2/. The guide
+and résumé PDFs link to the domain (`SITE_URL` in tools/guide-pdf/engine.mjs,
+public/resume/*.html, rebuilt by hand). With the site at the host root,
+robots.txt and sitemap.xml are read by crawlers as they are, and search
+engine verification files (`google<token>.html`, `yandex_<token>.html`) go
+into `public/` as is.
 
 ## Режим комментариев (только песочница)
 
@@ -77,6 +96,10 @@ docs/components.md, «Staging comment mode». Under Playwright
 screenshots unless the address has `?comment`.
 
 ## Moving the live site to this code (decision 20)
+
+Done in October 2026, kept for the record. The addresses below are the
+github.io ones of that time; steps 7 and 8 are replaced by «The domain
+danilevstratov.ru» above.
 
 `imevstratov-pixel/portfolio` still holds the old site and has no workflow,
 so its Pages source is «Deploy from a branch». A push of this code to its

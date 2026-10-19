@@ -16,12 +16,16 @@ concurrency:
 
 env:
   # One code base, two repositories. The "Deploy target" step derives the
-  # rest from the repository this runs in:
-  #   BASE    = /<repository name>/ (the project path on github.io)
-  #   PREVIEW = 0 only in imevstratov-pixel/portfolio (the live site: Yandex
-  #             Metrika, indexing, sitemap.xml); 1 everywhere else, e.g.
-  #             imevstratov-pixel/portfolio-v2 (noindex, no analytics).
-  SITE: https://imevstratov-pixel.github.io
+  # address and the mode from the repository this runs in:
+  #   imevstratov-pixel/portfolio (the live site): SITE https://danilevstratov.ru,
+  #     BASE / (the custom domain of its Pages, decision 22 of 15.10), PREVIEW 0
+  #     (Yandex Metrika, indexing, sitemap.xml);
+  #   any other, e.g. imevstratov-pixel/portfolio-v2 (staging):
+  #     SITE https://imevstratov-pixel.github.io, BASE /<repository name>/,
+  #     PREVIEW 1 (noindex, no analytics).
+  # The live build serves the domain root, so it only works once the domain
+  # is set in the repository's Pages settings (github.io/portfolio/ then
+  # redirects there).
   ASTRO_TELEMETRY_DISABLED: '1'
 
 jobs:
@@ -35,10 +39,13 @@ jobs:
           cache: npm
       - name: Deploy target
         run: |
-          echo "BASE=/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
           if [ "$GITHUB_REPOSITORY" = "imevstratov-pixel/portfolio" ]; then
+            echo "SITE=https://danilevstratov.ru" >> "$GITHUB_ENV"
+            echo "BASE=/" >> "$GITHUB_ENV"
             echo "PREVIEW=0" >> "$GITHUB_ENV"
           else
+            echo "SITE=https://imevstratov-pixel.github.io" >> "$GITHUB_ENV"
+            echo "BASE=/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
             echo "PREVIEW=1" >> "$GITHUB_ENV"
           fi
       - run: echo "Building $SITE$BASE with PREVIEW=$PREVIEW"

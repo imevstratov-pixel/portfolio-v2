@@ -35,7 +35,7 @@ import { markdownToHtml } from 'satteri';
 
 const ROOT = resolve(import.meta.dirname, '..', '..');
 const EXECUTABLE = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
-export const SITE_URL = 'https://imevstratov-pixel.github.io/portfolio/';
+export const SITE_URL = 'https://danilevstratov.ru/';
 const OUT_DIR = join(ROOT, 'public', 'free');
 // cover image: longest side in px (A4 portrait, so about 778 x 1100)
 const COVER_PX = 1100;
@@ -173,7 +173,7 @@ export async function buildGuide(config, srcPath) {
 
   html = typesetHtml(html);
 
-  // a link whose text is an address («doi.org/…», «imevstratov-pixel.github.io/…»)
+  // a link whose text is an address («doi.org/…», «danilevstratov.ru/…»)
   // stays on one line instead of breaking at its hyphen
   html = html.replace(/<a href="([^"]*)">([^<]*[a-z0-9]\.[a-z]{2,}[^<]*)<\/a>/g, '<a class="url" href="$1">$2</a>');
 
