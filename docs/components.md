@@ -110,10 +110,10 @@ section 7, docs/lab.md).
 | `npm run build` | Static build into `dist/` |
 | `npm run preview` | Serves `dist/` (Astro 7 may start it in the background; stop with `npx astro preview stop`) |
 | `npm run check` | `astro check`: TypeScript and template types (0 errors expected) |
-| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external. Expected pages: every route (/free/ included), one /cases/<slug>/ per published case in `src/content/cases` and one /services/<slug>/ per service but the guide must be built, /cases/ must link to each case page and keep each case anchor, /services/ must link to each service page, and no other page may sit under /cases/. `DIST=<dir>` checks a build made with `--outDir` |
+| `npm run check-links` | Every internal href/src/poster in `dist/` resolves, every `#anchor` exists on its page, no link leaves the base, no `/portfolio-v2/` literal in `src/`. Absolute URLs count as internal only for the page's own canonical, og:url and og:image; other links to the same host (sibling sites like `/skrizhal/`) are external. Expected pages: every route (/free/ included), one /cases/<slug>/ per published case in `src/content/cases`, one /services/<slug>/ per service but the guide, and /zadachki/ with one /zadachki/<slug>/ per visible Задачка must be built, /cases/ must link to each case page and keep each case anchor, /services/ must link to each service page, /zadachki/ to each Задачка, and no other page may sit under /cases/. `DIST=<dir>` checks a build made with `--outDir` |
 | `npm run leakcheck` | Greps `dist/` for internal markers (see rules). Legacy files copied from the old site are reported, not failed, for `hidden`/`_note`; `--strict` fails on them too. The client bundles `_astro/*.js` are compiled library code (Motion and Embla use `hidden` as code: `document.hidden`, `overflow: hidden`): in them `hidden` fails only as a content status (`status: "hidden"`), every other marker as anywhere. Fails on any file under `dist/media/` that no generated page references (a screenshot waiting for Daniil's OK must stay outside `public/`). Then runs `tools/prodcheck.mjs` (below) |
 | `node tools/prodcheck.mjs [dist]` | Deploy-mode check, run by `leakcheck` with the same `PREVIEW`, `BASE`, `SITE`. Preview: no `mc.yandex.ru` or `data-metrika` anywhere, a robots `noindex` meta on every HTML page (search-engine verification files `google*.html`, `yandex_*.html` from `public/` excepted), robots.txt `Disallow: /` without a sitemap, no sitemap.xml. Production: the Metrika counter and `data-metrika` on every generated page (the work.html redirect excepted), no robots meta except on 404, legacy files byte-identical to `public/`, robots.txt `Allow: /` with `Sitemap: <site><base>sitemap.xml`, sitemap.xml with every indexable generated page and en/ under `<site><base>`, nothing 404, noindex or redirect, no file carrying the staging comment mode (its marker `comment-mode:v1`, `data-comment-mode`, its chunks, `/issues/new`), and no preview-only /lab/ (no `lab/` page, no `_astro` chunk named after a file of `src/components/lab/` or `src/scripts/lab/`, which hold only what /lab/ alone uses; the home page's canvas islands live in `glyphs/`). Preview also, while `astro.config.mjs` registers `commentMode()`: every generated page (redirects excepted) loads the comment mode, and the chunks it loads later exist. Both: every `public/` file is built (old URLs), canonical and og:url are `<site><base><path>`, og:image is absolute and exists, the old home anchors lead to built pages and existing sections |
-| `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Without routes: every page, the built case and service pages too. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
+| `npm run shots -- --out shots/x / /services/` | Full-page screenshots at 375, 768, 1280 (`--widths 360,375` to change), reports horizontal overflow. Without routes: every page, the built case, service and Задачки pages too. Uses `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`) and its own static server under the base path |
 | `npm run verify` | build, check-links, leakcheck |
 | `npm run content` | Re-run the content export (needs `SITE_CONTENT`) |
 | `node tools/build-guide-pdf.mjs [course\|ai] <guide draft .md>` | Run by hand, not part of the build. One engine (`tools/guide-pdf/engine.mjs`: Markdown to A4 PDF in the site's type system, fonts embedded, contents with page numbers from a second pass, page numbers in the footer, bookmarks, clickable full-URL links with UTM tags, tables kept on one page, cover JPEG of page 1, PDF Info) and one config per guide (`tools/guide-pdf/<guide>.mjs`: cover, checks, own blocks, CSS). Without a guide name it builds `course`, as before. **`ai`** — «AI строит быстро. Как сделать, чтобы он строил то, что нужно» (`public/free/ai-stroit-bystro.pdf` and `-cover.jpg`, UTM `utm_source=ai-guide-pdf`): the cover shows the numbers of techniques, errors and templates counted from the draft, and the build stops when «Что внутри» promises other numbers (techniques, errors, cases, templates, exercises); `**Label.**` paragraphs (Ситуация, Как делаю, Симптом, Задача…) become two-column rows with the label in mono; `#### N.` techniques and «Ошибка / Шаблон / Принцип / Упражнение N.» headings get the number or the tag in mono; ```` ```scheme ```` blocks (id, тип, заголовок, данные, подпись) become black-and-white HTML/CSS figures — плитки, столбики (value at the tip, the longest bar at 70% of the track, a range hatched), цикл (six steps as a loop), лестница, путь (a row up to four steps, a column for more), таблица — and a figure drops its title when it repeats the heading above; ```` ```text ```` blocks (templates) are framed mono boxes; arrows → ← ↑ ↓ ↔ are inline SVG (not in the site's font subsets). New page only before chapters 1, 4, 8 and «Что почитать». **`course`** — Run by hand, not part of the build. Builds the free guide «Как разработать онлайн-курс» for /free/: `public/free/kak-razrabotat-onlajn-kurs.pdf` (A4, black and white, Inter Tight and IBM Plex Mono embedded, colours and font stacks from `tokens.css`; cover, contents with page numbers from a second pass, page numbers in the footer, bookmarks, clickable full-URL links, tables kept on one page, a line ending in «:» or «.» kept with the list or table it introduces, bold labels such as «**Логика программы:**» included, and no list leaving its last item alone at the top of a page; the step counts on the cover are counted from the draft: the numbered h3 steps of «Предпродакшн», the first numbered list of «Продакшн» and of «Постпродакшн», and the build stops unless they add up to `TOTAL_STEPS` (21, the «21 шаг» of pages home, services and free)) and `public/free/kak-razrabotat-onlajn-kurs-cover.jpg` (page 1). Reads only the text before «# Для Даниила» of the draft (kept outside the repository), fails on notes or placeholders left, puts the live address for «[адрес сайта]» and UTM tags (`utm_source=guide-pdf`) on links to the site. Prints pages, size, linked addresses and fonts. Needs `/opt/pw-browsers/chromium` (`CHROMIUM_PATH`) and poppler-utils (`pdfinfo`, `pdffonts`, `pdftoppm`). Commit both files; then check «PDF, N страниц» in `pages/free.md` (the build fails when it differs from the file) |
@@ -203,7 +203,7 @@ import {
 
 - `site`: data of `site/global.md` (section 5.2).
 - `getPage(id)`: data of `pages/<id>.md`; ids `home`, `services`, `cases`,
-  `products`, `free`, `hire`, `guide`, `404`. `pageBlocks(page)` returns the visible
+  `products`, `free`, `hire`, `guide`, `zadachki`, `404`. `pageBlocks(page)` returns the visible
   blocks in order; `getBlock(page, 'hero')` one block by id (throws if
   missing), `findBlock` the same but returns `undefined`.
 - `gref('global.email.line')` resolves a global reference (used in contact
@@ -338,8 +338,11 @@ No og:image at all when neither file exists, and prodcheck fails then.
 ### Header, Footer
 
 Used by `BaseLayout`; pages do not include them. Header: name (home link),
-page links, «Написать» (primary small button). Sticky first row; on phones the
-links form a second row that scrolls away. Footer: Telegram and email as text,
+page links, «Написать» (primary small button). Sticky first row; on phones and
+tablets (below 880px, where the five links, the name and «Написать» no longer
+fit one row) the links form a second row that scrolls away: one row from
+360px (narrower gaps under 420px, 14px type under 388px), a 320px screen
+wraps. Footer: Telegram and email as text,
 all footer links (incl. «Работодателям» with goal `hire`, «English» to `/en/`),
 «Сделано вместе с Claude», «© {year} Даниил Евстратов».
 
@@ -790,6 +793,48 @@ material is one more item in the content. `isNew: true` on an item puts the
 «new» sticker (`NewBadge`) on the top-left corner of the cover. The page ends
 with `ContactShort` (block `contact`, type `contact-short`).
 
+### Задачки (`pages/zadachki/`, `components/zadachki/`, SEO plan of 18.10)
+
+/zadachki/ lists the Задачки of the `zadachki` collection in their `order`
+(blocks of pages/zadachki.md: `intro`, `zadachki-list` with `readLabel`,
+`contact-short`): each card has the service's `short` name as a label, the
+title (h2, link), the short answer and «Читать решение»; two columns from
+720px. /zadachki/<slug>/ draws the frame from the frontmatter and the labels
+of `template` in pages/zadachki.md: «Все задачки», «Задачка · <service>», the
+h1, the plate «Пример задачи. Ситуация и цифры придуманы…» (an ink frame,
+small mono; one wording for the whole section), date and author (link to
+/hire/), «Коротко», «Ситуация», «Допущения»; then the body (`Prose`, h2
+sections; tables scroll sideways in their own box); the h2 that equals
+`artifact.title` gets `template.artifactNote` under it, and with
+`artifact.widget: "payback"` the `PaybackCalculator` stands where the body
+has the paragraph `[[widget]]` (plain text: the export drops HTML comments;
+the build fails when the h2 or the marker is missing); then «Когда звать специалиста» (the service's h1 linked to its
+page, `ServiceTerms show="note"`, the verb button), the experience line (a
+real published case, linked), «Ещё задачки», `template.madeBy` and the
+short contact block. JSON-LD Article (author Person → /hire/) and
+BreadcrumbList. Service pages list their Задачки under «Задачки по теме»
+(one more `ServicePart` row, label h2). The body marker `[[widget]]` must
+appear exactly once with `widget: "payback"` and never without it (the build
+fails otherwise); `artifact.widget` is `""` or `"payback"`.
+
+`PaybackCalculator` (artifact of the Задачка about AI agents): the school's
+numbers and the six stages (size S/M/L, «агент»), the result beside them
+from 1080px. `src/lib/payback.ts` holds the arithmetic for both the server
+(the worked example, rendered as the defaults, so the page reads without JS)
+and the browser script (recounts on every input): hours on lessons =
+people × hours × share; T-shirt weights S 1, M 5, L 10 split them by stage;
+after = agent stages × the share left to a human + human stages + support;
+money = hours × (salary × (1 + contributions) ÷ hours) + the neural network
+spend; payback = setup ÷ monthly saving; the course without payroll =
+budget + setup + spend per lesson × lessons, checked against the ceiling;
+the month cap = min(1.5 × spend, what the ceiling leaves). Inputs are
+labelled text fields with a decimal keyboard (`inputmode=decimal`; a number
+field drops a typed comma), the script reads «37,5» and «37.5»; checkboxes
+are square boxes of their own (the native one is round-cornered); screen
+readers hear one short summary in a `role=status` line 600 ms after typing
+stops; without JS a line says the example does not recount. Black and
+white.
+
 ### NewBadge (`components/NewBadge.astro`)
 
 ```astro
@@ -1093,12 +1138,14 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 - `items` (free-items): `items[{ id, anchor, isNew?, kind, title, text, insideLabel, inside[], format, file, cover { src, alt }, downloadLabel, discuss { text, links[{ label, service }] } }]` (`FreeItem`; `format` «PDF, 15 страниц» is checked against the file; the field is `downloadLabel`, not `button`, because `button` strings are Telegram codewords in the validation)
 - `contact` (contact-short, anchor `contact`): `heading`, `email`, `workload` (`ContactShort`, with the global price line)
 
+**zadachki**: `template { label, allLink, plate, short, situation, constraints, ctaHeading, ctaText, experience, related, artifactNote, madeBy }` (the frame of /zadachki/<slug>/), `intro`: `heading` (h1), `lead`; `list` (zadachki-list): `readLabel`; `contact` (contact-short, anchor `contact`): `heading`, `email`, `workload`
+
 **404**: `not-found`: `code`, `heading` (h1), `text`, `button { label, href }`, `links[{ label, href }]`
 
 ### 5.2 site (`site`)
 
 `site { name, lang, ogImage, ogImageAlt? }`, `contacts { telegram { handle, url, text }, email }`,
-`header { name, links[], cta }` (links: Услуги, Кейсы, Мои продукты, Бесплатно), `footer { contacts { telegramLabel, telegramText, emailLabel, emailText }, links[], legend?, madeWith, copyright }` (`legend`: the line «Подчёркнуто как в школе: …» with `[слова|член]` tokens, `Parsed inline`),
+`header { name, links[], cta }` (links: Услуги, Кейсы, Мои продукты, Бесплатно, Задачки), `footer { contacts { telegramLabel, telegramText, emailLabel, emailText }, links[], legend?, madeWith, copyright }` (`legend`: the line «Подчёркнуто как в школе: …» with `[слова|член]` tokens, `Parsed inline`),
 `telegram { plainButton, copiedLabel, copiedMs, singleHint, gridHint, buttons[{ codeword, caption, template, service? }], productTemplate }`,
 `email { line, short, mailto { subject, body }, defaultSubject }`,
 `work { howWeStart { heading, steps[{ title, text }], consultationNote, prepare, workload { text } }, price, payment, languages }`.
@@ -1167,7 +1214,19 @@ go first with a poster), `messageLink { label, template }`
 (`productTemplate(p)`), `metrics[]`, `order`; body paragraphs (`bodyHtml`).
 Product names use the huge size.
 
-### 5.6 testimonials (5)
+### 5.6 zadachki (`zadachki`)
+
+One file per Задачка, /zadachki/<slug>/ (slug = file name): `title` (h1 and
+<title>, up to 60 characters), `description` (starts «Пример задачи:», no
+made-up numbers), `order`, `date` (YYYY-MM-DD), `updated?`, `service`
+(a service slug with a page, not the guide), `short`, `situation`,
+`constraints[]`, `artifact { title, widget? }` (`widget: "payback"`),
+`experience? { text, case? }` (a published case), `visible`
+(default true). The body: h2 sections in Daniil's words (format:
+site-plan/zadachki/FORMAT.md in the planning folder). pages/zadachki.md holds
+the hub blocks and `template` (the labels and lines of the page frame).
+
+### 5.7 testimonials (5)
 
 `name`, `role`, `company` (may be ''), `kind` (`video`), `video`, `loop`,
 `poster`, `quote`, `pages[]`. Use `VideoTestimonial` (`layout="card"` in a `Carousel`).
@@ -1421,6 +1480,8 @@ case, /cases/<slug>/, slug = file name: `CaseFull` and `ContactShort`),
 slug = file name, SEO plan of 18.10: «Все услуги», `ServiceCard page`, the
 `free-guide` and `contact` blocks of pages/services.md, JSON-LD Service and
 BreadcrumbList; the list on /services/ stays and its card titles link here),
+`zadachki/index.astro` and `zadachki/[slug].astro` (/zadachki/ and one page
+per visible Задачка, see «Задачки» in section 4),
 `404.astro`, `work.html.ts` (redirect to `/services/#formats` with meta
 refresh, canonical and a link), `lab/og/[card].astro` (/lab/og/a|b|c/, preview
 builds only, noindex, in `BaseLayout bare`: the 1200×630 social preview

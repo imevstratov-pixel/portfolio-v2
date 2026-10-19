@@ -18,7 +18,8 @@
 // built Astro pages must not contain it either.
 //
 // Expected pages: the routes of the site (/, /services/, /cases/, /products/,
-// /free/, /hire/, /guide/, 404), one page /cases/<slug>/ for every published case
+// /free/, /zadachki/, /hire/, /guide/, 404), one page /zadachki/<slug>/ for
+// every visible Задачка (each linked from /zadachki/), one page /cases/<slug>/ for every published case
 // in src/content/cases (slug = file name, decision 17 of 14.10) and one page
 // /services/<slug>/ for every service but the guide (SEO plan of 18.10), each
 // linked from /services/, must exist;
@@ -213,6 +214,14 @@ const pagedServices = readdirSync(SERVICES_DIR)
   .filter((f) => f.endsWith('.md'))
   .map((f) => f.replace(/\.md$/, ''))
   .filter((slug) => slug !== 'guide');
+// every visible Задачка has a page /zadachki/<slug>/, linked from /zadachki/
+const ZADACHKI_DIR = join(ROOT, 'src', 'content', 'zadachki');
+const zadachki = existsSync(ZADACHKI_DIR)
+  ? readdirSync(ZADACHKI_DIR)
+      .filter((f) => f.endsWith('.md'))
+      .filter((f) => !/^visible:\s*false\s*$/m.test(readFileSync(join(ZADACHKI_DIR, f), 'utf8').split(/^---$/m)[1] ?? ''))
+      .map((f) => f.replace(/\.md$/, ''))
+  : [];
 const expected = [
   '',
   'services/',
@@ -224,6 +233,8 @@ const expected = [
   '404.html',
   ...publishedCases.map((c) => `cases/${c.slug}/`),
   ...pagedServices.map((slug) => `services/${slug}/`),
+  'zadachki/',
+  ...zadachki.map((slug) => `zadachki/${slug}/`),
 ];
 for (const route of expected) {
   if (!fileFor(BASE + route)) errors.push(`expected page ${BASE}${route} was not built`);
@@ -233,6 +244,13 @@ if (servicesIndex) {
   const { html } = page(servicesIndex);
   for (const slug of pagedServices) {
     if (!html.includes(`href="${BASE}services/${slug}/"`)) err(servicesIndex, `no link to the service page ${BASE}services/${slug}/`);
+  }
+}
+const zadachkiIndex = fileFor(BASE + 'zadachki/');
+if (zadachkiIndex) {
+  const { html } = page(zadachkiIndex);
+  for (const slug of zadachki) {
+    if (!html.includes(`href="${BASE}zadachki/${slug}/"`)) err(zadachkiIndex, `no link to ${BASE}zadachki/${slug}/`);
   }
 }
 const casesIndex = fileFor(BASE + 'cases/');
@@ -253,7 +271,7 @@ if (casesIndex) {
 
 const astroPages = htmlFiles.filter((f) => page(f).astro).length;
 console.log(
-  `check-links: ${htmlFiles.length} HTML files (${astroPages} Astro pages, ${publishedCases.length} case and ${pagedServices.length} service pages expected), ${checked} internal links, base ${BASE}`,
+  `check-links: ${htmlFiles.length} HTML files (${astroPages} Astro pages, ${publishedCases.length} case, ${pagedServices.length} service and ${zadachki.length} Задачки pages expected), ${checked} internal links, base ${BASE}`,
 );
 if (errors.length) {
   console.error(`\n${errors.length} problem(s):\n  ` + errors.join('\n  '));

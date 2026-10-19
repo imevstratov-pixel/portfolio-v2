@@ -2,7 +2,7 @@
 // Full-page screenshots of built pages at 375, 768 and 1280 px.
 //
 //   npm run build && npm run shots -- --out shots/v1 / /services/ /cases/
-//   npm run shots -- --out shots/all              (every route, the case and service pages too)
+//   npm run shots -- --out shots/all              (every route, the case, service and Задачки pages too)
 //   npm run shots -- --widths 360,375 /           (other widths)
 //
 // Serves dist/ under the base path (BASE, default /portfolio-v2/) with a small
@@ -18,7 +18,7 @@ const ROOT = resolve(import.meta.dirname, '..');
 const DIST = join(ROOT, 'dist');
 const BASE = ('/' + (process.env.BASE || '/portfolio-v2/').replace(/^\/+|\/+$/g, '') + '/').replace(/\/+/g, '/');
 const EXECUTABLE = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
-const ALL_ROUTES = ['/', '/services/', '/cases/', '/products/', '/free/', '/hire/', '/guide/', '/404.html'];
+const ALL_ROUTES = ['/', '/services/', '/cases/', '/products/', '/free/', '/zadachki/', '/hire/', '/guide/', '/404.html'];
 
 const args = process.argv.slice(2);
 let out = join(ROOT, 'shots');
@@ -44,7 +44,7 @@ if (!routes.length) {
           .map((n) => `/${dir}/${n}/`)
       : [];
   };
-  routes.push(...ALL_ROUTES, ...subpages('cases'), ...subpages('services'));
+  routes.push(...ALL_ROUTES, ...subpages('cases'), ...subpages('services'), ...subpages('zadachki'));
 }
 mkdirSync(out, { recursive: true });
 

@@ -1,0 +1,322 @@
+---
+// /zadachki/<slug>/: one Задачка (SEO plan of 18.10). The frame comes from
+// the frontmatter and the labels of pages/zadachki.md `template`: «Все
+// задачки», the label «Задачка · <service short name>», the h1, the plate
+// «Пример задачи…» (one wording for the whole section), the date and the
+// author (link to /hire/), «Коротко» (the short answer), «Ситуация» and
+// «Допущения»; then the body (Daniil's solution in h2 sections; the
+// artifact's h2 gets the line «Пример заполнен на придуманной ситуации…»
+// under it, and `artifact.widget: payback` puts the PaybackCalculator where
+// the body has the paragraph [[widget]]); then «Когда звать специалиста» (the
+// service's title linked to its page, its price line and verb button), the
+// experience line (a real case, linked), «Ещё задачки», the line «Как
+// сделана эта страница» and the short contact block. JSON-LD: Article with
+// the author and BreadcrumbList. Layout: the text column 1–9 from 1080px.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContactShort from '../../components/ContactShort.astro';
+import Prose from '../../components/Prose.astro';
+import ServiceTerms from '../../components/ServiceTerms.astro';
+import TelegramAction from '../../components/TelegramAction.astro';
+import PaybackCalculator from '../../components/zadachki/PaybackCalculator.astro';
+import {
+  bodyHtml,
+  caseHref,
+  findBlock,
+  getCase,
+  getPage,
+  getService,
+  servicePageHref,
+  site,
+  zadachkaHref,
+  zadachki,
+  type ZadachkaEntry,
+} from '../../lib/content';
+import { url } from '../../lib/url';
+
+export function getStaticPaths() {
+  return zadachki.map((z) => ({ params: { slug: z.id }, props: { entry: z } }));
+}
+
+interface Props {
+  entry: ZadachkaEntry;
+}
+
+const { entry } = Astro.props;
+const d = entry.data;
+const page = getPage('zadachki');
+const t: Record<string, string> = page.template ?? {};
+const contact = findBlock(page, 'contact');
+const service = getService(d.service);
+const experienceCase = d.experience?.case ? getCase(d.experience.case) : null;
+const others = zadachki.filter((z) => z.id !== entry.id);
+
+const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const dateText = (iso: string) => {
+  const [y, m, day] = iso.split('-').map(Number);
+  return `${day} ${MONTHS[m - 1]} ${y}`;
+};
+
+// the body: the artifact's h2 gets the line about the made-up example under
+// it; the calculator goes where the body has the paragraph [[widget]] (the
+// export drops HTML comments, so the marker is plain text)
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+let html = bodyHtml(entry);
+const artifactH2 = new RegExp(`(<h2\\b[^>]*>\\s*${escapeHtml(d.artifact.title).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*</h2>)`);
+if (!artifactH2.test(html)) throw new Error(`zadachki/${entry.id}: the body has no h2 «${d.artifact.title}» (artifact.title)`);
+if (t.artifactNote) html = html.replace(artifactH2, (h2) => `${h2}<p class="zd-note">${escapeHtml(t.artifactNote)}</p>`);
+const widget = d.artifact.widget === 'payback';
+const parts = html.split(/<p>\s*\[\[widget\]\]\s*<\/p>/);
+if (widget && parts.length !== 2)
+  throw new Error(`zadachki/${entry.id}: artifact.widget is set, the body needs exactly one [[widget]] paragraph (found ${parts.length - 1})`);
+if (!widget && /\[\[\s*widget/i.test(html))
+  throw new Error(`zadachki/${entry.id}: the body has a [[widget]] marker but artifact.widget is not "payback"`);
+const [before, after] = widget ? parts : [html, undefined];
+
+const abs = (path: string) => new URL(path, Astro.site).href;
+const pageUrl = abs(zadachkaHref(entry));
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: d.title,
+    description: d.description,
+    inLanguage: 'ru',
+    datePublished: d.date,
+    dateModified: d.updated ?? d.date,
+    url: pageUrl,
+    mainEntityOfPage: pageUrl,
+    author: { '@type': 'Person', name: site.site.name, url: abs(url('/hire/')) },
+    isPartOf: { '@type': 'CollectionPage', name: 'Задачки', url: abs(url('/zadachki/')) },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Главная', item: abs(url('/')) },
+      { '@type': 'ListItem', position: 2, name: 'Задачки', item: abs(url('/zadachki/')) },
+      { '@type': 'ListItem', position: 3, name: d.title, item: pageUrl },
+    ],
+  },
+];
+const ld = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+---
+
+<BaseLayout page={page} title={d.title} description={d.description} current="/zadachki/">
+  <script is:inline type="application/ld+json" slot="head" set:html={ld} />
+  <article class="zd" aria-labelledby="zd-title">
+    <div class="wrap">
+      <p class="zd__back">
+        <a href={url('/zadachki/')}>{t.allLink ?? 'Все задачки'}</a>
+      </p>
+
+      <header class="zd__head">
+        <p class="label">{t.label ?? 'Задачка'} · {service.data.short}</p>
+        <h1 id="zd-title" class="zd__title t-large">{d.title}</h1>
+        {t.plate && <p class="zd__plate">{t.plate}</p>}
+        <p class="zd__meta label">
+          <time datetime={d.date}>{dateText(d.date)}</time> · <a href={url('/hire/')}>{site.site.name}</a>
+        </p>
+      </header>
+
+      <section class="zd__short" aria-labelledby="zd-short">
+        <h2 id="zd-short" class="label">{t.short ?? 'Коротко'}</h2>
+        <p class="zd__short-text">{d.short}</p>
+      </section>
+
+      <section class="zd__case" aria-labelledby="zd-situation">
+        <div class="zd__part">
+          <h2 id="zd-situation" class="label">{t.situation ?? 'Ситуация'}</h2>
+          <p class="measure">{d.situation}</p>
+        </div>
+        {
+          d.constraints.length > 0 && (
+            <div class="zd__part">
+              <h2 class="label">{t.constraints ?? 'Допущения'}</h2>
+              <ul class="list-dash" role="list">
+                {d.constraints.map((c) => (
+                  <li>{c}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </section>
+
+      <div class="zd__body">
+        <Prose html={before} measure={false} class="zd__prose" />
+        {widget && <PaybackCalculator />}
+        {after && <Prose html={after} measure={false} class="zd__prose" />}
+      </div>
+
+      <section class="zd__cta" aria-labelledby="zd-cta">
+        <h2 id="zd-cta" class="t-medium">{t.ctaHeading ?? 'Когда звать специалиста'}</h2>
+        {t.ctaText && <p class="measure">{t.ctaText}</p>}
+        <p class="zd__service">
+          <a href={servicePageHref(service)}>{service.data.seo?.h1 ?? service.data.title}</a>
+        </p>
+        <ServiceTerms service={service} show="note" />
+        <TelegramAction codeword={service.data.codeword} label={service.data.button} caption={false} hint={false} email={false} />
+      </section>
+
+      {
+        d.experience?.text && (
+          <section class="zd__exp" aria-labelledby="zd-exp">
+            <h2 id="zd-exp" class="label">{t.experience ?? 'Похожее в моей работе'}</h2>
+            <p class="measure">
+              {d.experience.text}
+              {experienceCase && (
+                <>
+                  {' '}
+                  <a href={caseHref(experienceCase)}>{experienceCase.data.shortTitle ?? experienceCase.data.title}</a>
+                </>
+              )}
+            </p>
+          </section>
+        )
+      }
+
+      {
+        others.length > 0 && (
+          <nav class="zd__more" aria-labelledby="zd-more">
+            <h2 id="zd-more" class="label">{t.related ?? 'Ещё задачки'}</h2>
+            <ul class="list-dash" role="list">
+              {others.map((z) => (
+                <li>
+                  <a href={zadachkaHref(z)}>{z.data.title}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+
+      {t.madeBy && <p class="zd__made">{t.madeBy}</p>}
+    </div>
+  </article>
+  {contact && <ContactShort block={contact} />}
+</BaseLayout>
+
+<style>
+  .zd {
+    padding-top: var(--s3);
+  }
+
+  .zd__back {
+    font-size: 0.9375rem;
+  }
+
+  .zd__head {
+    margin-top: var(--s3);
+    display: grid;
+    gap: var(--s2);
+  }
+
+  .zd__title {
+    max-width: 22em;
+  }
+
+  /* the honest plate: an ink frame, small mono, one wording for the section */
+  .zd__plate {
+    max-width: 44rem;
+    padding: var(--s1) var(--s2);
+    border: var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+  }
+
+  .zd__short {
+    margin-top: var(--s4);
+    display: grid;
+    gap: var(--s1);
+  }
+
+  .zd__short-text {
+    max-width: 36em;
+    font-size: var(--fs-medium);
+    line-height: 1.4;
+    letter-spacing: var(--track-medium);
+  }
+
+  .zd__case {
+    margin-top: var(--s4);
+    display: grid;
+    gap: var(--s3);
+  }
+
+  .zd__part {
+    display: grid;
+    gap: var(--s1);
+    padding-top: var(--s2);
+    border-top: var(--hair);
+  }
+
+  .zd__body {
+    margin-top: var(--s4);
+    display: grid;
+    gap: var(--s3);
+  }
+
+  /* a wide table scrolls in its own box: grid items must be allowed to
+     shrink below the table's width */
+  .zd__body > :global(*) {
+    min-width: 0;
+  }
+
+  /* paragraphs and lists keep the reading measure; tables may be wider */
+  .zd__body :global(.zd__prose :is(p, ul, ol, blockquote, h2, h3)) {
+    max-width: var(--measure);
+  }
+
+  .zd__body :global(.zd-note) {
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+    color: var(--muted);
+  }
+
+  .zd__cta {
+    margin-top: var(--s5);
+    padding-top: var(--s3);
+    border-top: var(--line);
+    display: grid;
+    gap: var(--s2);
+    justify-items: start;
+  }
+
+  .zd__service {
+    font-size: var(--fs-medium);
+    font-weight: var(--bold);
+    line-height: var(--lh-medium);
+  }
+
+  .zd__exp,
+  .zd__more {
+    margin-top: var(--s4);
+    padding-top: var(--s2);
+    border-top: var(--hair);
+    display: grid;
+    gap: var(--s1);
+  }
+
+  .zd__made {
+    margin-top: var(--s4);
+    max-width: var(--measure);
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+    color: var(--muted);
+  }
+
+  @media (min-width: 1080px) {
+    .zd__head,
+    .zd__short,
+    .zd__case,
+    .zd__body,
+    .zd__cta,
+    .zd__exp,
+    .zd__more {
+      max-width: calc((100% - 11 * var(--gap)) / 12 * 9 + 8 * var(--gap));
+    }
+  }
+</style>

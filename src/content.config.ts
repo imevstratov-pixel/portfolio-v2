@@ -1,7 +1,7 @@
 // Content collections. The files in src/content are produced by the export
 // script (see docs/components.md) and are never edited by hand.
 //
-// Typed collections (cases, services, products, testimonials) describe the
+// Typed collections (cases, services, products, testimonials, zadachki) describe the
 // fields the components read; unknown extra fields are kept (loose objects),
 // so a new field in the content does not silently disappear.
 // pages and site vary per page, so only their common skeleton is typed.
@@ -257,4 +257,25 @@ const testimonials = defineCollection({
   }),
 });
 
-export const collections = { pages, site, cases, services, products, testimonials };
+// «Задачки» (SEO plan of 18.10): a made-up buyer task, Daniil's dictated
+// solution in the body (h2 sections), the artifact; the page frame (plate,
+// short answer, situation, the service, the experience line) comes from here
+const zadachki = defineCollection({
+  loader: loader('zadachki'),
+  schema: z.looseObject({
+    title: str, // h1 and <title>
+    description: str,
+    order: z.number(),
+    date: str, // "2026-10-19"
+    updated: optStr,
+    service: str, // service slug
+    short: str, // the short answer under the h1
+    situation: str,
+    constraints: z.array(str).default([]),
+    artifact: z.looseObject({ title: str, widget: z.enum(['', 'payback']).optional() }),
+    experience: z.looseObject({ text: str, case: optStr }).optional(),
+    visible: z.boolean().default(true),
+  }),
+});
+
+export const collections = { pages, site, cases, services, products, testimonials, zadachki };

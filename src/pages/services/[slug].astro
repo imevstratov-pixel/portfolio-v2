@@ -4,17 +4,19 @@
 // ключ». The list on /services/ stays as it is (its card titles link here);
 // the guide's page is /guide/. «Все услуги» back to the service's card, then
 // ServiceCard page: the h1 (`seo.h1`, otherwise the title), the summary, the
-// offer and the full template open; then the free-guide block and the
-// contact block of pages/services.md. Search title and description come
+// offer and the full template open; «Задачки по теме» (the Задачки whose
+// service this is, one more ServicePart row); then the free-guide block and the contact block of
+// pages/services.md. Search title and description come
 // from the service's `seo` (fallback: «<title> — <name>» and the summary).
 // JSON-LD: Service (provider Person, the price figure as an Offer: a price,
 // a minimum or a range, with price.note as its description) and
 // BreadcrumbList.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ServiceCard from '../../components/services/ServiceCard.astro';
+import ServicePart from '../../components/services/ServicePart.astro';
 import LeadMagnet from '../../components/LeadMagnet.astro';
 import ContactBlock from '../../components/ContactBlock.astro';
-import { findBlock, getPage, pagedServices, serviceHref, site, type ServiceEntry } from '../../lib/content';
+import { findBlock, getPage, pagedServices, serviceHref, site, zadachkaHref, zadachkiOfService, type ServiceEntry } from '../../lib/content';
 import { url } from '../../lib/url';
 
 export function getStaticPaths() {
@@ -32,6 +34,8 @@ const labels: Record<string, string> = page.serviceTemplate?.labels ?? {};
 const leadMagnet = findBlock(page, 'free-guide');
 const contact = findBlock(page, 'contact');
 const back: string = page.serviceTemplate?.allLink ?? 'Все услуги';
+// the Задачки that lead to this service (their «Когда звать специалиста»)
+const tasks = zadachkiOfService(entry);
 
 const title: string = d.seo?.title?.trim() || `${d.title} — ${site.site.name}`;
 const description: string = d.seo?.description?.trim() || d.summary;
@@ -104,6 +108,21 @@ const ld = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
       <div class="sp__card">
         <ServiceCard service={entry} labels={labels} page />
       </div>
+      {
+        tasks.length > 0 && (
+          <nav class="sp__tasks" aria-label="Задачки по теме">
+            <ServicePart label="Задачки по теме" level={2}>
+              <ul class="list-dash" role="list">
+                {tasks.map((z) => (
+                  <li>
+                    <a href={zadachkaHref(z)}>{z.data.title}</a>
+                  </li>
+                ))}
+              </ul>
+            </ServicePart>
+          </nav>
+        )
+      }
     </div>
   </div>
   {leadMagnet && <LeadMagnet block={leadMagnet} />}
@@ -120,6 +139,11 @@ const ld = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
   }
 
   .sp__card {
+    margin-top: var(--s3);
+  }
+
+  /* one more row of the template (ServicePart: label left, list right) */
+  .sp__tasks {
     margin-top: var(--s3);
   }
 </style>
