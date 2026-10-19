@@ -797,15 +797,38 @@ with `ContactShort` (block `contact`, type `contact-short`).
 
 /zadachki/ lists the Задачки of the `zadachki` collection in their `order`
 (blocks of pages/zadachki.md: `intro`, `zadachki-list` with `readLabel`,
-`contact-short`): each card has the service's `short` name as a label, the
+`contact-short`): the h1 carries the `NewBadge` while the intro block has
+`isNew: true`; each card has the service's `short` name as a label, the
 title (h2, link), the short answer and «Читать решение»; two columns from
 720px. /zadachki/<slug>/ draws the frame from the frontmatter and the labels
 of `template` in pages/zadachki.md: «Все задачки», «Задачка · <service>», the
 h1, the plate «Пример задачи. Ситуация и цифры придуманы…» (an ink frame,
 small mono; one wording for the whole section), date and author (link to
-/hire/), «Коротко», «Ситуация», «Допущения»; then the body (`Prose`, h2
-sections; tables scroll sideways in their own box); the h2 that equals
-`artifact.title` gets `template.artifactNote` under it, and with
+/hire/), the optional `cover`; then rows (Daniil's edit 3 of 19.10: the
+single narrow column read too long): «Коротко», «Ситуация» with
+«Допущения», then one row per h2 section of the body. From 1080px a row is
+the 12-column grid: the title in columns 1–3 (sticky under the header), the
+text in 4–12; below 1080px the title stands above the text. Paragraphs and
+lists keep a measure of 72ch (wider than the site's 66ch), tables, schemes
+and cards take the whole column. In the body (`Prose`; tables scroll
+sideways in their own box):
+- the first section, when it is one numbered list with an optional lead
+  paragraph («Что я спросил бы первым»), becomes numbered cards (two
+  columns from 720px) and ends in an ink box with `firstGoal` under the
+  label `template.goal` («Цель первых вопросов»); the build fails when
+  `firstGoal` is set and the first section is not such a list;
+- a top-level paragraph (not in a list item or a quote) opening with a bold
+  «N. Title.» (one or two digits, the bold part ends with a period) becomes
+  a step: an h3 with the number in small mono and a hairline above, its
+  text under it;
+- a paragraph «Таблица: …» right before a table becomes the table's caption
+  (`figure.zd-table`, small mono label; every table has one);
+- `figures` (`ZFigure`) stand at the start of their `section` (an h2 title,
+  or `situation`: right under the situation text, before «Допущения»);
+  `images` (`DitherPortrait`, 1 bit
+  like the portrait, optional caption) stand at the end of theirs; the
+  build fails when a section name is not in the body.
+The h2 that equals `artifact.title` gets `template.artifactNote` under it, and with
 `artifact.widget: "payback"` the `PaybackCalculator` stands where the body
 has the paragraph `[[widget]]` (plain text: the export drops HTML comments;
 the build fails when the h2 or the marker is missing); then «Когда звать специалиста» (the service's h1 linked to its
@@ -817,9 +840,22 @@ BreadcrumbList. Service pages list their Задачки under «Задачки �
 appear exactly once with `widget: "payback"` and never without it (the build
 fails otherwise); `artifact.widget` is `""` or `"payback"`.
 
+`ZFigure` (`components/zadachki/ZFigure.astro`): a scheme or a small
+infographic in HTML and CSS, black and white, no image files. `bars`: a
+label, an ink bar on a hairline track and the bold value per row (`unit`,
+`max`; label and value above the bar on phones, one row from 720px).
+`flow`: boxes in reading order joined by a short ink line drawn in CSS
+(one under another on phones, in one row from 720px; five boxes and more get
+smaller type in the row). No arrows (the rule above, and the fonts have no
+arrow glyphs) and no numbers (they would clash with the numbered steps under
+the figure). `note` is the side branch under it. Every bar needs a `value`
+(the build fails otherwise); values print with a comma and grouped
+thousands («9,6», «1 000»). The title is the figcaption (small mono), `caption` a grey line
+under it.
+
 `PaybackCalculator` (artifact of the Задачка about AI agents): the school's
 numbers and the six stages (size S/M/L, «агент»), the result beside them
-from 1080px. `src/lib/payback.ts` holds the arithmetic for both the server
+from 1080px (before and after as «с 9,6 до 4», no arrows). `src/lib/payback.ts` holds the arithmetic for both the server
 (the worked example, rendered as the defaults, so the page reads without JS)
 and the browser script (recounts on every input): hours on lessons =
 people × hours × share; T-shirt weights S 1, M 5, L 10 split them by stage;
@@ -1138,7 +1174,7 @@ Every page: `seo { title, description, ogImage?, noindex? }`, `blocks[]`
 - `items` (free-items): `items[{ id, anchor, isNew?, kind, title, text, insideLabel, inside[], format, file, cover { src, alt }, downloadLabel, discuss { text, links[{ label, service }] } }]` (`FreeItem`; `format` «PDF, 15 страниц» is checked against the file; the field is `downloadLabel`, not `button`, because `button` strings are Telegram codewords in the validation)
 - `contact` (contact-short, anchor `contact`): `heading`, `email`, `workload` (`ContactShort`, with the global price line)
 
-**zadachki**: `template { label, allLink, plate, short, situation, constraints, ctaHeading, ctaText, experience, related, artifactNote, madeBy }` (the frame of /zadachki/<slug>/), `intro`: `heading` (h1), `lead`; `list` (zadachki-list): `readLabel`; `contact` (contact-short, anchor `contact`): `heading`, `email`, `workload`
+**zadachki**: `template { label, allLink, plate, short, situation, constraints, ctaHeading, ctaText, experience, related, artifactNote, goal, madeBy }` (the frame of /zadachki/<slug>/), `intro`: `heading` (h1), `lead`, `isNew` (the «new» sticker on the h1); `list` (zadachki-list): `readLabel`; `contact` (contact-short, anchor `contact`): `heading`, `email`, `workload`
 
 **404**: `not-found`: `code`, `heading` (h1), `text`, `button { label, href }`, `links[{ label, href }]`
 
@@ -1222,7 +1258,11 @@ made-up numbers), `order`, `date` (YYYY-MM-DD), `updated?`, `service`
 (a service slug with a page, not the guide), `short`, `situation`,
 `constraints[]`, `artifact { title, widget? }` (`widget: "payback"`),
 `experience? { text, case? }` (a published case), `visible`
-(default true). The body: h2 sections in Daniil's words (format:
+(default true), `firstGoal?` (the ink box after «Что я спросил бы первым»),
+`figures[]` (`{ section, type: bars|flow, title, caption?, unit?, max?,
+note?, items[] { label, value?, text? } }`, at least two items), `cover?`
+(`{ src, alt, crop? }`, under the head) and `images[]` (`{ section, src,
+alt, caption?, crop? }`), both same-origin pictures drawn in 1 bit. The body: h2 sections in Daniil's words (format:
 site-plan/zadachki/FORMAT.md in the planning folder). pages/zadachki.md holds
 the hub blocks and `template` (the labels and lines of the page frame).
 

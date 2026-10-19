@@ -1,6 +1,7 @@
 ---
 // /zadachki/ «Задачки» (SEO plan of 18.10): the blocks of pages/zadachki.md
-// in content order: intro (h1 and one line), the list of Задачки (each: the
+// in content order: intro (h1 and one line; `isNew: true` puts the «new»
+// sticker on the end of the heading), the list of Задачки (each: the
 // service as a small label, the title as a link to its page, the short
 // answer, «Читать решение»), the short contact block (anchor contact, the
 // target of «Написать»). A new Задачка is one more file in
@@ -8,6 +9,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Section from '../../components/Section.astro';
 import ContactShort from '../../components/ContactShort.astro';
+import NewBadge from '../../components/NewBadge.astro';
 import { getPage, getService, pageBlocks, zadachkaHref, zadachki } from '../../lib/content';
 
 const page = getPage('zadachki');
@@ -23,7 +25,10 @@ for (const b of blocks) {
     blocks.map((b) =>
       b.type === 'intro' ? (
         <Section rule="none" pad="s4">
-          <h1>{b.heading}</h1>
+          <h1 class="zl-h1">
+            {b.heading}
+            {b.isNew && <NewBadge class="zl-h1__new" />}
+          </h1>
           {b.lead && <p class="lead zl-lead">{b.lead}</p>}
         </Section>
       ) : b.type === 'zadachki-list' ? (
@@ -57,6 +62,20 @@ for (const b of blocks) {
 </BaseLayout>
 
 <style>
+  /* the «new» sticker on the end of the heading, as if stuck on it */
+  .zl-h1 {
+    position: relative;
+    display: inline-block;
+    padding-right: 3.25rem;
+  }
+
+  .zl-h1 :global(.zl-h1__new) {
+    --nb-size: 4.75rem;
+    position: absolute;
+    top: -1.5rem;
+    right: -1.5rem;
+  }
+
   .zl-lead {
     margin-top: var(--s3);
   }

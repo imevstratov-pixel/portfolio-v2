@@ -666,7 +666,7 @@ hr,
   }
 
   .prose table:has(tr > :nth-child(4))::before {
-    content: 'Таблица листается вбок →';
+    content: 'Таблица листается вбок';
     position: sticky;
     left: 0;
     display: block;

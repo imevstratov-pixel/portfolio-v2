@@ -91,7 +91,7 @@ const months = r.paybackMonths;
     <dl class="pb__out">
       <div>
         <dt class="label">Часов на урок</dt>
-        <dd><span data-out="perLessonBefore">{num(r.perLessonBefore, 1)}</span> → <strong data-out="perLessonAfter">{num(r.perLessonAfter, 1)}</strong></dd>
+        <dd>с <span data-out="perLessonBefore">{num(r.perLessonBefore, 1)}</span> до <strong data-out="perLessonAfter">{num(r.perLessonAfter, 1)}</strong></dd>
       </div>
       <div>
         <dt class="label">Освобождается в месяц</dt>
@@ -99,7 +99,7 @@ const months = r.paybackMonths;
       </div>
       <div>
         <dt class="label">Урок стоит</dt>
-        <dd><span data-out="lessonBefore">{rub(r.lessonBefore)}</span> → <strong data-out="lessonAfter">{rub(r.lessonAfter)}</strong></dd>
+        <dd>с <span data-out="lessonBefore">{rub(r.lessonBefore)}</span> до <strong data-out="lessonAfter">{rub(r.lessonAfter)}</strong></dd>
       </div>
       <div>
         <dt class="label">Экономия в месяц</dt>

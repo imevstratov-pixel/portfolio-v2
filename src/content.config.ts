@@ -274,6 +274,38 @@ const zadachki = defineCollection({
     constraints: z.array(str).default([]),
     artifact: z.looseObject({ title: str, widget: z.enum(['', 'payback']).optional() }),
     experience: z.looseObject({ text: str, case: optStr }).optional(),
+    // the ink box under the «Что я спросил бы первым» cards: what the questions are for
+    firstGoal: optStr,
+    // schemes and small infographics drawn in HTML (ZFigure), placed at the
+    // start of a body section («situation» = under «Ситуация»)
+    figures: z
+      .array(
+        z.looseObject({
+          section: str,
+          type: z.enum(['bars', 'flow']),
+          title: str,
+          caption: optStr,
+          unit: optStr,
+          max: z.number().optional(),
+          note: optStr,
+          items: z.array(z.looseObject({ label: str, value: z.number().optional(), text: optStr })).min(2),
+        }),
+      )
+      .default([]),
+    // pictures in one bit (DitherPortrait): the cover under the head, images
+    // at the end of their body section; files in public/
+    cover: z.looseObject({ src: str, alt: str, crop: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional() }).optional(),
+    images: z
+      .array(
+        z.looseObject({
+          section: str,
+          src: str,
+          alt: str,
+          caption: optStr,
+          crop: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
+        }),
+      )
+      .default([]),
     visible: z.boolean().default(true),
   }),
 });
