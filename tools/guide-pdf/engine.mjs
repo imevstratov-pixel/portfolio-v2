@@ -122,6 +122,9 @@ export async function buildGuide(config, srcPath) {
   html = html.replace(/<a href="([^"]*)"/g, (_, href) => {
     const h = href.replace(/&amp;/g, '&');
     if (!/^(https?:\/\/|mailto:)/.test(h)) badLinks.push(h);
+    // the site moved to its domain (SITE_URL); a draft still linking to the
+    // old github.io address fails the build
+    if (/imevstratov-pixel\.github\.io\/portfolio(\/|$)/.test(h)) badLinks.push(`${h} (old address, use ${SITE_URL})`);
     let out = h;
     if (h.startsWith(SITE_URL)) {
       const [base, hash = ''] = h.split('#');

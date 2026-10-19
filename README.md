@@ -28,22 +28,47 @@ Components, content fields, CSS classes and tools: [docs/components.md](docs/com
 
 ## The domain danilevstratov.ru
 
-Since 19.10.2026 the live site is the root of `danilevstratov.ru` (decision 22
-of 15.10). The workflow builds `imevstratov-pixel/portfolio` with
-`SITE=https://danilevstratov.ru BASE=/`, so that build only works while the
-domain is set in that repository's Settings → Pages → Custom domain; GitHub
-then redirects `imevstratov-pixel.github.io/portfolio/*` to the same path on
-the domain. DNS at the registrar: A records for `@` to 185.199.108.153,
-185.199.109.153, 185.199.110.153, 185.199.111.153; AAAA for `@` to
-2606:50c0:8000::153 … 2606:50c0:8003::153; CNAME `www` to
-`imevstratov-pixel.github.io.`; the TXT record of the domain verification in
-the account's Settings → Pages. «Enforce HTTPS» is on once GitHub has issued
-the certificate. The staging site stays on github.io/portfolio-v2/. The guide
-and résumé PDFs link to the domain (`SITE_URL` in tools/guide-pdf/engine.mjs,
-public/resume/*.html, rebuilt by hand). With the site at the host root,
-robots.txt and sitemap.xml are read by crawlers as they are, and search
-engine verification files (`google<token>.html`, `yandex_<token>.html`) go
-into `public/` as is.
+The live site moves to the root of `danilevstratov.ru` (decision 22 of 15.10).
+The workflow reads the address from the repository's Pages settings
+(actions/configure-pages): while no custom domain is saved in
+`imevstratov-pixel/portfolio` → Settings → Pages, it builds for
+`imevstratov-pixel.github.io/portfolio/` as before; once the domain is saved,
+the next run builds `SITE=https://danilevstratov.ru BASE=/`, and GitHub
+redirects `imevstratov-pixel.github.io/portfolio/<path>` to the same path on
+the domain. Set the domain only on `portfolio`, never on a
+`imevstratov-pixel.github.io` repository (every project site would move with
+it). The staging site stays on github.io/portfolio-v2/.
+
+The switch, in this order (saving the domain before DNS works sends every old
+link to an address that does not open):
+1. Account Settings → Pages → Add a domain → `danilevstratov.ru`; put its TXT
+   record `_github-pages-challenge-imevstratov-pixel` at the registrar; Verify.
+2. DNS at the registrar (REG.RU, the domain identified via Gosuslugi, else a
+   .ru domain is not delegated): delete the parking A records; A for `@` to
+   185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153; AAAA
+   for `@` to 2606:50c0:8000::153 … 2606:50c0:8003::153; CNAME `www` to
+   `imevstratov-pixel.github.io.`
+3. Wait until public resolvers (8.8.8.8 and Yandex 77.88.8.8) return exactly
+   those four A addresses for `danilevstratov.ru` and `www` resolves too.
+4. `portfolio` → Settings → Pages → Custom domain → `danilevstratov.ru` (the
+   apex, not www) → Save, then at once Actions → «Deploy to GitHub Pages» →
+   Run workflow (no code release needed). Until that run ends the domain
+   serves the old build, whose assets sit under /portfolio/.
+5. Check: `curl -sI https://imevstratov-pixel.github.io/portfolio/hire/`
+   answers 301 to the same path on the domain; the domain pages load; the
+   workflow log says `Building https://danilevstratov.ru/`.
+6. When GitHub has issued the certificate (up to 24 h), tick «Enforce HTTPS».
+7. Yandex Metrika: if the counter accepts data only from listed addresses,
+   add the domain; URL goals that name `/portfolio/` must name the new paths.
+8. Search: Google Search Console, a Domain property verified by a DNS TXT
+   record; Yandex Webmaster, `https://danilevstratov.ru` verified by DNS or by
+   `yandex_<token>.html` dropped into `public/`; submit
+   `https://danilevstratov.ru/sitemap.xml` in both. With the site at the host
+   root, robots.txt and sitemap.xml are read by crawlers as they are.
+9. Profile links (hh.ru, LinkedIn, Telegram): `https://danilevstratov.ru/hire/`,
+   `/en/` for the English CV. The guide and résumé PDFs already link to the
+   domain (`SITE_URL` in tools/guide-pdf/engine.mjs, public/resume/*.html,
+   rebuilt by hand); send them only once the domain works.
 
 ## Режим комментариев (только песочница)
 

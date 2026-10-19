@@ -134,12 +134,14 @@ page links to (resume/*.html, the PDF sources); en/ is in. A new route lands
 in the sitemap by itself.
 Test another base with `BASE=/x/ npm run build && BASE=/x/ npm run check-links`.
 
-Deploy (`.github/workflows/deploy.yml`): one code base, two repositories. In
-`imevstratov-pixel/portfolio` the workflow sets `SITE=https://danilevstratov.ru`,
-`BASE=/` and `PREVIEW=0` (the live site at the root of its custom domain, README
-«The domain danilevstratov.ru»); everywhere else `SITE=https://imevstratov-pixel.github.io`,
-`BASE=/<repository name>/` and `PREVIEW=1` (the sandbox
-`imevstratov-pixel/portfolio-v2`). Both run build, check-links and leakcheck
+Deploy (`.github/workflows/deploy.yml`): one code base, two repositories. The
+address comes from each repository's Pages settings (actions/configure-pages):
+with a custom domain saved, `SITE=https://<domain>` and `BASE=/` (the live
+`imevstratov-pixel/portfolio` on danilevstratov.ru, README «The domain
+danilevstratov.ru»), without one `SITE=https://imevstratov-pixel.github.io` and
+`BASE=/<repository name>/` (the sandbox `imevstratov-pixel/portfolio-v2`, and
+the live site before its domain is saved). `PREVIEW=0` only in
+`imevstratov-pixel/portfolio`, `PREVIEW=1` everywhere else. Both run build, check-links and leakcheck
 (with prodcheck) before the upload. Check the live build locally without
 touching `dist/`:
 
