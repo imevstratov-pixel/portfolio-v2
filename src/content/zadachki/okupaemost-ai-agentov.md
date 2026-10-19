@@ -30,6 +30,18 @@ figures:
     value: 9.6
   - label: После внедрения
     value: 4
+cover:
+  src: /media/zadachki/okupaemost-ai-agentov/cover.jpg
+  alt: Рука на калькуляторе рядом с ноутбуком с таблицей, блокнот с расчётами и кофе
+  crop:
+  - 0.1
+  - 0
+  - 0.9
+  - 0.72
+images:
+- section: Решение по шагам
+  src: /media/zadachki/okupaemost-ai-agentov/tshirts.jpg
+  alt: 'Три сложенные футболки стопкой: внизу большая чёрная, в середине белая, сверху маленькая серая; рядом пустые стикеры'
 ---
 
 ## Что я спросил бы первым

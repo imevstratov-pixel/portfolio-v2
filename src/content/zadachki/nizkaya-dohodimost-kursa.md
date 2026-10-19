@@ -31,6 +31,31 @@ figures:
     value: 80
   - label: Остались после модуля 3
     value: 30
+cover:
+  src: /media/zadachki/nizkaya-dohodimost-kursa/cover.jpg
+  alt: 'Кухонный стол вечером: ноутбук с видеоуроком на паузе, бумаги по бухучёту, калькулятор, телефон и чай'
+  crop:
+  - 0
+  - 0.04
+  - 1
+  - 0.84
+images:
+- section: Решение по шагам
+  src: /media/zadachki/nizkaya-dohodimost-kursa/steps.jpg
+  alt: 'Урок глазами ученика: на ноутбуке учётная программа, рука с ручкой над блокнотом'
+  crop:
+  - 0.15
+  - 0.05
+  - 0.85
+  - 0.95
+- section: Ошибки, которые я ищу в уроках
+  src: /media/zadachki/nizkaya-dohodimost-kursa/errors.jpg
+  alt: Распечатки экранов программы на столе, на каждой маркером обведено одно место
+  crop:
+  - 0.15
+  - 0
+  - 0.85
+  - 1
 ---
 
 ## Что я спросил бы первым

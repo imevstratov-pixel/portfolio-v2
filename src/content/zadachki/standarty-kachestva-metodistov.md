@@ -32,6 +32,26 @@ figures:
   - label: Лид
     text: финальная проверка чистой работы
   note: Если автор не уверен в правках — второй кросс-чек, потом лид.
+cover:
+  src: /media/zadachki/standarty-kachestva-metodistov/cover.jpg
+  alt: Распечатка урока с пометками на полях, рука в тёмном рукаве указывает ручкой на строку
+  crop:
+  - 0
+  - 0.08
+  - 1
+  - 0.8
+images:
+- section: Решение по шагам
+  src: /media/zadachki/standarty-kachestva-metodistov/steps.jpg
+  alt: Стикеры на стене в четыре колонки, рука прикрепляет стикер в третью колонку
+  crop:
+  - 0.22
+  - 0.05
+  - 0.62
+  - 0.65
+- section: Стандарт урока и рубрика проверки
+  src: /media/zadachki/standarty-kachestva-metodistov/rubric.jpg
+  alt: 'Чек-лист из шести пунктов: четыре квадрата отмечены галочкой, два пустые, рядом маркер'
 ---
 
 ## Что я спросил бы первым

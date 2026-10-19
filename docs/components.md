@@ -1262,7 +1262,18 @@ made-up numbers), `order`, `date` (YYYY-MM-DD), `updated?`, `service`
 `figures[]` (`{ section, type: bars|flow, title, caption?, unit?, max?,
 note?, items[] { label, value?, text? } }`, at least two items), `cover?`
 (`{ src, alt, crop? }`, under the head) and `images[]` (`{ section, src,
-alt, caption?, crop? }`), both same-origin pictures drawn in 1 bit. The body: h2 sections in Daniil's words (format:
+alt, caption?, crop? }`), both same-origin pictures drawn in 1 bit. The
+pictures live in `public/media/zadachki/<slug>/` (`cover.jpg` and one file
+per picture, JPEG 1400 px wide). They are generated (Daniil's choice of
+19.10: GPT Image 2.5 Flare, 16:9) in one style: a casual phone snapshot with
+the flash, objects and hands, no faces, no readable text, no logos; one large
+subject in close-up and strong tonal contrast (dark things on white). Two
+traps in 1 bit: a dark, moody shot becomes a black block, and neighbouring
+objects in the same mid-grey become one even checker, unreadable at phone
+width (about 180 dither cells across). The cover is cropped to about 2.2:1
+(e.g. `crop: [0, 0.08, 1, 0.8]`); crop an inline picture close to its
+subject. `template.madeBy` says the
+illustrations are generated. The body: h2 sections in Daniil's words (format:
 site-plan/zadachki/FORMAT.md in the planning folder). pages/zadachki.md holds
 the hub blocks and `template` (the labels and lines of the page frame).
 

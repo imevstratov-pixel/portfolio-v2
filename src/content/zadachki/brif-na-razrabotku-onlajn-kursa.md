@@ -34,6 +34,26 @@ figures:
     text: пилот на части клиентов
   - label: Правки после пилота
     text: часть моей работы
+cover:
+  src: /media/zadachki/brif-na-razrabotku-onlajn-kursa/cover.jpg
+  alt: Ручной сканер штрихкодов на коробке на упаковочном столе склада, рядом ноутбук, сзади стеллажи
+  crop:
+  - 0
+  - 0.08
+  - 1
+  - 0.8
+images:
+- section: Решение по шагам
+  src: /media/zadachki/brif-na-razrabotku-onlajn-kursa/steps.jpg
+  alt: 'Инвентаризация: кладовщик сканирует коробку на полке ручным сканером'
+  crop:
+  - 0.38
+  - 0.12
+  - 0.58
+  - 0.62
+- section: Шаблон брифа на онлайн-курс
+  src: /media/zadachki/brif-na-razrabotku-onlajn-kursa/brief.jpg
+  alt: 'Встреча над брифом: бланк на планшете с пометками, ручка, две чашки кофе'
 ---
 
 ## Что я спросил бы первым
