@@ -10,6 +10,9 @@ The memorable element is a large black-and-white tier board. Its letters
 represent editorial priority for a first learning product, never effect size.
 Each name opens its explanation. A product selector gives the beginner a
 short route through the board; the complete reference remains available.
+Each product explicitly names its recommended methods and their roles;
+conditional additions are separate. The floating return link restores the
+selected tier-list item and keyboard focus, or the board heading on direct entry.
 
 ```text
 ASCII headline                   short promise
@@ -43,6 +46,10 @@ the existing external export, so re-exporting does not remove the guide.
 
 Edit the source files, not `src/content/frameworks/guide.json` or the generated
 catalogue item. The web page and PDF share the same exported content.
+Three contextual service offers also share their copy: consultation after the
+product cases, an audit after the sequencing section, and implementation after
+the worksheet. The web uses base-aware service paths; PDF links use the public
+site domain. Check these promises against the actual service pages when editing.
 
 The guide is a beginner's editorial selection based on the supplied research.
 Examples are explicitly fictional. Source links distinguish a model's author

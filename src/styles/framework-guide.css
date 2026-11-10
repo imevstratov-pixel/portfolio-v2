@@ -42,7 +42,16 @@
 .fg-stack + .fg-stack { margin-top:var(--s4); }
 .fg-stack h3 { font-size:var(--fs-large); }
 .fg-stack h4 { margin-top:var(--s2); }
-.fg-stack-methods { display:flex; flex-wrap:wrap; gap:var(--s1) var(--s2); font-size:.9375rem; }
+.fg-stack-recommendation { border-block:var(--line); padding-block:var(--s2); }
+.fg-stack-recommendation > h4 { margin:0 0 var(--s1); }
+.fg-stack-methods { display:grid; gap:var(--s2); margin-top:var(--s2); font-size:.9375rem; }
+.fg-stack-methods a { font-weight:var(--bold); }
+.fg-stack-methods p { margin-top:.3rem; max-width:var(--measure); }
+.fg-stack-optional { border-top:var(--hair); padding-top:var(--s2); margin-top:var(--s2); }
+.fg-service { display:grid; gap:var(--s2); border-block:var(--line); padding-block:var(--s3); margin-top:var(--s5); }
+.fg .fg-service h2 { font-size:var(--fs-medium); line-height:1.25; letter-spacing:var(--track-medium); }
+.fg-service__copy { display:grid; gap:var(--s2); max-width:var(--measure); }
+.fg-service ul { display:flex; flex-wrap:wrap; gap:var(--s2) var(--s3); }
 .fg-stack-steps { display:grid; gap:var(--s3); }
 .fg-stack-steps li { display:grid; grid-template-columns:1.5rem 1fr; gap:var(--s2); }
 .fg-stack-steps p { margin-top:.4rem; max-width:var(--measure); }
@@ -100,6 +109,8 @@
   .fg[data-enhanced] .fg-search { grid-template-columns:minmax(0,1fr) 15rem auto; align-items:end; }
   .fg-method__body { margin-left:calc(2.5rem + var(--s2)); }
   .fg-method__facts > div { display:grid; grid-template-columns:9rem 1fr; gap:var(--s2); }
+  .fg-stack-methods { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s2) var(--s3); }
+  .fg-stack-optional .fg-stack-methods { grid-template-columns:1fr; }
 }
 @media(min-width:1080px) {
   .fg-hero { grid-template-columns:repeat(12,minmax(0,1fr)); column-gap:var(--gap); }
@@ -113,6 +124,7 @@
   .fg-stack-menu a { padding:var(--s2); }
   .fg-stack { border-top:none; padding-top:0; }
   .fg-figure { width:75%; margin-left:auto; }
+  .fg-service { grid-template-columns:minmax(0,4fr) minmax(0,7fr); column-gap:calc(var(--gap) * 2); }
 }
 @media(max-width:719px) {
   .fg-hero__nav { align-items:flex-start; }

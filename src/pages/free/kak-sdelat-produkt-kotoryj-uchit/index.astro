@@ -3,6 +3,8 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import ContactShort from '../../../components/ContactShort.astro';
 import AsciiHeadline from '../../../components/glyphs/AsciiHeadline.astro';
 import DitherPortrait from '../../../components/glyphs/DitherPortrait.astro';
+import GuideReturn from '../../../components/free/GuideReturn.astro';
+import GuideService from '../../../components/free/GuideService.astro';
 import { getPage, findBlock } from '../../../lib/content';
 import { person, ldJson } from '../../../lib/person';
 import { url, absoluteUrl } from '../../../lib/url';
@@ -84,7 +86,15 @@ const ld = ldJson([
             <h3 id={`stack-title-${stack.id}`} tabindex="-1">{stack.name}</h3>
             <p class="fg-subtitle">{stack.scenario}</p>
             <p><strong>{d.stackLabels.goal}.</strong> {stack.goal}</p>
-            <ul role="list" class="fg-stack-methods" aria-label={d.stackLabels.frameworks}>{stack.frameworks.map((id) => <li><a href={`#method-${id}`} data-framework-link>{frameworkById.get(id)?.name}</a></li>)}</ul>
+            <div class="fg-stack-recommendation">
+              <h4>{d.stackLabels.frameworks}</h4>
+              <p class="fg-small">{d.stackLabels.recommendation}</p>
+              <ul role="list" class="fg-stack-methods">{stack.recommendation.core.map((item) => <li><a href={`#method-${item.framework}`} data-framework-link>{frameworkById.get(item.framework)?.alias.split(' / ')[0]}</a><p>{item.role}</p></li>)}</ul>
+              {stack.recommendation.optional.length > 0 && <div class="fg-stack-optional">
+                <h5>{d.stackLabels.optional}</h5>
+                <ul role="list" class="fg-stack-methods">{stack.recommendation.optional.map((item) => <li><a href={`#method-${item.framework}`} data-framework-link>{frameworkById.get(item.framework)?.alias.split(' / ')[0]}</a><p>{item.role}</p></li>)}</ul>
+              </div>}
+            </div>
             <h4>{d.stackLabels.steps}</h4>
             <ol class="fg-stack-steps" role="list">{stack.steps.map((step,i) => <li><span class="label">0{i+1}</span><div><h5>{step.title}</h5><p>{step.text}</p><p class="fg-deliverable">{step.artifact}</p></div></li>)}</ol>
             <p class="fg-stack-check"><strong>{d.stackLabels.check}.</strong> {stack.check}</p>
@@ -93,6 +103,8 @@ const ld = ldJson([
         </div>
       </div>
     </section>
+
+    <GuideService id="consulting" offer={d.serviceOffers.consulting} />
 
     <section class="fg-section" id="frameworks" aria-labelledby="fg-frameworks">
       <div class="fg-section__intro"><h2 id="fg-frameworks">{d.frameworksTitle}</h2><p>{d.frameworksLead}</p></div>
@@ -127,6 +139,8 @@ const ld = ldJson([
       <figcaption class="label">{d.practiceImage.caption}</figcaption>
     </figure>
 
+    <GuideService id="audit" offer={d.serviceOffers.audit} />
+
     <section class="fg-row" id="worksheet" aria-labelledby="fg-worksheet">
       <div><h2 id="fg-worksheet">{d.worksheet.title}</h2><p class="fg-after">{d.worksheet.lead}</p><p class="fg-small fg-after">{d.worksheet.privacy}</p></div>
       <form class="fg-workbook ym-hide-content" data-workbook data-filename={d.worksheet.filename} data-title={d.title} data-saved={d.worksheet.saved} data-unavailable={d.worksheet.unavailable} data-downloaded={d.worksheet.downloaded} data-empty={d.worksheet.empty} data-cleared={d.worksheet.cleared}>
@@ -137,11 +151,14 @@ const ld = ldJson([
       <p class="fg-closing">{d.worksheet.closing}</p>
     </section>
 
+    <GuideService id="build" offer={d.serviceOffers.build} />
+
     <section class="fg-row fg-sources" aria-labelledby="fg-sources">
       <div><h2 id="fg-sources">{d.sourcesTitle}</h2><p class="fg-after">{d.sourcesLead}</p><p class="label fg-after">{d.updated}</p><a class="btn fg-after" href={url(d.catalogue.file)} download data-goal="download">{d.download}</a></div>
       <details class="fg-source-disclosure"><summary>{d.sourcesToggle}</summary><ol class="fg-source-list">{d.sources.map((source) => <li id={`source-${source.id}`}><a href={source.url}>{source.title}</a><p class="label">{source.type}</p><p>{source.supports}</p><p class="fg-small">{source.limit}</p></li>)}</ol></details>
     </section>
   </article>
+  <GuideReturn label={d.returnToTiers} />
   {contact && <ContactShort block={contact} />}
 </BaseLayout>
 <script>

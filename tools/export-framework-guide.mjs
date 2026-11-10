@@ -26,6 +26,13 @@ for (const stack of guide.stacks) {
   if (!/^[a-z0-9-]+$/.test(stack.id) || stackIds.has(stack.id)) throw new Error(`Invalid/duplicate stack: ${stack.id}`);
   stackIds.add(stack.id);
   for (const id of stack.frameworks) if (!ids.has(id)) throw new Error(`${stack.id}: unknown framework ${id}`);
+  const recommendations = [...stack.recommendation.core, ...stack.recommendation.optional];
+  const recommendedIds = new Set(recommendations.map((item) => item.framework));
+  if (!stack.recommendation.core.length || recommendedIds.size !== recommendations.length ||
+      recommendedIds.size !== stack.frameworks.length || stack.frameworks.some((id) => !recommendedIds.has(id))) {
+    throw new Error(`${stack.id}: recommendations must cover each framework exactly once`);
+  }
+  for (const item of recommendations) if (!item.role?.trim()) throw new Error(`${stack.id}: missing role for ${item.framework}`);
   for (const step of stack.steps) if (step.framework && !ids.has(step.framework)) throw new Error(`${stack.id}: unknown step framework ${step.framework}`);
 }
 if (guide.stacks.length !== 7) throw new Error('The guide promises seven product stacks');

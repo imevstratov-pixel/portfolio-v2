@@ -22,10 +22,24 @@ const sourceLink = (id) => {
   if (!source) throw new Error(`Unknown source ${id}`);
   return `[${source.title}](${source.url})`;
 };
+const recommendationItem = ({ framework: id, role }) => {
+  const framework = frameworks.get(id);
+  if (!framework) throw new Error(`Unknown framework ${id}`);
+  return `- **${modelName(framework)}.** ${role}`;
+};
 
 function markdown() {
   const out = [];
   const p = (s = '') => out.push(text(s), '');
+  const serviceOffer = (id) => {
+    const offer = guide.serviceOffers?.[id];
+    if (!offer?.title || !offer.text || !offer.links?.length) throw new Error(`Missing service offer ${id}`);
+    p(`SERVICE_OFFER_START_${id}`);
+    p(`### ${offer.title}`);
+    p(offer.text);
+    p(offer.links.map(({ label, href }) => `[${label}](${new URL(href, 'https://danilevstratov.ru').href})`).join('; '));
+    p('SERVICE_OFFER_END');
+  };
   p(`# ${guide.title}`);
   p(guide.lead);
   p(guide.audience);
@@ -50,17 +64,23 @@ function markdown() {
     p(`### ${index + 1}. ${stack.name}`);
     p(stack.scenario);
     p(`**${guide.stackLabels.goal}.** ${stack.goal}`);
-    p(`**${guide.stackLabels.frameworks}.** ${stack.frameworks.map((id) => {
-      const framework = frameworks.get(id);
-      if (!framework) throw new Error(`Unknown framework ${id}`);
-      return modelName(framework);
-    }).join(' + ')}.`);
+    if (!stack.recommendation?.core?.length) throw new Error(`Missing recommended stack for ${stack.id}`);
+    p('STACK_RECOMMENDATION_START');
+    p(`#### ${guide.stackLabels.frameworks}`);
+    p(guide.stackLabels.recommendation);
+    p(stack.recommendation.core.map(recommendationItem).join('\n'));
+    if (stack.recommendation.optional?.length) {
+      p(`#### ${guide.stackLabels.optional}`);
+      p(stack.recommendation.optional.map(recommendationItem).join('\n'));
+    }
+    p('STACK_RECOMMENDATION_END');
     for (const [i, step] of stack.steps.entries()) {
       p(`**${i + 1}. ${step.title}.** ${step.text}${step.artifact ? ` **Что подготовить:** ${step.artifact}` : ''}`);
     }
     p(`**${guide.stackLabels.check}.** ${stack.check}`);
     p(`**${guide.stackLabels.limit}.** ${stack.limit}`);
   });
+  serviceOffer('consulting');
 
   p(`## ${guide.frameworksTitle}`);
   p(guide.frameworksLead);
@@ -82,6 +102,7 @@ function markdown() {
   for (const item of guide.sequence.items) { p(`### ${item.name}`); p(item.text); }
   p(guide.sequence.after);
   p('ILLUSTRATION_PRACTICE');
+  serviceOffer('audit');
 
   p(`## ${guide.worksheet.title}`);
   p(guide.worksheet.lead);
@@ -91,6 +112,7 @@ function markdown() {
     p('WORKSHEET_LINE');
   }
   p(guide.worksheet.closing);
+  serviceOffer('build');
 
   p(`## ${guide.sourcesTitle}`);
   p(guide.sourcesLead);

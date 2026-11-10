@@ -6,15 +6,21 @@ export function frameworkConfig(guide, images) {
     utm: 'utm_source=framework-guide&utm_medium=pdf',
     author: guide.author,
     role: 'методолог образовательных продуктов',
-    pageBreakBefore: [guide.intro.title, guide.tierTitle, guide.stacksTitle, guide.frameworksTitle, guide.sequence.title, guide.worksheet.title, guide.sourcesTitle],
+    pageBreakBefore: [guide.intro.title, guide.tierTitle, guide.stacksTitle, guide.frameworksTitle, guide.sequence.title, guide.worksheet.title],
     check(md, problems) {
       const cards = (md.match(/^### [SABCD] · /gm) ?? []).length;
       if (!cards) problems.push('no framework cards in the compiled guide');
       if (!guide.sources?.length) problems.push('no sources in the exported guide');
+      if ((md.match(/^STACK_RECOMMENDATION_START$/gm) ?? []).length !== guide.stacks.length) problems.push('missing recommended stacks');
+      if ((md.match(/^SERVICE_OFFER_START_/gm) ?? []).length !== 3) problems.push('expected three service offers');
       return { cards, stacks: guide.stacks?.length ?? 7 };
     },
     transform(html, h) {
       const labels = ['Как применить', 'Что даёт', 'Где не поможет', 'Что получится', 'Первоисточник', 'Чему учим', 'Как собрать', 'Как проверить результат', 'Где этой сборки мало', 'Подходы в сборке', 'Пример', 'Ситуация', 'Первый шаг'];
+      html = html.replace(/<p>STACK_RECOMMENDATION_START<\/p>([\s\S]*?)<p>STACK_RECOMMENDATION_END<\/p>/g,
+        '<section class="stack-recommendation">$1</section>');
+      html = html.replace(/<p>SERVICE_OFFER_START_(consulting|audit|build)<\/p>([\s\S]*?)<p>SERVICE_OFFER_END<\/p>/g,
+        '<aside class="service-offer service-offer--$1">$2</aside>');
       html = html.replace(/<h3>([SABCD]) · ([\s\S]*?)<\/h3>([\s\S]*?)(?=<h[23](?: |>)|$)/g,
         (_, tier, title, body) => `<section class="framework-card"><h3 class="framework-title"><span class="tier-tag">${tier}</span><span>${title}</span></h3>${body}</section>`);
       html = html.replace(/<h3>(\d+)\. ([\s\S]*?)<\/h3>/g,
@@ -73,6 +79,17 @@ export function frameworkConfig(guide, images) {
 .framework-card .detail-row { font-size: 9.25pt; line-height: 1.4; }
 .guide .stack-title { display: flex; gap: 4mm; font-size: 15pt; margin-top: 8mm; }
 .stack-number { font: 400 9pt/1.6 var(--font-mono); color: var(--muted); }
+.stack-recommendation { max-width: 150mm; border-top: var(--hair); border-bottom: var(--hair); padding: 3mm 0; break-inside: avoid; font-size: 9.25pt; line-height: 1.4; }
+.stack-recommendation h4 { font: 400 8pt/1.4 var(--font-mono); color: var(--muted); margin: 0 0 2mm; }
+.stack-recommendation p { margin-bottom: 2mm; }
+.stack-recommendation ul > li { padding-left: 0; }
+.stack-recommendation ul > li::before { content: none; }
+.stack-recommendation ul > li + li { margin-top: 1.3mm; }
+.stack-recommendation ul + h4 { margin-top: 3mm; }
+.service-offer { max-width: 150mm; border-top: var(--line); padding-top: 4mm; margin: 6mm 0 0; break-inside: avoid; }
+.guide .service-offer h3 { margin-top: 0; font-size: 14pt; line-height: 1.2; }
+.service-offer > p { margin-top: 2.5mm; }
+.service-offer > p:last-child { font-size: 9pt; }
 .ascii-diagram { border-top: var(--hair); border-bottom: var(--hair); padding: 4mm 0; margin: 5mm 0; font: 400 8.3pt/1.5 var(--font-mono); white-space: pre-wrap; break-inside: avoid; }
 .inline-arrow { width: 1em; height: .72em; vertical-align: -.02em; display: inline-block; }
 .print-illustration { width: 150mm; margin: 5mm 0; break-inside: avoid; }
