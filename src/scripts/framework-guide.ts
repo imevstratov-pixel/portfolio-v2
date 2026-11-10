@@ -39,7 +39,11 @@ if (root) {
         clearFilter(); target.open = true;
         requestAnimationFrame(() => target.scrollIntoView({ block:'start' }));
       }
-    } else if (hash.startsWith('stack-')) selectStack(hash.slice(6));
+    } else if (hash.startsWith('stack-')) {
+      selectStack(hash.slice(6));
+      const target = panels.find((panel) => panel.id === hash);
+      requestAnimationFrame(() => target?.scrollIntoView({ block:'start' }));
+    }
     else if (hash.startsWith('source-')) {
       const target = document.getElementById(hash);
       const disclosure = target?.closest('details');
